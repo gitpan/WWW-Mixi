@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.27$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.28$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -332,11 +332,11 @@ sub parse_list_bookmark {
 			# parse record
 			($item->{'link'}, $item->{'image'})  = ($1, $2) if ($lines[0] =~ /<td WIDTH=90 .*?><a href="([^"]*show_friend.pl\?id=\d+)"><img SRC="([^"]*)".*?>/is);
 			($item->{'subject'}, $item->{'gender'}) = ($1, $2) if ($lines[0] =~ /<td COLSPAN=2 BGCOLOR=#FFFFFF>(.*?) \((.*?)\)<\/td>/is);
-			$item->{'descrption'} = $1 if ($lines[1] =~ /<td COLSPAN=2 BGCOLOR=#FFFFFF>(.*?)<\/td>/is);
+			$item->{'description'} = $1 if ($lines[1] =~ /<td COLSPAN=2 BGCOLOR=#FFFFFF>(.*?)<\/td>/is);
 			$item->{'time'}    = $1 if ($lines[2] =~ /<td BGCOLOR=#FFFFFF WIDTH=140>(.*?)<\/td>/is);
 			# format
 			foreach (qw(image link)) { $item->{$_} = $self->absolute_url($item->{$_}, $base) if ($item->{$_}); }
-			foreach (qw(subject descrption gender)) {
+			foreach (qw(subject description gender)) {
 				$item->{$_} =~ s/<.*?>//g if ($item->{$_});
 				$item->{$_} = $self->rewrite($item->{$_});
 			}
@@ -512,7 +512,7 @@ sub parse_list_friend_next {
 	my $res     = (@_) ? shift : $self->response();
 	my $base    = $res->request->uri->as_string;
 	my $content = $res->content;
-	return undef unless ($content =~ /\|<\/font>&nbsp;<a HREF=([^<>]*?list_friend.pl[^<>]*?)>([^<>]*?)<\/a>/);
+	return undef unless ($content =~ /&nbsp;&nbsp;<a href=([^<>]*?list_friend.pl\?page=.*?)>(.*?)<\/a>/);
 	my $subject = $2;
 	my $link    = $self->absolute_url($1, $base);
 	my $next    = {'link' => $link, 'subject' => $2};
@@ -524,7 +524,7 @@ sub parse_list_friend_previous {
 	my $res      = (@_) ? shift : $self->response();
 	my $base     = $res->request->uri->as_string;
 	my $content  = $res->content;
-	return undef unless ($content =~ /<a HREF=([^<>]*?list_friend.pl[^<>]*?)>([^<>]*?)<\/a>&nbsp;<font COLOR=[^<>]*?>\|/);
+	return undef unless ($content =~ /<a href=([^<>]*?list_friend.pl\?page=.*?)>(.*?)<\/a>&nbsp;&nbsp;/);
 	my $subject  = $2;
 	my $link     = $self->absolute_url($1, $base);
 	my $previous = {'link' => $link, 'subject' => $2};
@@ -560,6 +560,33 @@ sub parse_list_message {
 					'link'     => $self->absolute_url($link, $base),
 					'status'   => $status,
 					'emvelope' => $emvelope,
+				};
+				push(@items, $item);
+			}
+		}
+	}
+	return @items;
+}
+
+sub parse_list_outbox {
+	my $self      = shift;
+	my $res       = (@_) ? shift : $self->response();
+	my $base      = $res->request->uri->as_string;
+	my $content   = $res->content;
+	my @items     = ();
+	my $re_link   = '<a href="?(.+?)"?>(.+?)<\/a>';
+	if ($content =~ /<!--送信済み一覧-->.*?<table BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=553>(.+?)<\/table>/s) {
+		$content = $1;
+		while ($content =~ s/<tr BGCOLOR="?(#FFF7E1|#FFFFFF)"?>(.*?)<\/tr>//s) {
+			my $message  = $2;
+			if ($message =~ /<td>([^<>]*?)<\/td>\s*<td>${re_link}<\/td>\s*<td>(\d{2})月(\d{2})日<\/td>/is) {
+				my ($name, $link, $subj) = ($1, $2, $3);
+				my $time = sprintf('%02d/%02d', $4, $5);
+				my $item = {
+					'time'     => $time,
+					'subject'  => $self->rewrite($subj),
+					'name'     => $self->rewrite($name),
+					'link'     => $self->absolute_url($link, $base),
 				};
 				push(@items, $item);
 			}
@@ -695,13 +722,16 @@ sub parse_view_message {
 	my $base      = $res->request->uri->as_string;
 	my $content   = $res->content;
 	my $item      = undef;
-	my $re_link   = '<a href="?(.+?)"?>(.+?)<\/a>';
+#	my $re_link   = '<a href="?(.+?)"?>(.+?)<\/a>';
+	my $re_link   = '<a href="(.+?)">(.+?)<\/';
 	my $re_date   = '(\d{4})年(\d{2})月(\d{2})日&nbsp;&nbsp;(\d{1,2}):(\d{2})';
 	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=555>(.*?)<\/table>/s) {
 		my $message = $1;
 		my @rows = split(/<\/tr>/, $message, 4);
-		my $image = $1 if ($rows[0] =~ s/<td ALIGN=center.*?>.*?<img SRC="(.*?)" border=0>.*?<\/td>//i);
-		my ($link, $name) = ($1, $2) if ($rows[0] =~ s/<td BGCOLOR=#FFF4E0.*?>.*?${re_link}.*?<\/td>//i);
+#		my $image = $1 if ($rows[0] =~ s/<td ALIGN=center.*?>.*?<img SRC="(.*?)" border=0>.*?<\/td>//i);
+		my $image = $1 if ($rows[0] =~ /<td ALIGN=center.*?>.*?<img SRC="(.*?)" border=0>.*?<\/td>/i);
+#		my ($link, $name) = ($1, $2) if ($rows[0] =~ s/<td BGCOLOR=#FFF4E0.*?>.*?${re_link}.*?<\/td>//i);
+		my ($link, $name) = ($1, $2) if ($rows[0] =~ /<td BGCOLOR=#FFF4E0.*?>.*?${re_link}.*?td>/i);
 		my $time = sprintf('%04d/%02d/%02d %02d:%02d', $1, $2, $3, $4, $5) if ($rows[1] =~ /${re_date}/);
 		my $subj = $1 if ($rows[2] =~ /<\/font>&nbsp;:&nbsp;(.*)<\/td>/);
 		my $desc = $1 if ($rows[3] =~ /<td CLASS=h120>(.*?)<\/td>/);
@@ -938,6 +968,14 @@ sub get_list_message {
 	$url     = shift if (@_ and $_[0] ne 'refresh');
 	$self->set_response($url, @_) or return;
 	return $self->parse_list_message();
+}
+
+sub get_list_outbox {
+	my $self = shift;
+	my $url  = 'list_message.pl?box=outbox';
+	$url     = shift if (@_ and $_[0] ne 'refresh');
+	$self->set_response($url, @_) or return;
+	return $self->parse_list_outbox();
 }
 
 sub get_new_album {
@@ -1595,6 +1633,7 @@ sub test_get_mainly_categories {
 		'list_diary_capacity' => '日記容量',
 		'list_friend'      => '友人・知人一覧',
 		'list_message'     => '受信メッセージ',
+		'list_outbox'      => '送信メッセージ',
 		'new_album'        => 'マイミクシィ最新アルバム',
 		'new_bbs'          => 'コミュニティ最新書き込み',
 		'new_comment'      => '日記コメント記入履歴',

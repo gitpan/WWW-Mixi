@@ -1,5 +1,15 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.28  Fri Apr  1 14:13:00 2005
+	- add "parse_list_outbox", "get_list_outbox". (thanks AsO)
+		- allows you to get and parse "message.pl?box=outbox".
+	- fix "parse_message".
+		- allows you to parse "view_message" in outbox.
+	- fix "parse_list_friend_next" and "parse_list_friend_previous".
+		- it does not work because of HTML changes at 05/03/31.
+	- fix "parse_list_bookmark".
+		- it had key "descrption" instead of "description".
+
 0.27  Wed Mar  9 23:56:00 2005
 	- PODs converted to utf-8.
 

@@ -377,6 +377,18 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'emvelope' => 'http://mixi.jp/img/mail5.gif'
  }
 
+=item @items = $mixi->parse_list_outbox( [$response] );
+
+最近の送信メッセージ（list_message.pl?box=outboxのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'subject' => 'こんにちわ。',
+ 	'link' => 'http://mixi.jp/view_message.pl?id=xxxxxx&box=xxxxx',
+ 	'name' => '塚本牧生',
+ 	'time' => '08/18',
+ }
+
 =item @items = $mixi->parse_new_album( [$response] );
 
 マイミクシィ最新アルバム（new_album.plのメイン部）を解析します。
@@ -486,13 +498,15 @@ IDを取得できなかった時の返り値は0です。
 受信メッセージ（view_message.plのメイン部）のメッセージを解析します。
 返り値は、メッセージを取得できたときは以下のようなハッシュリファレンス、ない場合はundefです。
 
+送信メッセージにも対応しました。
+
  {
- 	'subject'    => 'こんにちわ。',
- 	'image'      => 'http://img.mixi.jp/photo/member/xx/xx/xxxxxx_xxxxxxxxs.jpg',
- 	'link'       => 'http://mixi.jp/show_friend.pl?id=?id=xxxxxx',
- 	'name'       => '塚本牧生',
- 	'time'       => '2004/08/18 12:34',
- 	'descrption' => '本文...',
+ 	'subject'     => 'こんにちわ。',
+ 	'image'       => 'http://img.mixi.jp/photo/member/xx/xx/xxxxxx_xxxxxxxxs.jpg',
+ 	'link'        => 'http://mixi.jp/show_friend.pl?id=?id=xxxxxx',
+ 	'name'        => '塚本牧生',
+ 	'time'        => '2004/08/18 12:34',
+ 	'description' => '本文...',
  }
 
 =item @items = $mixi->parse_view_message_form( [$response] );
