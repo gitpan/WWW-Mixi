@@ -1,138 +1,138 @@
 =head1 NAME
 
-WWW::Mixi::Cookbook - WWW::Mixi�Υ��å��֥å�
+WWW::Mixi::Cookbook - WWW::Mixiのクックブック
 
 =head1 DESCRIPTION
 
-���Υɥ�����Ȥˤ�WWW::Mixi��ŵ��Ū�ʻȤ����򼨤������Ĥ��Υ���ץ뤬���äƤ��ޤ���
+このドキュメントにはWWW::Mixiの典型的な使い方を示すいくつかのサンプルが入っています。
 
-=head1 mixi����Υǡ�������
+=head1 mixiからのデータ取得
 
-WWW::Mixi�⥸�塼��ˤϡ����������Ѥ�login�᥽�åɤȡ����줫��1�᥽�åɤ�ľ�ܥ����Ȥʤɤ�����Ǥ���ǡ��������᥽�åɤ�����ޤ���
-������Ȥ��ȡ�mixi�ؤΥ������������˴�ñ�Ǥ���
+WWW::Mixiモジュールには、ログイン用のloginメソッドと、それから1メソッドで直接コメントなどを取得できるデータ取得メソッドがあります。
+これらを使うと、mixiへのアクセスは非常に簡単です。
 
-=head2 ��������
+=head2 ログイン
 
-mixi�ؤΥ�������ϡ�login���ޥ�ɰ�ĤǴ�λ���ޤ���
-���������ˤϡ�LWP::UserAgent��������Ǥ�Request�᥽�åɤ�get��post�᥽�åɤǤ�mixi���������⡢mixi����Υǡ��������᥽�åɤǤΥǡ����������ǽ�ˤʤ�ޤ���
+mixiへのログインは、loginコマンド一つで完了します。
+ログイン後には、LWP::UserAgentスタイルでのRequestメソッドやget、postメソッドでのmixiアクセスも、mixiからのデータ取得メソッドでのデータ取得も可能になります。
 
  use WWW::Mixi;
  use HTTP::Request::Common;
  
  my $mixi = WWW::Mixi->new('me@mixi.user', 'mixi_password');
  
- print "�������󤷤ޤ���\n";
+ print "ログインします。\n";
  my $response = $mixi->login;
 
-=head2 �ޥ��ߥ������ǿ������μ���
+=head2 マイミクシイ最新日記の取得
 
-mixi����ξ�������⡢�䤬�ǡ��������᥽�åɤ��ɤ�Ǥ��뤤���Ĥ��������ʥ᥽�åɤǴ�ñ�˺Ѥޤ��뤳�Ȥ��Ǥ��ޤ���
-���٤ƤΥǡ����������б����Ƥ���櫓�ǤϤ���ޤ��󤬡������Ȥ��Τ����ִ�ñ����ˡ�Ǥ���
+mixiからの情報取得も、私がデータ取得メソッドと読んでいるいくつかの便利なメソッドで簡単に済ませることができます。
+すべてのデータ取得に対応しているわけではありませんが、それを使うのが一番簡単な方法です。
 
-�ޤ����ޥ��ߥ������ǿ������ѤΥǡ��������᥽�å�"get_new_friend_diary"��Ҳ𤷤ޤ��礦��
-���Υ᥽�åɤϡ����Τ褦������Υ�ե���󥹤��֤��ޤ���
+まず、マイミクシイ最新日記用のデータ取得メソッド"get_new_friend_diary"を紹介しましょう。
+このメソッドは、次のような配列のリファレンスを返します。
 
  {
- 	'subject' => 'mixi���ܡ�',
+ 	'subject' => 'mixiの本。',
  	'link' => 'http://mixi.jp/list_item_review.pl?reviewer_id=xxxx&item_id=xxxxx',
- 	'name' => '��������',
+ 	'name' => '塚本牧生',
  	'time' => '2004/08/18 13:18'
  }
 
-��Ȥ��ơ��ޥ��ߥ������ǿ�������ƥ����Ȥǽ��Ϥ��륹����ץȤ�󤲤ޤ��礦��
+例として、マイミクシイ最新日記をテキストで出力するスクリプトを挙げましょう。
 
  use WWW::Mixi;
  
  my $mixi = WWW::Mixi->new('me@mixi.user', 'mixi_password');
  
- print "�������󤷤ޤ���\n";
+ print "ログインします。\n";
  my $response = $mixi->login;
  
- print "�ޥ��ߥ������ǿ�������������ޤ���\n";
+ print "マイミクシイ最新日記を取得します。\n";
  my =item get_new_friend_diary;
- print "�ޥ��ߥ������ǿ���������Ϥ��ޤ���\n";
+ print "マイミクシイ最新日記を出力します。\n";
  foreach my $item (@items) {
  	my $subject = $item->{'subject'};
  	my $link = $item->{'link'};
  	my $name = $item->{'name'};
  	my $time = $item->{'time'};
- 	print "�� $subject\n[����] $time\n[̾��] $name\n[Link] $link\n\n";
+ 	print "■ $subject\n[日時] $time\n[名前] $name\n[Link] $link\n\n";
  }
 
-����äȵ����դ��Ƥ��������Τϡ�mixi��ʸ�������ɤ�EUC���Ȥ������ȤǤ���
-Windows�Υ��ޥ�ɥ饤��ʤɤǻȤ����ˤϡ�ʸ�������ɤ�SJIS�ˤ��Ƥ��ɬ�פ�����Ǥ��礦���顢���λ���Jcode�⥸�塼��ʤɤ��ȹ�碌�ƤߤƤ���������
+ちょっと気を付けておきたいのは、mixiの文字コードがEUCだということです。
+Windowsのコマンドラインなどで使う時には、文字コードをSJISにしてやる必要があるでしょうから、その時はJcodeモジュールなども組合わせてみてください。
 
-=head2 ����¾�Υǡ��������᥽�å�
+=head2 その他のデータ取得メソッド
 
-�ޥ��ߥ������ǿ������Ѥ�get_new_friend_diary��¾�ˤ⡢�����Ĥ��Υǡ��������᥽�åɤ�����ޤ���
-�ʲ���0.21�Ǥ����ѤǤ���ǡ��������᥽�åɤΰ����Ǥ���������Ū�ˤϸ�ҤΡ�parse_���פȤ����᥽�åɤˤϡ��б������get_���ץ᥽�åɤ�����ȻפäƤޤ��ְ㤤�Ϥ���ޤ���
-���ΤǴ����ʰ����ϡ��ɥ�����Ȥ��ǧ���Ƥ���������
+マイミクシイ最新日記用のget_new_friend_diaryの他にも、いくつかのデータ取得メソッドがあります。
+以下は0.21版で利用できるデータ取得メソッドの一部ですが、基本的には後述の「parse_～」というメソッドには、対応する「get_～」メソッドがあると思ってまず間違いはありません。
+正確で完全な一覧は、ドキュメントを確認してください。
 
-¿���Υǡ��������᥽�åɤϡ�get_new_friend_diary��Ʊ���褦�˰����ʤ��Ǽ¹ԤǤ������줾���ޤä������ΡʤǤ�get_new_friend_diary�Ȼ��������Ρ˥ϥå����ե���󥹤�ʣ���֤��ޤ���
+多くのデータ取得メソッドは、get_new_friend_diaryと同じように引数なしで実行でき、それぞれ決まった形式の（でもget_new_friend_diaryと似た感じの）ハッシュリファレンスを複数返します。
 
 =over 4
 
 =item get_information
 
-�ۡ����ɽ�������ִ����Ԥ���Τ��Τ餻�פ�������ޤ���
+ホームに表示される「管理者からのお知らせ」を取得します。
 
 =item get_list_comment
 
-�Ƕ�Υ����Ȥ�ɽ�������ֺǶ�Υ����Ȱ����פ�������ޤ���
+最近のコメントに表示される「最近のコメント一覧」を取得します。
 
 =item get_list_message
 
-��å�������ɽ�������ּ���Ȣ�פ�������ޤ���
+メッセージに表示される「受信箱」を取得します。
 
 =item get_new_bbs
 
-���ߥ�˥ƥ��ǿ��񤭹��ߤ�������ޤ���
+コミュニティ最新書き込みを取得します。
 
 =item get_new_comment
 
-���������ȵ��������������ޤ���
+日記コメント記入履歴を取得します。
 
 =item get_new_friend_diary
 
-�ޥ��ߥ������ǿ�������������ޤ���
+マイミクシイ最新日記を取得します。
 
 =item get_new_review
 
-�ޥ��ߥ������ǿ���ӥ塼��������ޤ���
+マイミクシイ最新レビューを取得します。
 
 =item get_show_log
 
-�������Ȥ�������ޤ���
+あしあとを取得します。
 
 =back
 
-�㳰�Ȥ��ơ��ᥤ���˥塼���ܤ��������get_main_menu���Хʡ����������get_banner���ġ���С����ܤ��������get_tool_bar��3�Ĥϡ�������URL�����Ǥ��ޤ���
-�����ϤɤΥڡ����ˤǤ⤢�뤫��Ǥ���
-URL��"home.pl"�Τ褦�ˡ��ڡ���̾����ʬ�����Ǥ⹽���ޤ���
+例外として、メインメニュー項目を取得するget_main_menu、バナーを取得するget_banner、ツールバー項目を取得するget_tool_barの3つは、引数でURLを指定できます。
+これらはどのページにでもあるからです。
+URLは"home.pl"のように、ページ名の部分だけでも構いません。
 
  my =item get_main_menu("home.pl");
 
-URL���ά�������ˤϡ��Ǹ�˥ǡ��������᥽�åɤ���get�ޤ���post�᥽�åɤǼ��������ڡ����ˤʤ�ޤ���
+URLを省略した時には、最後にデータ取得メソッドか、getまたはpostメソッドで取得したページになります。
 
 =over 4
 
 =item get_main_menu
 
-�ڡ�����Ƭ���Υᥤ���˥塼��������ޤ���
+ページ先頭部のメインメニューを取得します。
 
 =item get_banner
 
-�Хʡ���������ޤ���
+バナーを取得します。
 
 =item get_tool_bar
 
-�ᥤ���˥塼�β���ɸ�������ġ���С���������ޤ���
+メインメニューの下に標示されるツールバーを取得します。
 
 =back
 
-�ޤ����̤��㳰�Ȥ���get_show_log_count�Ϥ������ȿ����֤��ޤ���
-Ʊ�ͤˡ�get_self_id�ϼ�ʬ��ID���֤��ޤ���
-�������֤��ͤ�����Ǥ⡢�ϥå����ե���󥹤Ǥ�ʤ���ñ�ʤ륹����Ǥ���
+また、別の例外としてget_show_log_countはあしあと数を返します。
+同様に、get_self_idは自分のIDを返します。
+これらの返り値は配列でも、ハッシュリファレンスでもなく、単なるスカラです。
 
  my $count = $mixi->get_show_log_count;
  my $id = $mixi->get_self_id;
@@ -141,88 +141,88 @@ URL���ά�������ˤϡ��Ǹ�˥ǡ��������᥽�åɤ���get�ޤ���post�᥽�åɤǼ�������
 
 =item get_show_log_count
 
-�������Ȥ�������ޤ���
+あしあとを取得します。
 
 =item get_self_id
 
-��ʬ��ID��������ޤ���
+自分のIDを取得します。
 
 =back
 
-=head1 LWP::UserAgent��������ǤΥ�������
+=head1 LWP::UserAgentスタイルでのアクセス
 
-��������ȥǡ��������᥽�åɤ�Ȥä������ǥ��󥰤ϴ�ñ�Ǥ����������Ǥ���ǡ����ϸ¤��ޤ��������顼�ϥ�ɥ�󥰤μ夵���㤭��Ǥ���
-�⤦�����٤�������ȼ�ͳ�����Ѥ�ͤ���ΤǤ���С������LWP::UserAgent���ȻפäƻȤäƤߤƤ���������
+ログインとデータ取得メソッドを使ったコーディングは簡単ですが、取得できるデータは限られますし、エラーハンドリングの弱さが泣き所です。
+もう少し細かい制御と自由な利用を考えるのであれば、これをLWP::UserAgentだと思って使ってみてください。
 
-�ºݤˡ�WWW::Mixi�Υ����ѡ����饹��LWP::RobotUA�ǡ�����ˤ��Υ����ѡ����饹��LWP::UserAgent�Ǥ���
-¿���Υ᥽�åɤ�LWP����UserAgent����Ѿ�����Ƥ��ꡢ����ۤɰ㤤�򴶤��뤳�ȤϤʤ��Ǥ��礦��
+実際に、WWW::MixiのスーパークラスはLWP::RobotUAで、さらにそのスーパークラスはLWP::UserAgentです。
+多くのメソッドがLWP：：UserAgentから継承されており、それほど違いを感じることはないでしょう。
 
-=head2 ��������
+=head2 ログイン
 
-LWP::UserAgent��������ǥ����ǥ��󥰤���ˤ��Ƥ⡢���������login�᥽�åɤ�ȤäƤ��ޤä��ɤ��Ǥ��礦��
+LWP::UserAgentスタイルでコーディングするにしても、ログインはloginメソッドを使ってしまって良いでしょう。
 
-LWP::UserAgent��Ȥ����Υ��������Ȥϡ�POST��HTTP::Request���֥������Ȥ���������Cookie��ͭ���ˤ�����������ڡ����˥�����������Ȥ��ä����ˤʤ�ޤ���
-��������᥽�åɤϡ�����Ū�ˤ�ñ�ˤ������֤˹Ԥ��ޤ���
-���θ��Cookie�ǥ��å����ID����ưŪ������������ޤ��Τǡ�LWP::UserAgent�Ǥ���褦��request��simple_request�᥽�åɤǳƥڡ����˥��������Ǥ��ޤ���
+LWP::UserAgentを使う時のログイン作業は、POSTのHTTP::Requestオブジェクトを生成し、Cookieを有効にし、ログインページにアクセスするといった手順になります。
+ログインメソッドは、内部的には単にこれを順番に行います。
+その後はCookieでセッションIDが自動的に送受信されますので、LWP::UserAgentでするようにrequestやsimple_requestメソッドで各ページにアクセスできます。
 
-�㤨�С����������˥ۡ����HTML��ʬ����Ϥ���ˤϰʲ��Τ褦�ˤ��ޤ���
+例えば、ログイン後にホームのHTML部分を出力するには以下のようにします。
 
  use WWW::Mixi;
  use HTTP::Request::Common;
  
  my $mixi = WWW::Mixi->new('me@mixi.user', 'mixi_password');
  
- print "�������󤷤ޤ���\n";
+ print "ログインします。\n";
  my $response = $mixi->login;
  
- print "�ۡ����������ޤ���\n";
+ print "ホームを取得します。\n";
  $request = &HTTP::Request::Common::GET('http://mixi.jp/home.pl');
  $response = $mixi->request($request);
  print $response->content;
 
-=head2 get�᥽�å�
+=head2 getメソッド
 
-LWP::UserAgent�⥸�塼��Ǥ�ɸ��Ū�ʥڡ���������(1)HTTP::Request���֥������Ȥ�������(2)request�᥽�åɤǥꥯ�����Ȥν����μ��ˤʤ�ޤ���
-WWW::Mixi�⥸�塼��Ǥϡ�����¾��get��post�Ȥ����ʰ�Ū�ʥ᥽�åɤ��Ѱդ��Ƥ��ꡢ�����Ȥ����Ȥ�Ǥ��ޤ���
+LWP::UserAgentモジュールでの標準的なページ取得は(1)HTTP::Requestオブジェクトの生成、(2)requestメソッドでリクエストの処理の手順になります。
+WWW::Mixiモジュールでは、この他にgetとpostという簡易的なメソッドを用意しており、これを使うこともできます。
 
-�㤨�С���Ǥϼ����ͤˤ��ƥۡ����������ޤ�����
+例えば、上では次の様にしてホームを取得しました。
 
  use WWW::Mixi;
  use HTTP::Request::Common;
  
- (ά)
+ (略)
  
- print "�ۡ����������ޤ���\n";
+ print "ホームを取得します。\n";
  $request = &HTTP::Request::Common::GET('http://mixi.jp/home.pl');
  $response = $mixi->request($request);
  print $response->content;
 
-get��Ȥ��ȡ�HTTP::Request::Common�⥸�塼��ʤɤ�Ȥä��ꥯ�����Ȥ������򤻤��ˡ�ľ��URL����ꤹ��кѤߤޤ���
-�ޤ���URL��'http://'����Ϥޤ�����URL�ǤϤʤ����Ǹ�Υե�����̾�ʤޤ��Ϥ��������ĥ�Ҥ�'.pl'��ʤ�����Ρˤ���ꤹ��н�ʬ�Ǥ���
-�Ĥޤꡢ���Τ褦�˽񤱤�Ʊ�������Ǥ��ޤ���
+getを使うと、HTTP::Request::Commonモジュールなどを使ったリクエストの生成をせずに、直接URLを指定すれば済みます。
+また、URLも'http://'から始まる絶対URLではなく、最後のファイル名（またはそこから拡張子の'.pl'を省いたもの）を指定すれば十分です。
+つまり、下のように書けば同じ事ができます。
 
  use WWW::Mixi;
  
- (ά)
+ (略)
  
- print "�ۡ����������ޤ���\n";
+ print "ホームを取得します。\n";
  $response = $mixi->get('home.pl');
  print $response->content;
 
-=head2 post�᥽�å�
+=head2 postメソッド
 
-��ñ��GET�ǥڡ�����������뤿��Υ᥽�åɤȤ��ơ�WWW::Mixi�ˤ�get�Ȥ����᥽�åɤ��Ѱդ���Ƥ��ޤ�����
+簡単にGETでページを取得するためのメソッドとして、WWW::Mixiにはgetというメソッドが用意されていました。
 
-Ʊ�ͤ�POST�ǥե�����������ͤ���������ˤϡ�post�Ȥ����ʰ�Ū�ʥ᥽�åɤ�Ȥ����Ȥ��Ǥ��ޤ���
-post�Ǥϡ�URL��¾�˥ե�����ǡ�����������Ϥ��ޤ���
-�㤨�С����Τ褦�ˤ������������Ƥ��Ǥ��ޤ���
+同様にPOSTでフォームの入力値を送信するには、postという簡易的なメソッドを使うことができます。
+postでは、URLの他にフォームデータを引数で渡します。
+例えば、次のようにすれば日記の投稿ができます。
 
  use WWW::Mixi;
  
  my %diary = (
- 	'submit'      => 'confirm',                  # �ץ�ӥ塼:main������:confirm������:cancel
- 	'diary_title' => 'WWW::Mixi�����������',
- 	'diary_body'  => "WWW::Mixi�⥸�塼�����������Ƥ��Ƥߤޤ���\nPOST�᥽�åɤλ�Ǥ���",
+ 	'submit'      => 'confirm',                  # プレビュー:main、作成:confirm、修正:cancel
+ 	'diary_title' => 'WWW::Mixiで日記の投稿',
+ 	'diary_body'  => "WWW::Mixiモジュールで日記を投稿してみます。\nPOSTメソッドの試験です。",
  	'photo1'      => '',
  	'photo2'      => '',
  	'photo3'      => '',
@@ -230,28 +230,28 @@ post�Ǥϡ�URL��¾�˥ե�����ǡ�����������Ϥ��ޤ���
  
  my $mixi = WWW::Mixi->new('me@mixi.user', 'mixi_password');
  
- print "�������󤷤ޤ���\n";
+ print "ログインします。\n";
  my ($result, $response) = $mixi->login;
  
- print "��������Ƥ��ޤ���\n";
+ print "日記を投稿します。\n";
  $response = $mixi->post('add_diary.pl', %diary);
 
-�ե�������ͤϡ��������˼�ưŪ�˥��󥳡��ɤ���ޤ���
-�ռ�Ū�˥��󥳡��ɤ䥨�������פ򤹤�ɬ�פϤ���ޤ���
+フォームの値は、送信前に自動的にエンコードされます。
+意識的にエンコードやエスケープをする必要はありません。
 
-=head2 �ե����������
+=head2 ファイルの送信
 
-post�᥽�åɤǤϼ̿��ʤɡ��ե�������������뤳�Ȥ��θ����Ƥ��ޤ��ʤ����ޤä��������Ƥ��ޤ��󡣤��һ���ơ���̤򶵤��Ƥ��������ˡ�
+postメソッドでは写真など、ファイルを送信することも考慮されています（が、まったく試験されていません。ぜひ試験して、結果を教えてください）。
 
-�㤨�С������Υץ�ӥ塼��ɽ�����뤿��Υ��������Ǥϡ�������Ž�դ���̿����photo1�ס�photo2�ס�photo3�פ�3�ĤΥե�����ɤ�����Ƥ�뤳�Ȥ��Ǥ��ޤ���
-�ե�������ͤ˥ե��������ꤷ�������ϡ��ե�����ѥ���������������ե���󥹤���ꤷ�ޤ���
+例えば、日記のプレビューを表示するためのアクションでは、日記に貼付する写真を「photo1」「photo2」「photo3」の3つのフィールドに入れてやることができます。
+フィールド値にファイルを指定したい時は、ファイルパスだけを持つ配列リファレンスを指定します。
 
  use WWW::Mixi;
  
  my %diary = (
- 	'submit'      => 'main',                  # �ץ�ӥ塼:main������:confirm������:cancel
- 	'diary_title' => 'WWW::Mixi�����������',
- 	'diary_body'  => "WWW::Mixi�⥸�塼�����������Ƥ��Ƥߤޤ���\nPOST�᥽�åɤλ�Ǥ���",
+ 	'submit'      => 'main',                  # プレビュー:main、作成:confirm、修正:cancel
+ 	'diary_title' => 'WWW::Mixiで日記の投稿',
+ 	'diary_body'  => "WWW::Mixiモジュールで日記を投稿してみます。\nPOSTメソッドの試験です。",
  	'photo1'      => ['c:\My Documents\photos\walrus.png'],
  	'photo2'      => '',
  	'photo3'      => '',
@@ -259,37 +259,37 @@ post�᥽�åɤǤϼ̿��ʤɡ��ե�������������뤳�Ȥ��θ����Ƥ��ޤ��ʤ����ޤä���
  
  my $mixi = WWW::Mixi->new('me@mixi.user', 'mixi_password');
  
- print "�������󤷤ޤ���\n";
+ print "ログインします。\n";
  my ($result, $response) = $mixi->login;
  
- print "��������Ƥ��ޤ���\n";
+ print "日記を投稿します。\n";
  $response = $mixi->post('add_diary.pl', %diary);
 
-=head2 �ᥤ���˥塼�β��ϥ᥽�å�
+=head2 メインメニューの解析メソッド
 
-����ƥ�Ĥμ������Ѥ�С�����ɬ�פʥǡ�������Ф�����β��Ϥ򤹤�Ǥ��礦��
-WWW::Mixi�⥸�塼��ˤϡ������Ĥ��Υڡ����Ѥβ��ϥ᥽�åɤ�����ޤ���
+コンテンツの取得が済めば、次は必要なデータを取り出すための解析をするでしょう。
+WWW::Mixiモジュールには、いくつかのページ用の解析メソッドがあります。
 
-���ϷϤǰ��ִ�ñ�ʡʤ����ƺǽ�˺��줿�˲��ϥ᥽�åɤ��ᥤ���˥塼�ʥڡ�����Ƭ��mixi�Υ����Ȱ��ˡ֥ۡ���סָ��������Υܥ��������ޤ줿��˥塼�Ǥ��ˤ���Ϥ���parse_main_menu�᥽�åɤǤ���
-���Υ᥽�åɤϡ����Τ褦������Υ�ե���󥹤��֤��ޤ���
+解析系で一番簡単な（そして最初に作られた）解析メソッドがメインメニュー（ページ先頭のmixiのログと一緒に「ホーム」「検索」等のボタンが埋め込まれたメニューです）を解析するparse_main_menuメソッドです。
+このメソッドは、次のような配列のリファレンスを返します。
 
  {
- 	'subject' => '�ۡ���',
+ 	'subject' => 'ホーム',
  	'link' => 'http://mixi.jp/home.pl'
  }
 
-��Ȥ��ơ��ۡ����������ƥᥤ���˥塼�γƹ��ܤ���Ϥ��륹����ץȤ�󤲤ޤ��礦��
-�������ۡ���μ����ޤǤ���ʬ�ϡ��֥ڡ����μ����פι�ǽФƤ�����Τ�Ʊ���ʤΤǤ��ä���Ѥޤ��Ƥ��ޤ���
+例として、ホームを取得してメインメニューの各項目を出力するスクリプトを挙げましょう。
+ただしホームの取得までの部分は、「ページの取得」の項で出てきたものと同じなのでざっくり済ませています。
 
  use WWW::Mixi;
  
  my $mixi = WWW::Mixi->new('me@mixi.user', 'mixi_password');
- print "�������󤷤ޤ���\n";
+ print "ログインします。\n";
  my $response = $mixi->login;
- print "�ۡ����������ޤ���\n";
+ print "ホームを取得します。\n";
  $response = $mixi->get('home.pl');
  
- print "�ᥤ���˥塼����Ϥ��ޤ���\n";
+ print "メインメニューを出力します。\n";
  my =item parse_main_menu($response);
  foreach my $item (@items) {
  	my $subject = $item->{'subject'};
@@ -297,145 +297,145 @@ WWW::Mixi�⥸�塼��ˤϡ������Ĥ��Υڡ����Ѥβ��ϥ᥽�åɤ�����ޤ���
  	print "$subject -> $link\n";
  }
 
-�ʤ���$response����ꤷ�ʤ��ä����ϡ��Ǹ��get�ޤ���post�᥽�åɤǼ��������ǡ�������Ϥ��ޤ���request��simple_request���оݳ��Ǥ��ˡ�
-�����Ǥϡ����Ϥ��Ƥ���ΤϺǸ��get�Ǽ��������ǡ����ʤΤǡ����Τ褦��$response�λ���Ͼʤ��Ƥ⹽���ޤ���
+なお、$responseを指定しなかった時は、最後にgetまたはpostメソッドで取得したデータを解析します（requestやsimple_requestは対象外です）。
+上の例では、解析しているのは最後にgetで取得したデータなので、下のように$responseの指定は省いても構いません。
 
  my =item parse_main_menu();
 
-=head2 ����¾�β��ϥ᥽�å�
+=head2 その他の解析メソッド
 
-�ᥤ���˥塼�Ѥ�parse_main_method��¾�ˤ⡢�����Ĥ��β��ϥ᥽�åɤ��ߤ����Ƥ��ޤ���
+メインメニュー用のparse_main_methodの他にも、いくつかの解析メソッドが設けられています。
 
-���ϥ᥽�åɤϤ������$response������˼�ꡢ�ۤȤ�ɤϥϥå����ե���󥹤�������֤��ޤ���
-$response����ꤷ�ʤ��ä����β����оݤϡ��Ǹ��get�ޤ���post�᥽�åɤǼ��������ǡ����Ǥ���
-�ϥå����ե���󥹤λ��ĥ������ܤϡ��᥽�åɤ��Ȥ˰㤤�ޤ���
+解析メソッドはいずれも$responseを引数に取り、ほとんどはハッシュリファレンスの配列を返します。
+$responseを指定しなかった時の解析対象は、最後にgetまたはpostメソッドで取得したデータです。
+ハッシュリファレンスの持つキー項目は、メソッドごとに違います。
 
-�ʲ���0.21�Ǥ����ѤǤ�������ѥ᥽�åɤΰ����Ǥ���
-�ǿ��ǤǤϥ᥽�åɤ��ɲä���Ƥ������ѹ�����Ƥ����ꤹ�뤫���Τ�ޤ���Τǡ��ܺ٤ϥɥ�����Ȥ��ǧ���Ƥ���������
+以下は0.21版で利用できる解析用メソッドの一覧です。
+最新版ではメソッドが追加されていたり変更されていたりするかも知れませんので、詳細はドキュメントを確認してください。
 
 =over 4
 
 =item parse_main_menu
 
-�ڡ�����Ƭ���Υᥤ���˥塼����Ϥ��ޤ���
+ページ先頭部のメインメニューを解析します。
 
 =item parse_banner
 
-�ᥤ���˥塼�������ޤ�Ƥ���Хʡ�����Ϥ��ޤ���
+メインメニューに埋め込まれているバナーを解析します。
 
 =item parse_tool_bar
 
-�ᥤ���˥塼�β���ɸ�������ġ���С�����Ϥ��ޤ���
+メインメニューの下に標示されるツールバーを解析します。
 
 =item parse_information
 
-�ۡ����home.pl�ˤ�ɽ�������ִ����Ԥ���Τ��Τ餻�פ���Ϥ��ޤ���
+ホーム（home.pl）に表示される「管理者からのお知らせ」を解析します。
 
 =item parse_calendar
 
-����������calendar.pl�˾�Υ��٥�ȡʻ��å��٥�ȡ��Ի��å��٥�ȡ��ޥ��ߥ��������������ˤ���Ϥ��ޤ���
+カレンダー（calendar.pl）上のイベント（参加イベント、不参加イベント、マイミクシィの誕生日）を解析します。
 
 =item parse_calendar_term
 
-����������calendar.pl�ˤ�ɽ�����Ƥ�����֡�ǯ��ˤ���Ϥ��ޤ���
+カレンダー（calendar.pl）が表示している期間（年月）を解析します。
 
 =item parse_calendar_next
 
-����������calendar.pl�ˤΡּ��η�פؤΥ�󥯤���Ϥ��ޤ���
+カレンダー（calendar.pl）の「次の月」へのリンクを解析します。
 
 =item parse_calendar_previous
 
-����������calendar.pl�ˤΡ����η�פؤΥ�󥯤���Ϥ��ޤ���
+カレンダー（calendar.pl）の「前の月」へのリンクを解析します。
 
 =item parse_list_bookmark
 
-�����������list_bookmark.pl�ˤ���Ϥ��ޤ���
+お気に入り（list_bookmark.pl）を解析します。
 
 =item parse_list_comment
 
-�Ƕ�Υ����ȡ�list_comment.pl�ˤ�ɽ�������ֺǶ�Υ����Ȱ����פ���Ϥ��ޤ���
+最近のコメント（list_comment.pl）に表示される「最近のコメント一覧」を解析します。
 
 =item parse_list_community
 
-���ߥ�˥ƥ�������list_community.pl�ˤ�ɽ������륳�ߥ�˥ƥ�����Ϥ��ޤ���
+コミュニティ一覧（list_community.pl）に表示されるコミュニティを解析します。
 
 =item parse_list_community_next
 
-���ߥ�˥ƥ�������list_community.pl�ˤΡּ��Υڡ����פؤΥ�󥯤���Ϥ��ޤ���
+コミュニティ一覧（list_community.pl）の「次のページ」へのリンクを解析します。
 
 =item parse_list_community_previous
 
-���ߥ�˥ƥ�������list_community.pl�ˤΡ����Υڡ����פؤΥ�󥯤���Ϥ��ޤ���
+コミュニティ一覧（list_community.pl）の「前のページ」へのリンクを解析します。
 
 =item parse_list_diary
 
-������list_diary.pl�ˤ��������ܤ���Ϥ��ޤ���
+日記（list_diary.pl）の日記項目を解析します。
 
 =item parse_list_diary_next
 
-������list_diary.pl�ˤΡּ���xx��פؤΥ�󥯤���Ϥ��ޤ���
+日記（list_diary.pl）の「次のxx件」へのリンクを解析します。
 
 =item parse_list_diary_previous
 
-������list_diary.pl�ˤΡ�����xx��פؤΥ�󥯤���Ϥ��ޤ���
+日記（list_diary.pl）の「前のxx件」へのリンクを解析します。
 
 =item parse_list_friend
 
-ͧ�͡��οͰ�����list_friend.pl�ˤ�ͧ�͡��οͤ���Ϥ��ޤ���
+友人・知人一覧（list_friend.pl）の友人・知人を解析します。
 
 =item parse_list_friend_next
 
-ͧ�͡��οͰ�����list_friend.pl�ˤΡּ��Υڡ����פؤΥ�󥯤���Ϥ��ޤ���
+友人・知人一覧（list_friend.pl）の「次のページ」へのリンクを解析します。
 
 =item parse_list_friend_previous
 
-ͧ�͡��οͰ�����list_friend.pl�ˤΡ����Υڡ����פؤΥ�󥯤���Ϥ��ޤ���
+友人・知人一覧（list_friend.pl）の「前のページ」へのリンクを解析します。
 
 =item parse_list_message
 
-��å�������message.pl�ˤ�ɽ�������ּ���Ȣ�פ���Ϥ��ޤ���
+メッセージ（message.pl）に表示される「受信箱」を解析します。
 
 =item parse_new_bbs
 
-���ߥ�˥ƥ��ǿ��񤭹��ߡ�new_bbs.pl�ˤ���Ϥ��ޤ���
+コミュニティ最新書き込み（new_bbs.pl）を解析します。
 
 =item parse_new_comment
 
-���������ȵ��������new_comment.pl�ˤ���Ϥ��ޤ���
+日記コメント記入履歴（new_comment.pl）を解析します。
 
 =item parse_new_friend_diary
 
-�ޥ��ߥ������ǿ�������new_friend_diary.pl�ˤ���Ϥ��ޤ���
+マイミクシイ最新日記（new_friend_diary.pl）を解析します。
 
 =item parse_new_friend_diary_next
 
-�ޥ��ߥ������ǿ�������new_friend_diary.pl�ˤΡּ��Υڡ����פؤΥ�󥯤���Ϥ��ޤ���
+マイミクシィ最新日記（new_friend_diary.pl）の「次のページ」へのリンクを解析します。
 
 =item parse_new_friend_diary_previous
 
-�ޥ��ߥ������ǿ�������new_friend_diary.pl�ˤΡ����Υڡ����פؤΥ�󥯤���Ϥ��ޤ���
+マイミクシィ最新日記（new_friend_diary.pl）の「前のページ」へのリンクを解析します。
 
 =item parse_new_review
 
-�ޥ��ߥ������ǿ���ӥ塼��new_review.pl�ˤ���Ϥ��ޤ���
+マイミクシイ最新レビュー（new_review.pl）を解析します。
 
 =item parse_show_log
 
-�������ȡ�show_log.pl�ˤ���Ϥ��ޤ���
+あしあと（show_log.pl）を解析します。
 
 =item parse_show_log_count
 
-�������ȡ�show_log.pl�ˤΡ֥ڡ������ΤΥ����������פ���Ϥ��ޤ���
-���Υ᥽�åɤ��֤��ͤϥ����������ǡ��ϥå����ե���󥹤�����ǤϤ���ޤ���
+あしあと（show_log.pl）の「ページ全体のアクセス数」を解析します。
+このメソッドの返り値はアクセス数で、ハッシュリファレンスの配列ではありません。
 
 =item parse_add_diary_preview
 
-���������Υץ�ӥ塼��add_diary.pl�ˤ���Ϥ����ƥܥ������������ե�������ͤ��֤��ޤ���
+日記作成のプレビュー（add_diary.pl）を解析し、各ボタンに相当するフォームの値を返します。
 
 =item parse_self_id
 
-���������ӥ塼��list_review.pl�ˤ���Ϥ�����ʬ��ID���֤��ޤ���
-���Υ᥽�åɤ��֤��ͤ�ID�ǡ��ϥå����ե���󥹤�����ǤϤ���ޤ���
+おすすめレビュー（list_review.pl）を解析し、自分のIDを返します。
+このメソッドの返り値はIDで、ハッシュリファレンスの配列ではありません。
 
 =back
 

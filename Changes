@@ -1,5 +1,8 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.27  Wed Mar  9 23:56:00 2005
+	- PODs converted to utf-8.
+
 0.26  Wed Mar  9 12:53:00 2005
 	- first CPAN-ed version; created by h2xs 1.23 with options
 		-AX -n WWW::Mixi

@@ -1,6 +1,6 @@
 =head1 NAME
 
-WWW::Mixi - Mixi���������Ѥ�LWP::UserAgent�⥸�塼��
+WWW::Mixi - Mixiアクセス用のLWP::UserAgentモジュール
 
 =head1 SYNOPSIS
 
@@ -12,184 +12,184 @@ WWW::Mixi - Mixi���������Ѥ�LWP::UserAgent�⥸�塼��
 
 =head1 DESCRIPTION
 
-Mixi�˥����������뤿��Υ⥸�塼��Ǥ���
+Mixiにアクセスするためのモジュールです。
 
-LWP::RobotUA�Υ��֥��饹�ˤʤäƤ��ꡢLWP::UserAgent�����LWP::RobotUA��Ʊ���褦�˻Ȥ����Ȥ��Ǥ��ޤ���
-WWW::Mixi�ˤ�LWP::UserAgent�������������3�Ĥ���ޤ���
+LWP::RobotUAのサブクラスになっており、LWP::UserAgentおよびLWP::RobotUAと同じように使うことができます。
+WWW::MixiにはLWP::UserAgentより便利な点が3つあります。
 
-�ޤ���WWW::Mixi�Ǥϥ��������Ϣ�κ�Ȥ򤹤٤�login�᥽�åɤǺѤޤ��뤳�Ȥ��Ǥ��ޤ���
-login�᥽�åɤϡ�Cookie��̵���ˤʤäƤ����ͭ���ˤ������֥��������������˼�����ä��᡼�륢�ɥ쥹�ȥѥ���ɤ�login�ڡ��������Ф����쥹�ݥ󥹤���Ϥ��ƥ��å����ID�ȥ�ե�å������URL��������ޤ���
-������������ϡ�is_login_required��is_logined��session��refresh�ʤɤΥ᥽�åɤǳ�ǧ�Ǥ��ޤ���
+まず、WWW::Mixiではログイン関連の作業をすべてloginメソッドで済ませることができます。
+loginメソッドは、Cookieが無効になっていれば有効にし、オブジェクト生成時に受け取ったメールアドレスとパスワードをloginページに送出し、レスポンスを解析してセッションIDとリフレッシュ先のURLを取得します。
+ログイン状況は、is_login_required、is_logined、session、refreshなどのメソッドで確認できます。
 
-���줫�顢�����Ĥ��������ʥ᥽�åɤ��Ѱդ���Ƥ��ޤ���
-���̤����2�����ǡ���Ĥ�����URL��������뤿���absolute_url��absolute_linked_url�Ǥ������Ԥ�mixi�Υۡ���ڡ����ޤ��ϻ��ꤵ�줿URL��١����Ȥ�������URL�򡢸�ԤϺǸ��get�ޤ���post�Ǽ��������ڡ�����١����Ȥ���URL���֤��ޤ���
-�⤦��Ĥϡ�mixi�Υ���ƥ�Ĥ���Ϥ��뤿��Υ᥽�åɤǤ���0.13�ǤǤϥᥤ���˥塼�����Ѥ�parse_main_menu���ġ���С������Ѥ�parse_tool_bar�����Τ餻�����Ѥ�parse_information�᥽�åɤʤɤ�����ޤ���
+それから、いくつかの便利なメソッドが用意されています。
+大別すれば2系統で、一つは絶対URLを取得するためのabsolute_urlやabsolute_linked_urlです。前者はmixiのホームページまたは指定されたURLをベースとした絶対URLを、後者は最後にgetまたはpostで取得したページをベースとしたURLを返します。
+もう一つは、mixiのコンテンツを解析するためのメソッドです。0.13版ではメインメニュー解析用のparse_main_menu、ツールバー解析用のparse_tool_bar、お知らせ解析用のparse_informationメソッドなどがあります。
 
-�ޤ���LWP::RobotUA�Υ��֥��饹�ʤΤǡ�robot exclusion�ؤ���θ�����˹Ԥ��Ƥ��ޤ����㤨�С�����mixi��robot.txt����񤤤ƥ��ܥåȤ��ӽ��������ˤϡ����Υ⥸�塼���Ư���ʤ��ʤ�ޤ��ʤ����ʤ�٤��Ǥ��礦�ˡ�
-�ޤ��������С��˹���٤򤫤��ʤ��褦��delay��1�ä����ꤵ��Ƥ��ꡢ1�ô֤�1��ʾ�Υꥯ�����ȤϽ������ʤ��褦�ˤʤäƤ��ޤ���
+また、LWP::RobotUAのサブクラスなので、robot exclusionへの配慮が既に行われています。例えば、将来mixiがrobot.txt等を書いてロボットを排除した時には、このモジュールは働かなくなります（そうなるべきでしょう）。
+また、サーバーに高負荷をかけないよう、delayが1秒に設定されており、1秒間に1回以上のリクエストは処理しないようになっています。
 
 =head1 METHODS
 
-WWW::Mixi��LWP::RobotUA�Υ��֥��饹�Ȥ��Ƽ�������Ƥ��ޤ��Τǡ�LWP::RobotUA�Ȥ��οƥ��饹�Ǥ���LWP::UserAgent�Υ᥽�åɤ�����Ѥ��Ǥ��ޤ���
-�����λȤ����ˤĤ��Ƥϡ��ƥ��饹�Υɥ�����Ȥ�������������
+WWW::MixiはLWP::RobotUAのサブクラスとして実装されていますので、LWP::RobotUAとその親クラスであるLWP::UserAgentのメソッドを引き継いでいます。
+これらの使い方については、各クラスのドキュメントをご覧ください。
 
-=head2 ���󥹥ȥ饯��
+=head2 コンストラクタ
 
-WWW::Mixi�Υ��󥹥ȥ饯���Ǥ���
+WWW::Mixiのコンストラクタです。
 
 =over 4
 
 =item $mixi = WWW::Mixi->new($email, $password [, '-log' => \&logging_method] [, '-abort' => \&aborting_method] [, '-rewrite' => \&rewriting_method] )
 
-WWW::Mixi���֥������Ȥ�������륳�󥹥ȥ饯���Ǥ���
+WWW::Mixiオブジェクトを作成するコンストラクタです。
 
-�ǽ����Ĥΰ����ϡ�mixi�˥������󤹤뤿��Υ᡼�륢�ɥ쥹�ȥѥ���ɤǡ��������ɬ�ܤǤ���
-'-log'�ϥ��ץ����ǡ���������Ϥ��뤿��Υ᥽�åɤ���ꤷ�ޤ���
-'-abort'�ϥ��ץ����ǡ����顼���ν�λ������Ԥ�����Υ᥽�åɤ���ꤷ�ޤ���
-'-rewrite'�ϥ��ץ����ǡ����ϻ��Υƥ������ͤΥ�ե����ޥåȤ򤹤뤿��Υ᥽�åɤ���ꤷ�ޤ���
+最初の二つの引数は、mixiにログインするためのメールアドレスとパスワードで、いずれも必須です。
+'-log'はオプションで、ログを出力するためのメソッドを指定します。
+'-abort'はオプションで、エラー時の終了処理を行うためのメソッドを指定します。
+'-rewrite'はオプションで、解析時のテキスト値のリフォーマットをするためのメソッドを指定します。
 
-���Υ᥽�åɤ�LWP::RobotUA�ʤ�𤷤�LWP::UserAgent�ˤ���Ѿ�����new�᥽�åɤ��񤭤��Ƥ��ޤ���
+このメソッドはLWP::RobotUA（を介してLWP::UserAgent）から継承したnewメソッドを上書きしています。
 
 =back
 
-=head2 ��������ȥ����������μ���
+=head2 ログインとログイン情報の取得
 
-mixi�˥������󤹤뤿��Υ᥽�åɤȡ����ߤΥ���������������å����ID�ʤɤδ�Ϣ�����������뤿��Υ᥽�åɷ��Ǥ���
+mixiにログインするためのメソッドと、現在のログイン状況、セッションIDなどの関連情報を取得するためのメソッド郡です。
 
 =over 4
 
 =item $response = $mixi->login
 
-mixi�˥������󤷤ޤ���
-ɬ�פǤ���С�Cookie��ͭ�����ʤɤ��Ԥ��ޤ���
+mixiにログインします。
+必要であれば、Cookieの有効化などが行われます。
 
 =item $result = $mixi->is_logined
 
-��������ѤߤǤ����1��̤��������Ǥ����0���֤��ޤ���
+ログイン済みであれば1、未ログインであれば0を返します。
 
 =item $result = $mixi->is_login_required( [$response] )
 
-�Ǹ��get�ޤ���post�Ǽ��������ڡ����ǡ�������Ϥ��ơ���������ե����बɽ������Ƥ��ʤ�����ǧ���ޤ���
-�ڡ����μ������������Ƥ��ơ���������ե����बɽ������Ƥ��ʤ��Ȥ��ˤ�0���֤��ޤ���
-��������ե����बɽ������Ƥ���Ȥ��ʤɤˤϡ����顼��å��������֤��ޤ���
+最後にgetまたはpostで取得したページデータを解析して、ログインフォームが表示されていないか確認します。
+ページの取得が成功していて、ログインフォームが表示されていないときには0を返します。
+ログインフォームが表示されているときなどには、エラーメッセージを返します。
 
-$response����ꤷ���Ȥ��ˤϡ��Ǹ�˼��������ڡ������Ѥ���$response����Ϥ��ޤ���
-$response�ˤ�HTTP::Response���֥������ȡ�get��post��request��simple_request�᥽�åɤʤɤ��֤��ͤ������Ǥ��ˤ���ꤷ�Ƥ���������
+$responseを指定したときには、最後に取得したページの変わりに$responseを解析します。
+$responseにはHTTP::Responseオブジェクト（get、post、request、simple_requestメソッドなどの返り値がそうです）を指定してください。
 
 =item $session = $mixi->session
 
-���ߤΥ��å����ID���֤��ޤ���
-�����������ʤɡ����å����ID������Ǥ��Ƥ��ʤ����ˤ�undef���֤�ޤ���
+現在のセッションIDを返します。
+ログイン前など、セッションIDを取得できていない時にはundefが返ります。
 
 =item $session = $mixi->refresh
 
-����������˼���������ե�å���URL���֤��ޤ���
+ログイン時に取得したリフレッシュURLを返します。
 
 =back
 
-=head2 �ڡ�������
+=head2 ページ取得
 
-�ڡ�����������뤿��Υ᥽�åɤǤ���
-�����������ˤϻȤ��ޤ���
+ページを取得するためのメソッドです。
+ログイン前には使えません。
 
 =over 4
 
 =item $response = $mixi->get($url)
 
-GET�᥽�åɤǻ��ꤵ�줿URL��������ޤ���
-URL�������'login'��'show_logs'�ʤɤ�'.pl'��ʤ����ե�����̾����ꤷ�Ƥ⹽���ޤ���
+GETメソッドで指定されたURLを取得します。
+URLの代わりに'login'、'show_logs'などの'.pl'を省いたファイル名を指定しても構いません。
 
-�֤��ͤ�HTTP::Response���֥������Ȥǡ������LWP::UserAgent�⥸�塼���request�᥽�åɤ�Ʊ���Ǥ���
+返り値はHTTP::Responseオブジェクトで、これはLWP::UserAgentモジュールのrequestメソッドと同じです。
 
 =item $response = $mixi->post($url ['field' => value, ...])
 
-POST�᥽�åɤǻ��ꤵ�줿URL��������ޤ���
-URL�������'login'��'show_logs'�ʤɤ�'.pl'��ʤ����ե�����̾����ꤷ�Ƥ⹽���ޤ���
+POSTメソッドで指定されたURLを取得します。
+URLの代わりに'login'、'show_logs'などの'.pl'を省いたファイル名を指定しても構いません。
 
-POST���Υե�����ɤ��ͤϡ�'name' => 'Mr. Mixi', 'Age' => '3years'�Τ褦�ˡ��ե������̾���ͤ��Фǻ��ꤷ�Ƥ��������������ФϤ����Ļ��ꤷ�Ƥ⹽���ޤ���
-�ե�������ͤˤϥե��������ꤹ�뤳�Ȥ�Ǥ��ޤ������λ��ϡ�'pic1' => ['./picture.jpg']�Τ褦�ˡ��ե�����ѥ������������ե���󥹤��Ϥ��Ƥ���������
-�ʤ���POST�ǡ�����HTTP::Request::Common�⥸�塼���POST�᥽�åɤǽ�������ޤ����ե��������ξܺ٤ʤɤˤĤ��ƤϤ�����Ǥ���ǧ����������
+POST時のフィールドの値は、'name' => 'Mr. Mixi', 'Age' => '3years'のように、フィールド名と値の対で指定してください。この対はいくつ指定しても構いません。
+フィールド値にはファイルを指定することもできます。この時は、'pic1' => ['./picture.jpg']のように、ファイルパスだけを配列リファレンスで渡してください。
+なお、POSTデータはHTTP::Request::CommonモジュールのPOSTメソッドで処理されます。ファイル指定の詳細などについてはこちらでご確認ください。
 
-�֤��ͤ�HTTP::Response���֥������Ȥǡ������LWP::UserAgent�⥸�塼���request�᥽�åɤ�Ʊ���Ǥ���
+返り値はHTTP::Responseオブジェクトで、これはLWP::UserAgentモジュールのrequestメソッドと同じです。
 
 =item $response = $mixi->response()
 
-�Ǹ��get�ޤ���post�Ǽ��������쥹�ݥ󥹤��֤��ޤ���
-�֤��ͤ�HTTP::Response���֥������Ȥǡ������LWP::UserAgent�⥸�塼���request�᥽�åɤ�Ʊ���Ǥ���
+最後にgetまたはpostで取得したレスポンスを返します。
+返り値はHTTP::Responseオブジェクトで、これはLWP::UserAgentモジュールのrequestメソッドと同じです。
 
 =back
 
-=head2 �����ѥ᥽�å�
+=head2 解析用メソッド
 
-�����ѤߤΥڡ�������Ϥ��ޤ���
+取得済みのページを解析します。
 
-���ϷϤΥ᥽�åɤϤ�����⡢����$response����ꤷ���Ȥ��ˤ�$response��̤������ϺǸ��get�ޤ���post�᥽�åɤǼ��������ǡ�������Ϥ��ޤ���
-$response�ˤ�HTTP::Response���֥������ȡ�get��post��request��simple_request�᥽�åɤʤɤ��֤��ͤ������Ǥ��ˤ���ꤷ�Ƥ���������
+解析系のメソッドはいずれも、引数$responseを指定したときには$responseを、未指定時は最後にgetまたはpostメソッドで取得したデータを解析します。
+$responseにはHTTP::Responseオブジェクト（get、post、request、simple_requestメソッドなどの返り値がそうです）を指定してください。
 
 =over 4
 
 =item @items = $mixi->parse_main_menu( [$response] );
 
-�ᥤ���˥塼�ʡ�mixi�פΥ����Ȱ��ΤˤʤäƤ�����ʬ�Υ�˥塼�ˤι��ܤ�������ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+メインメニュー（「mixi」のロゴと一体になっている部分のメニュー）の項目を取得します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '�ۡ���',
+ 	'subject' => 'ホーム',
  	'link' => 'http://mixi.jp/home.pl'
  }
 
 =item @items = $mixi->parse_banner( [$response] );
 
-�Хʡ��ʥᥤ���˥塼�������ޤ�Ƥ����Ρˤ�������ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+バナー（メインメニューに埋め込まれているもの）を取得します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '��ͥ�����Find Job !',
+ 	'subject' => '求人サイトFind Job !',
  	'link' => 'http://mixi.jp/banner.pl?id=x'
  	'image' => 'http://banner.host.domain/image.gif'
  }
 
-mixi�����ѵ���Ρ�2.�ػ߻���������ˤϡ�mixi �α��Ĥޤ��ϥͥåȥ���������ƥ��˸������԰١פ��ޤޤ�Ƥ��ꡢ�Хʡ��ˤ�����פ����뤳�Ȥ�mixi�α��Ĥ�ɬ�פʤ��Ȥ��Ȼפ��ޤ���
-WWW::Mixi�⥸�塼�����Ѥ���ݤϡ��嵭���ɤ���θ������ǡ��Хʡ���Ŭ�ڤ˰������Ȥ�侩���ޤ���
+mixiの利用規約の「2.禁止事項」第二条には「mixi の運営またはネットワーク・システムを妨害する行為」が含まれており、バナーによる利益を得ることはmixiの運営に必要なことだと思われます。
+WWW::Mixiモジュールを使用する際は、上記を良く考慮した上で、バナーを適切に扱うことを推奨します。
 
 =item @items = $mixi->parse_tool_bar( [$response] );
 
-�ġ���С��ι��ܤ�������ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+ツールバーの項目を取得します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '�ȥåץڡ���',
+ 	'subject' => 'トップページ',
  	'link' => 'http://mixi.jp/home.pl'
  }
 
 =item @items = $mixi->parse_information( [$response] );
 
-���Τ餻�ι��ܤ�������ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+お知らせの項目を取得します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '���ʤ���ͧ�ͤ� mixi �˾��Ԥ��褦��',
+ 	'subject' => 'あなたの友人を mixi に招待しよう！',
  	'link' => 'http://mixi.jp/invite.pl',
- 	'description\' => 'ͧ�ͤ���'
+ 	'description\' => '友人を招待'
  }
 
 =item @items = $mixi->parse_calendar( [$response] );
 
-����������calendar.pl�Υᥤ�����ˤ���Ϥ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+カレンダー（calendar.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '������',
+ 	'subject' => '誕生日',
  	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx',
- 	'name' => '��������',
+ 	'name' => '塚本牧生',
  	'time' => '2004/08/18'
  	'icon' => 'http://mixi.jp/img/i_bd.gif'
  }
 
 =item @items = $mixi->parse_calendar_term( [$response] );
 
-����������calendar.pl�Υᥤ�����ˤδ��֡�ǯ��ˤ���Ϥ��ޤ���
-�֤��ͤϡ��ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+カレンダー（calendar.plのメイン部）の期間（年月）を解析します。
+返り値は、以下のようなハッシュリファレンスにしたものの配列です。
 
  {
  	'year' => '2004',
@@ -198,33 +198,33 @@ WWW::Mixi�⥸�塼�����Ѥ���ݤϡ��嵭���ɤ���θ������ǡ��Хʡ���Ŭ�ڤ˰������
 
 =item @items = $mixi->parse_calendar_next( [$response] );
 
-����������calendar.pl�Υᥤ�����ˤΡּ��η�פؤΥ�󥯤���Ϥ��ޤ���
-�֤��ͤϡ��ּ��η�פ�������ϰʲ��Τ褦�ʥϥå����ե���󥹡��ʤ�����undef�Ǥ���
+カレンダー（calendar.plのメイン部）の「次の月」へのリンクを解析します。
+返り値は、「次の月」がある場合は以下のようなハッシュリファレンス、ない場合はundefです。
 
  {
- 	'subject' => '���η�',
+ 	'subject' => '次の月',
  	'link' => 'http://mixi.jp/calendar.pl?year=2004&month=10&pref_id=13',
  }
 
 =item @items = $mixi->parse_calendar_previous( [$response] );
 
-����������calendar.pl�Υᥤ�����ˤΡ����η�פؤΥ�󥯤���Ϥ��ޤ���
-�֤��ͤϡ������η�פ�������ϰʲ��Τ褦�ʥϥå����ե���󥹡��ʤ�����undef�Ǥ���
+カレンダー（calendar.plのメイン部）の「前の月」へのリンクを解析します。
+返り値は、「前の月」がある場合は以下のようなハッシュリファレンス、ない場合はundefです。
 
  {
- 	'subject' => '���η�',
+ 	'subject' => '前の月',
  	'link' => 'http://mixi.jp/calendar.pl?year=2004&month=10&pref_id=13',
  }
 
 =item @items = $mixi->parse_list_bookmark( [$response] );
 
-�����������list_bookmark.pl�Υᥤ�����ˤ���Ϥ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+お気に入り（list_bookmark.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
  	'subject' => 'walrus',
- 	'gender' => '����',
- 	'description' => 'Perl�ޥ˥���PDA�ޥ˥��ǥ����륹�桼�������ᥤ�󥵥��Ȥ������Ϥ�����Ǥ���...',
+ 	'gender' => '男性',
+ 	'description' => 'PerlマニアでPDAマニアでザウルスユーザー。メインサイトの日記はこちらです。...',
  	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxx.jpg',
  	'link' => 'http://mixi.jp/show_friend.pl?id=xxxxxx',
  	'time' => '2004/08/18 13:18'
@@ -232,23 +232,23 @@ WWW::Mixi�⥸�塼�����Ѥ���ݤϡ��嵭���ɤ���θ������ǡ��Хʡ���Ŭ�ڤ˰������
 
 =item @items = $mixi->parse_list_comment( [$response] );
 
-�Ƕ�Υ����ȡ�list_comment.pl�Υᥤ�����ˤ���Ϥ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+最近のコメント（list_comment.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '����ˤ��',
+ 	'subject' => 'こんにちわ。',
  	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx',
- 	'name' => '��������',
+ 	'name' => '塚本牧生',
  	'time' => '2004/08/18 13:18'
  }
 
 =item @items = $mixi->parse_list_community( [$response] );
 
-���ߥ�˥ƥ�������list_community.pl�Υᥤ�����ˤ���Ϥ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+コミュニティ一覧（list_community.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => 'WWW::Mixi�⥸�塼��',
+ 	'subject' => 'WWW::Mixiモジュール',
  	'link' => 'http://mixi.jp/view_community.pl?id=xxxx',
  	'image' => 'http://img.mixi.jp/photo/comm/xx/xx/xxxx_xxs.jpg',
  	'count' => '20'
@@ -256,36 +256,36 @@ WWW::Mixi�⥸�塼�����Ѥ���ݤϡ��嵭���ɤ���θ������ǡ��Хʡ���Ŭ�ڤ˰������
 
 =item @items = $mixi->parse_list_community_next( [$response] );
 
-���ߥ�˥ƥ�������list_community.pl�Υᥤ�����ˤΡּ��Υڡ����פؤΥ�󥯤���Ϥ��ޤ���
-�֤��ͤϡ��ּ��Υڡ����פ�������ϰʲ��Τ褦�ʥϥå����ե���󥹡��ʤ�����undef�Ǥ���
+コミュニティ一覧（list_community.plのメイン部）の「次のページ」へのリンクを解析します。
+返り値は、「次のページ」がある場合は以下のようなハッシュリファレンス、ない場合はundefです。
 
  {
- 	'subject' => '����xx��',
+ 	'subject' => '次のxx件',
  	'link' => 'http://mixi.jp/list_community.pl?page=x',
  }
 
 =item @items = $mixi->parse_list_community_previous( [$response] );
 
-���ߥ�˥ƥ�������list_community.pl�Υᥤ�����ˤΡ����Υڡ����פؤΥ�󥯤���Ϥ��ޤ���
-�֤��ͤϡ������Υڡ����פ�������ϰʲ��Τ褦�ʥϥå����ե���󥹡��ʤ�����undef�Ǥ���
+コミュニティ一覧（list_community.plのメイン部）の「前のページ」へのリンクを解析します。
+返り値は、「前のページ」がある場合は以下のようなハッシュリファレンス、ない場合はundefです。
 
  {
- 	'subject' => '����50��',
+ 	'subject' => '前の50件',
  	'link' => 'http://mixi.jp/list_community.pl?page=x',
  }
 
 =item @items = $mixi->parse_list_diary( [$response] );
 
-������list_diary.pl�ˤΥᥤ����ʬ�Ѥβ��ϥ᥽�åɤǤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
-images����Ȥϥ���ͥ�������β�����URL��ϥå����ե���󥹤ˤ�����Τ�����ˤʤ�ޤ���
+日記（list_diary.pl）のメイン部分用の解析メソッドです。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+imagesの中身はサムネイルと本体画像のURLをハッシュリファレンスにしたものの配列になります。
 
  {
- 	'subject'     => '����ˤ��ϡ�',
+ 	'subject'     => 'こんにちは。',
  	'link'        => 'http://mixi.jp/view_diary.pl?id=xxxxxx',
- 	'description' => '��ʸ����Ƭ...',
+ 	'description' => '本文の冒頭...',
  	'time'        => '08/18 13:18'
- 	'count'       => '�����ȷ��',
+ 	'count'       => 'コメント件数',
  	'images'      => [
  		{
  			'link'        => 'http://img.mixi.jp/photo/diary/xx/xx/xxxxxxxxx_xxx.jpg',
@@ -296,8 +296,8 @@ images����Ȥϥ���ͥ�������β�����URL��ϥå����ե���󥹤ˤ�����Τ�����ˤ
 
 =item @items = $mixi->parse_list_diary_capasity( [$response] );
 
-������list_diary.pl�Υᥤ�����ˤΡ������λ��Ѿ����פ���Ϥ��ޤ���
-�֤��ͤϡ��������λ��Ѿ����פ�������ϰʲ��Τ褦�ʥϥå����ե���󥹡��ʤ�����undef�Ǥ���
+日記（list_diary.plのメイン部）の「日記の使用状況」を解析します。
+返り値は、「日記の使用状況」がある場合は以下のようなハッシュリファレンス、ない場合はundefです。
 
  {
  	'max' => '100.0',
@@ -306,72 +306,72 @@ images����Ȥϥ���ͥ�������β�����URL��ϥå����ե���󥹤ˤ�����Τ�����ˤ
 
 =item @items = $mixi->parse_list_diary_next( [$response] );
 
-������list_diary.pl�Υᥤ�����ˤΡּ���xx��פؤΥ�󥯤���Ϥ��ޤ���
-�֤��ͤϡ��ּ���xx��פ�������ϰʲ��Τ褦�ʥϥå����ե���󥹡��ʤ�����undef�Ǥ���
+日記（list_diary.plのメイン部）の「次のxx件」へのリンクを解析します。
+返り値は、「次のxx件」がある場合は以下のようなハッシュリファレンス、ない場合はundefです。
 
  {
- 	'subject' => '����xx��',
+ 	'subject' => '次のxx件',
  	'link' => 'http://mixi.jp/list_diary.pl?page=x',
  }
 
 =item @items = $mixi->parse_list_diary_previous( [$response] );
 
-������list_diary.pl�Υᥤ�����ˤΡ�����xx��פؤΥ�󥯤���Ϥ��ޤ���
-�֤��ͤϡ�������xx��פ�������ϰʲ��Τ褦�ʥϥå����ե���󥹡��ʤ�����undef�Ǥ���
+日記（list_diary.plのメイン部）の「前のxx件」へのリンクを解析します。
+返り値は、「前のxx件」がある場合は以下のようなハッシュリファレンス、ない場合はundefです。
 
  {
- 	'subject' => '����xx��',
+ 	'subject' => '前のxx件',
  	'link' => 'http://mixi.jp/list_diary.pl?page=x',
  }
 
 =item @items = $mixi->parse_list_friend( [$response] );
 
-ͧ�͡��οͰ�����list_friend.pl�Υᥤ�����ˤ���Ϥ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+友人・知人一覧（list_friend.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => 'walrus����',
+ 	'subject' => 'walrusさん',
  	'link' => 'http://mixi.jp/show_friend.pl?id=xxxxx',
  	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxxx_xxxxxxxxxx.jpg',
  	'id' => 'xxxxx',
  	'count' => 'xxx'
- 	'status' => '���� - new!!',
+ 	'status' => '日記 - new!!',
 
  }
 
 =item @items = $mixi->parse_list_friend_next( [$response] );
 
-ͧ�͡��οͰ�����list_friend.pl�Υᥤ�����ˤΡּ��Υڡ����פؤΥ�󥯤���Ϥ��ޤ���
-�֤��ͤϡ��ּ��Υڡ����פ�������ϰʲ��Τ褦�ʥϥå����ե���󥹡��ʤ�����undef�Ǥ���
+友人・知人一覧（list_friend.plのメイン部）の「次のページ」へのリンクを解析します。
+返り値は、「次のページ」がある場合は以下のようなハッシュリファレンス、ない場合はundefです。
 
  {
- 	'subject' => '����xx��',
+ 	'subject' => '次のxx件',
  	'link' => 'http://mixi.jp/list_friend.pl?page=x',
  }
 
 =item @items = $mixi->parse_list_friend_previous( [$response] );
 
-ͧ�͡��οͰ�����list_friend.pl�Υᥤ�����ˤΡ����Υڡ����פؤΥ�󥯤���Ϥ��ޤ���
-�֤��ͤϡ������Υڡ����פ�������ϰʲ��Τ褦�ʥϥå����ե���󥹡��ʤ�����undef�Ǥ���
+友人・知人一覧（list_friend.plのメイン部）の「前のページ」へのリンクを解析します。
+返り値は、「前のページ」がある場合は以下のようなハッシュリファレンス、ない場合はundefです。
 
  {
- 	'subject' => '����50��',
+ 	'subject' => '前の50件',
  	'link' => 'http://mixi.jp/list_friend.pl?page=x',
  }
 
 =item @items = $mixi->parse_list_message( [$response] );
 
-�Ƕ�μ�����å�������list_message.pl�Υᥤ�����ˤ���Ϥ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
-status��new(����)��opened(����)��replied(�ֿ��Ѥ�)��unknown(����)�ˤʤ�ޤ���
+最近の受信メッセージ（list_message.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)になります。
 
-0.13�ǤޤǤǤ�status���ʤ��������replied������ޤ�����
-0.13�Ǥ����status���ɲä��줿�Τǡ�replied�Ϻ������ޤ�����
+0.13版までではstatusがなく、代わりにrepliedがありました。
+0.13版からはstatusが追加されたので、repliedは削除されました。
 
  {
- 	'subject' => '����ˤ��',
+ 	'subject' => 'こんにちわ。',
  	'link' => 'http://mixi.jp/view_message.pl?id=xxxxxx&box=xxxxx',
- 	'name' => '��������',
+ 	'name' => '塚本牧生',
  	'time' => '08/18',
  	'status' => 'replied',
  	'emvelope' => 'http://mixi.jp/img/mail5.gif'
@@ -379,698 +379,698 @@ status��new(����)��opened(����)��replied(�ֿ��Ѥ�)��unknown(����)�ˤʤ�ޤ���
 
 =item @items = $mixi->parse_new_album( [$response] );
 
-�ޥ��ߥ������ǿ�����Х��new_album.pl�Υᥤ�����ˤ���Ϥ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+マイミクシィ最新アルバム（new_album.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '���ܲȤο͡�',
+ 	'subject' => '塚本家の人々',
  	'link' => 'http://mixi.jp/view_album.pl?id=xxxxxx',
- 	'name' => '��������',
+ 	'name' => '塚本牧生',
  	'time' => '2004/08/18 13:18'
  }
 
 =item @items = $mixi->parse_new_bbs( [$response] );
 
-���ߥ�˥ƥ��ǿ��񤭹��ߡ�new_bbs.pl�Υᥤ�����ˤ���Ϥ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+コミュニティ最新書き込み（new_bbs.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '����ˤ��',
+ 	'subject' => 'こんにちわ。',
  	'link' => 'http://mixi.jp/view_bbs.pl?id=xxxxxx',
- 	'name' => '��������',
+ 	'name' => '塚本牧生',
  	'time' => '2004/08/18 13:18'
  }
 
 =item @items = $mixi->parse_new_comment( [$response] );
 
-���������ȵ��������new_comment.pl�Υᥤ�����ˤ���Ϥ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+日記コメント記入履歴（new_comment.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '����ˤ��',
+ 	'subject' => 'こんにちわ。',
  	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx',
- 	'name' => '��������',
+ 	'name' => '塚本牧生',
  	'time' => '2004/08/18 13:18'
  }
 
 =item @items = $mixi->parse_new_friend_diary( [$response] );
 
-�ޥ��ߥ������ǿ�������new_friend_diary.pl�Υᥤ�����ˤ���Ϥ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+マイミクシィ最新日記（new_friend_diary.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '����ˤ��',
+ 	'subject' => 'こんにちわ。',
  	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx',
- 	'name' => '��������',
+ 	'name' => '塚本牧生',
  	'time' => '2004/08/18 13:18'
  }
 
 =item @items = $mixi->parse_new_friend_diary_next( [$response] );
 
-�ޥ��ߥ������ǿ�������new_friend_diary.pl�Υᥤ�����ˤΡּ��Υڡ����פؤΥ�󥯤���Ϥ��ޤ���
-�֤��ͤϡ��ּ��Υڡ����פ�������ϰʲ��Τ褦�ʥϥå����ե���󥹡��ʤ�����undef�Ǥ���
+マイミクシィ最新日記（new_friend_diary.plのメイン部）の「次のページ」へのリンクを解析します。
+返り値は、「次のページ」がある場合は以下のようなハッシュリファレンス、ない場合はundefです。
 
  {
- 	'subject' => '����xx���ɽ��',
+ 	'subject' => '次のxx件を表示',
  	'link' => 'http://mixi.jp/new_friend_diary.pl?page=x',
  }
 
 =item @items = $mixi->parse_new_friend_diary_previous( [$response] );
 
-�ޥ��ߥ������ǿ�������new_friend_diary.pl�Υᥤ�����ˤΡ����Υڡ����פؤΥ�󥯤���Ϥ��ޤ���
-�֤��ͤϡ������Υڡ����פ�������ϰʲ��Τ褦�ʥϥå����ե���󥹡��ʤ�����undef�Ǥ���
+マイミクシィ最新日記（new_friend_diary.plのメイン部）の「前のページ」へのリンクを解析します。
+返り値は、「前のページ」がある場合は以下のようなハッシュリファレンス、ない場合はundefです。
 
  {
- 	'subject' => '����50���ɽ��',
+ 	'subject' => '前の50件を表示',
  	'link' => 'http://mixi.jp/new_friend_diary.pl?page=x',
  }
 
 =item @items = $mixi->parse_new_review( [$response] );
 
-�ޥ��ߥ������ǿ���ӥ塼��new_review.pl�Υᥤ�����ˤ���Ϥ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+マイミクシィ最新レビュー（new_review.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => 'mixi���ܡ�',
+ 	'subject' => 'mixiの本。',
  	'link' => 'http://mixi.jp/list_item_review.pl?reviewer_id=xxxx&item_id=xxxxx',
- 	'name' => '��������',
+ 	'name' => '塚本牧生',
  	'time' => '2004/08/18 13:18'
  }
 
 =item $id = $mixi->parse_self_id( [$response] );
 
-���������ӥ塼��list_review.pl�ˤΡ֥�ӥ塼��񤯡ץܥå�������Ϥ�����ʬ��ID���֤��ޤ���
-ID������Ǥ��ʤ��ä������֤��ͤ�0�Ǥ���
+おすすめレビュー（list_review.pl）の「レビューを書く」ボックスを解析し、自分のIDを返します。
+IDを取得できなかった時の返り値は0です。
 
-���Υ᥽�åɤ�¾��¿���β��Ϸϥ᥽�åɤȰ㤤���ϥå����ե���󥹤�����ǤϤʤ�������ʸ����ʥ������͡ˤ��֤����Ȥ����դ��Ƥ���������
+このメソッドは他の多くの解析系メソッドと違い、ハッシュリファレンスの配列ではなくただの文字列（スカラ値）を返すことに注意してください。
 
 =item @items = $mixi->parse_show_log( [$response] );
 
-�������ȡ�show_log.pl�Υᥤ�����ˤ���Ϥ����������Ȥ��֤��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+あしあと（show_log.plのメイン部）を解析し、あしあとを返します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
  	'link' => 'http://mixi.jp/show_friend.pl?id=xxxxx',
- 	'name' => '��������',
+ 	'name' => '塚本牧生',
  	'time' => '2004/08/18 13:18'
  }
 
 =item $count = $mixi->parse_show_log_count( [$response] );
 
-�������ȡ�show_log.pl�Υᥤ�����ˤ���Ϥ����������ȿ����֤��ޤ���
+あしあと（show_log.plのメイン部）を解析し、あしあと数を返します。
 
-���Υ᥽�åɤ�¾��¿���β��Ϸϥ᥽�åɤȰ㤤���ϥå����ե���󥹤�����ǤϤʤ������ο��͡ʥ������͡ˤ��֤����Ȥ����դ��Ƥ���������
+このメソッドは他の多くの解析系メソッドと違い、ハッシュリファレンスの配列ではなくただの数値（スカラ値）を返すことに注意してください。
 
 =item @items = $mixi->parse_view_message( [$response] );
 
-������å�������view_message.pl�Υᥤ�����ˤΥ�å���������Ϥ��ޤ���
-�֤��ͤϡ���å�����������Ǥ����Ȥ��ϰʲ��Τ褦�ʥϥå����ե���󥹡��ʤ�����undef�Ǥ���
+受信メッセージ（view_message.plのメイン部）のメッセージを解析します。
+返り値は、メッセージを取得できたときは以下のようなハッシュリファレンス、ない場合はundefです。
 
  {
- 	'subject'    => '����ˤ��',
+ 	'subject'    => 'こんにちわ。',
  	'image'      => 'http://img.mixi.jp/photo/member/xx/xx/xxxxxx_xxxxxxxxs.jpg',
  	'link'       => 'http://mixi.jp/show_friend.pl?id=?id=xxxxxx',
- 	'name'       => '��������',
+ 	'name'       => '塚本牧生',
  	'time'       => '2004/08/18 12:34',
- 	'descrption' => '��ʸ...',
+ 	'descrption' => '本文...',
  }
 
 =item @items = $mixi->parse_view_message_form( [$response] );
 
-������å�������view_message.pl�Υᥤ�����ˤΥ�å�����������ֿ��ʤɤΥե��������Ϥ��ޤ���
-�֤��ͤϡ��ե����ऴ�Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+受信メッセージ（view_message.plのメイン部）のメッセージ削除、返信などのフォームを解析します。
+返り値は、フォームごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
  	'command' => 'delete_message'
  	'action' => 'http://mixi.jp/delete_message.pl?box=xxxxx&message_id=xxxxxxx',
- 	'submit' => '�� ��',
+ 	'submit' => '削 除',
  }
 
-�ƥե�����ϡ�action���б������ͤ�URL���Ф��ơ��ե��������submit�Ȥ���submit���б������ͤ�����post�����������ΤǤ���
+各フォームは、actionに対応する値のURLに対して、フォーム項目submitとしてsubmitに対応する値だけをpostで送信するものです。
 
 =item @items = $mixi->parse_add_diary_preview( [$response ]);
 
-���������Υץ�ӥ塼��add_diary.pl�Υᥤ�����ˤ���Ϥ����ƥܥ������������ե�������ͤ��֤��ޤ���
-�֤��ͤϡ��ե����ऴ�Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+日記作成のプレビュー（add_diary.plのメイン部）を解析し、各ボタンに相当するフォームの値を返します。
+返り値は、フォームごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
  	'__action__' => 'http://mixi.jp/show_friend.pl?id=xxxxx',
  	'submit' => 'confirm',
- 	'diary_title' => '����������',
- 	'diary_body' => '������ī�����դ��ä���
- ���ޤ줿�Ф����...',
+ 	'diary_title' => '今日の日記',
+ 	'diary_body' => '今日は朝から晩だった。
+ 生まれたばかりの...',
  	'packed' => 'asjkEKJHFu.16190.diary:1:adjksHfsdk.16190.diary_s:1'
  }
 
-__action__�Ȥ������������뤳�Ȥ����դ��Ƥ���������
-����Ϥ��Υե������������URL��ɽ���Ƥ����Τǡ��ե������ͤǤϤ���ޤ���
-��������������confirm�ˤ�����ˤϡ����Υ����Ϻ�����Ƥ���ɬ�פ�����ޤ���
+__action__というキーがあることに注意してください。
+これはこのフォームの送信先URLを表しているもので、フォーム値ではありません。
+日記を作成する（confirm）する時には、このキーは削除しておく必要があります。
 
-photo1��3�Υ����ϥץ�ӥ塼�������˲����ե�����򤪤��äƤ���С�mixi¦����������ʸ�����֤���ޤ���
-���������������ˤϡ����Τޤޤ��ͤ��������ޤ���
+photo1～3のキーはプレビュー取得時に画像ファイルをおくっていれば、mixi側からランダムな文字列が返されます。
+日記を作成する時には、そのままの値を送信します。
 
 =back
 
-=head2 �ǡ����μ���
+=head2 データの取得
 
-ľ�ܥǡ�����������뤿��Υ᥽�åɤǤ���
+直接データを取得するためのメソッドです。
 
-�ºݤˤϡ������Ǽ�ưŪ�˥ڡ����μ����Ȳ��Ϥ��Ԥ��ޤ���
-�֤��ͤϡ����Ѥ������ϥ᥽�åɡ�parse_���ˤ˽स�ޤ���
+実際には、内部で自動的にページの取得と解析が行われます。
+返り値は、使用される解析メソッド（parse_～）に準じます。
 
-�ǡ��������᥽�åɤϥ����ǥ��󥰤��ñ�ˤ��ޤ������֤��ͤ��ʤ��Ȥ��ˤϥ��顼���������Τ�������Ȥ������˳����쥳���ɤ��ʤ��Τ���Ƚ�Ǥ��񤷤����Ȥ����դ��Ƥ���������
-�����������ˤϡ�log�᥽�åɤ��񤭤��Ƥ����ƥ��顼��å��������򽦤���response�᥽�åɤ�ľ��HTTP�쥹�ݥ󥹤�������Ʋ��Ϥ��롢�Ȥ��ä���ˡ��ͤ��Ƥ��������ʤȤϸ����������ޤǤ��Ƥ��ޤ���get�᥽�åɡ�parse_���᥽�åɤ�Ȥ�����֤Ǥ��礦�ˡ�
+データ取得メソッドはコーディングを簡単にしますが、返り値がないときにはエラーが起きたのか、それとも本当に該当レコードがないのかの判断が難しいことに注意してください。
+こうした時には、logメソッドを上書きしておいてエラーメッセージ等を拾う、responseメソッドで直接HTTPレスポンスを取得して解析する、といった方法を考えてください（とは言え、そこまでしてしまうとgetメソッド＋parse_～メソッドを使うより手間でしょう）。
 
 =over 4
 
 =item @items = $mixi->get_main_menu( [$url | $url => 'refresh'] )
 
-���ꤵ�줿URL�Υᥤ���˥塼��������ޤ���
-�֤��ͤ�parse_main_menu��Ʊ���Ǥ���
+指定されたURLのメインメニューを取得します。
+返り値はparse_main_menuと同じです。
 
-���ꤵ�줿URL���Ǹ��get�ޤ���post�᥽�åɤǼ�������URL��Ʊ���Ȥ����ޤ���URL�����ꤵ��ʤ��ä��Ȥ��ϡ��Ǹ��get�ޤ���post�᥽�åɤǼ��������ǡ����Υᥤ���˥塼���֤��ޤ���
-Ʊ��URL�Ǥ�Ƽ����������Ȥ��ˤϡ�'refresh'����ꤷ�Ƥ���������
+指定されたURLが最後にgetまたはpostメソッドで取得したURLと同じとき、またはURLが指定されなかったときは、最後にgetまたはpostメソッドで取得したデータのメインメニューを返します。
+同一URLでも再取得したいときには、'refresh'を指定してください。
 
 =item @items = $mixi->get_banner( [$url | $url => 'refresh'] )
 
-���ꤵ�줿URL�ΥХʡ���������ޤ���
-�֤��ͤ�parse_banner��Ʊ���Ǥ���
+指定されたURLのバナーを取得します。
+返り値はparse_bannerと同じです。
 
-���ꤵ�줿URL���Ǹ��get�ޤ���post�᥽�åɤǼ�������URL��Ʊ���Ȥ����ޤ���URL�����ꤵ��ʤ��ä��Ȥ��ϡ��Ǹ��get�ޤ���post�᥽�åɤǼ��������ǡ����Υᥤ���˥塼���֤��ޤ���
-Ʊ��URL�Ǥ�Ƽ����������Ȥ��ˤϡ�'refresh'����ꤷ�Ƥ���������
+指定されたURLが最後にgetまたはpostメソッドで取得したURLと同じとき、またはURLが指定されなかったときは、最後にgetまたはpostメソッドで取得したデータのメインメニューを返します。
+同一URLでも再取得したいときには、'refresh'を指定してください。
 
 =item @items = $mixi->get_tool_bar( [$url | $url => 'refresh'] )
 
-���ꤵ�줿URL�Υġ���С���������ޤ���
-�֤��ͤ�parse_tool_bar��Ʊ���Ǥ���
+指定されたURLのツールバーを取得します。
+返り値はparse_tool_barと同じです。
 
-���ꤵ�줿URL���Ǹ��get�ޤ���post�᥽�åɤǼ�������URL��Ʊ���Ȥ����ޤ���URL�����ꤵ��ʤ��ä��Ȥ��ϡ��Ǹ��get�ޤ���post�᥽�åɤǼ��������ǡ����Υᥤ���˥塼���֤��ޤ���
-Ʊ��URL�Ǥ�Ƽ����������Ȥ��ˤϡ�'refresh'����ꤷ�Ƥ���������
+指定されたURLが最後にgetまたはpostメソッドで取得したURLと同じとき、またはURLが指定されなかったときは、最後にgetまたはpostメソッドで取得したデータのメインメニューを返します。
+同一URLでも再取得したいときには、'refresh'を指定してください。
 
 =item @items = $mixi->get_information( [$url | $url => 'refresh' | 'refresh'] );
 
-���ꤵ�줿URL���顢�ִ����Ԥ���Τ��Τ餻�פ�������ޤ���
-URL����ꤷ�ʤ��ä����ϡ֥ۡ���פ��оݤˤ��ޤ���
-�֤��ͤ�parse_information��Ʊ���Ǥ���
+指定されたURLから、「管理者からのお知らせ」を取得します。
+URLを指定しなかった時は「ホーム」を対象にします。
+返り値はparse_informationと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_calendar( [$url | $url => 'refresh' | 'refresh'] );
 
-����������������ޤ���
-�ǥե���ȤǤϺ���Υ����������оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_calendar��Ʊ���Ǥ���
+カレンダーを取得します。
+デフォルトでは今月のカレンダーを対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_calendarと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_calendar_term( [$url | $url => 'refresh' | 'refresh'] );
 
-���������δ��֡�ǯ��ˤ�������ޤ���
-�ǥե���ȤǤϺ���Υ����������оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_calendar_term��Ʊ���Ǥ���
+カレンダーの期間（年月）を取得します。
+デフォルトでは今月のカレンダーを対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_calendar_termと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_calendar_next( [$url | $url => 'refresh' | 'refresh'] );
 
-���������Ρּ��η�פؤΥ�󥯤�������ޤ���
-�ǥե���ȤǤϡ֥��������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_calendar_next��Ʊ���Ǥ���
+カレンダーの「次の月」へのリンクを取得します。
+デフォルトでは「カレンダー」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_calendar_nextと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_calendar_previous( [$url | $url => 'refresh' | 'refresh'] );
 
-���������Ρ����η�פؤΥ�󥯤�������ޤ���
-�ǥե���ȤǤϡ֥��������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_calendar_previous��Ʊ���Ǥ���
+カレンダーの「前の月」へのリンクを取得します。
+デフォルトでは「カレンダー」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_calendar_previousと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_list_bookmark( [$url | $url => 'refresh' | 'refresh'] );
 
-�����������������ޤ���
-�ǥե���ȤǤϥۡ���Ρ֤���������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_bookmark��Ʊ���Ǥ���
+お気に入りを取得します。
+デフォルトではホームの「お気に入り」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_bookmarkと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_list_comment( [$url | $url => 'refresh' | 'refresh'] );
 
-�ǿ��Υ����Ȥ�������ޤ���
-�ǥե���ȤǤϡֺǿ��Υ����ȡפ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_comment��Ʊ���Ǥ���
+最新のコメントを取得します。
+デフォルトでは「最新のコメント」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_commentと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_list_community( [$url | $url => 'refresh' | 'refresh'] );
 
-���ߥ�˥ƥ�������������ޤ���
-�ǥե���ȤǤϡ֥��ߥ�˥ƥ������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_community��Ʊ���Ǥ���
+コミュニティ一覧を取得します。
+デフォルトでは「コミュニティ一覧」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_communityと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_list_community_next( [$url | $url => 'refresh' | 'refresh'] );
 
-���ߥ�˥ƥ������Ρּ��Υڡ����פؤΥ�󥯤�������ޤ���
-�ǥե���ȤǤϡ֥��ߥ�˥ƥ������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_community_next��Ʊ���Ǥ���
+コミュニティ一覧の「次のページ」へのリンクを取得します。
+デフォルトでは「コミュニティ一覧」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_community_nextと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_list_community_previous( [$url | $url => 'refresh' | 'refresh'] );
 
-���ߥ�˥ƥ������Ρ����Υڡ����פؤΥ�󥯤�������ޤ���
-�ǥե���ȤǤϡ֥��ߥ�˥ƥ������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_community_previous��Ʊ���Ǥ���
+コミュニティ一覧の「前のページ」へのリンクを取得します。
+デフォルトでは「コミュニティ一覧」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_community_previousと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_list_diary( [$url | $url => 'refresh' | 'refresh'] );
 
-����������������ޤ���
-�ǥե���ȤǤϡ������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_diary��Ʊ���Ǥ���
+日記一覧を取得します。
+デフォルトでは「日記」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_diaryと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_list_diary_capacity( [$url | $url => 'refresh' | 'refresh'] );
 
-�����Ρ������λ��Ѿ����פ�������ޤ���
-�ǥե���ȤǤϡ������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_diary_capacity��Ʊ���Ǥ���
+日記の「日記の使用状況」を取得します。
+デフォルトでは「日記」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_diary_capacityと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_list_diary_next( [$url | $url => 'refresh' | 'refresh'] );
 
-�����Ρּ��Υڡ����פؤΥ�󥯤�������ޤ���
-�ǥե���ȤǤϡ������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_diary_next��Ʊ���Ǥ���
+日記の「次のページ」へのリンクを取得します。
+デフォルトでは「日記」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_diary_nextと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_list_diary_previous( [$url | $url => 'refresh' | 'refresh'] );
 
-�����Ρ����Υڡ����פؤΥ�󥯤�������ޤ���
-�ǥե���ȤǤϡ������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_diary_previous��Ʊ���Ǥ���
+日記の「前のページ」へのリンクを取得します。
+デフォルトでは「日記」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_diary_previousと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_list_friend( [$url | $url => 'refresh' | 'refresh'] );
 
-ͧ�͡��οͰ�����������ޤ���
-�ǥե���ȤǤϡ�ͧ�͡��οͰ����פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_friend��Ʊ���Ǥ���
+友人・知人一覧を取得します。
+デフォルトでは「友人・知人一覧」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_friendと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item $item = $mixi->get_list_friend_next( [$url | $url => 'refresh' | 'refresh'] );
 
-ͧ�͡��οͰ����Ρּ��Υڡ����פؤΥ�󥯤�������ޤ���
-�ǥե���ȤǤϡ�ͧ�͡��οͰ����פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_friend_next��Ʊ���Ǥ���
+友人・知人一覧の「次のページ」へのリンクを取得します。
+デフォルトでは「友人・知人一覧」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_friend_nextと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item $item = $mixi->get_list_friend_previous( [$url | $url => 'refresh' | 'refresh'] );
 
-ͧ�͡��οͰ����Ρ����Υڡ����פؤΥ�󥯤�������ޤ���
-�ǥե���ȤǤϡ�ͧ�͡��οͰ����פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_friend_previous��Ʊ���Ǥ���
+友人・知人一覧の「前のページ」へのリンクを取得します。
+デフォルトでは「友人・知人一覧」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_friend_previousと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_list_message( [$url | $url => 'refresh' | 'refresh'] );
 
-�ֺǶ�μ�����å������פ�������ޤ���
-�ǥե���ȤǤϡֺǶ�μ�����å������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_list_message��Ʊ���Ǥ���
+「最近の受信メッセージ」を取得します。
+デフォルトでは「最近の受信メッセージ」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_messageと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_new_album( [$url | $url => 'refresh' | 'refresh'] );
 
-�ޥ��ߥ������ǿ�����Х��������ޤ���
-�ǥե���ȤǤϡ֥ޥ��ߥ������ǿ�����Х�פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_new_album��Ʊ���Ǥ���
+マイミクシィ最新アルバムを取得します。
+デフォルトでは「マイミクシィ最新アルバム」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_new_albumと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_new_bbs( [$url | $url => 'refresh' | 'refresh'] );
 
-���ߥ�˥ƥ��ǿ��񤭹��ߤ�������ޤ���
-�ǥե���ȤǤϡ֥��ߥ�˥ƥ��ǿ�����ߡפ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_new_bbs��Ʊ���Ǥ���
+コミュニティ最新書き込みを取得します。
+デフォルトでは「コミュニティ最新書込み」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_new_bbsと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_new_comment( [$url | $url => 'refresh' | 'refresh'] );
 
-���������ȵ��������������ޤ���
-�ǥե���ȤǤϡ����������ȵ�������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_new_comment��Ʊ���Ǥ���
+日記コメント記入履歴を取得します。
+デフォルトでは「日記コメント記入履歴」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_new_commentと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_new_friend_diary( [$url | $url => 'refresh' | 'refresh'] );
 
-�ޥ��ߥ������ǿ�������������ޤ���
-�ǥե���ȤǤϡ֥ޥ��ߥ������ǿ������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_new_friend_diary��Ʊ���Ǥ���
+マイミクシィ最新日記を取得します。
+デフォルトでは「マイミクシィ最新日記」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_new_friend_diaryと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item $item = $mixi->get_new_friend_diary_next( [$url | $url => 'refresh' | 'refresh'] );
 
-�ޥ��ߥ������ǿ������Ρּ��Υڡ����פؤΥ�󥯤�������ޤ���
-�ǥե���ȤǤϡ֥ޥ��ߥ������ǿ������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_new_friend_diary_next��Ʊ���Ǥ���
+マイミクシィ最新日記の「次のページ」へのリンクを取得します。
+デフォルトでは「マイミクシィ最新日記」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_new_friend_diary_nextと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item $item = $mixi->get_new_friend_diary_previous( [$url | $url => 'refresh' | 'refresh'] );
 
-�ޥ��ߥ������ǿ������Ρ����Υڡ����פؤΥ�󥯤�������ޤ���
-�ǥե���ȤǤϡ֥ޥ��ߥ������ǿ������פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_new_friend_diary_previous��Ʊ���Ǥ���
+マイミクシィ最新日記の「前のページ」へのリンクを取得します。
+デフォルトでは「マイミクシィ最新日記」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_new_friend_diary_previousと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_new_review( [$url | $url => 'refresh' | 'refresh'] );
 
-�ޥ��ߥ������ǿ���ӥ塼��������ޤ���
-�ǥե���ȤǤϡ֥ޥ��ߥ������ǿ���ӥ塼�פ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_new_review��Ʊ���Ǥ���
+マイミクシィ最新レビューを取得します。
+デフォルトでは「マイミクシィ最新レビュー」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_new_reviewと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item $id = $mixi->get_self_id( ['refresh'] );
 
-���������ӥ塼��list_review.pl�ˤΡ֥�ӥ塼��񤯡ץܥå�������Ϥ���
-��ʬ��ID���֤��ޤ���
-ID������Ǥ��ʤ��ä������֤��ͤ�0�Ǥ���
-�������ȿ���������ޤ���
-�֤��ͤ�parse_self_id��Ʊ���Ǥ���
+おすすめレビュー（list_review.pl）の「レビューを書く」ボックスを解析し、
+自分のIDを返します。
+IDを取得できなかった時の返り値は0です。
+あしあと数を取得します。
+返り値はparse_self_idと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������֤��������ӥ塼�פλ��ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが「おすすめレビュー」の時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_show_log( [$url | $url => 'refresh' | 'refresh'] );
 
-�������Ȥ�������ޤ���
-�ǥե���ȤǤϡ֤������ȡפ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_show_log��Ʊ���Ǥ���
+あしあとを取得します。
+デフォルトでは「あしあと」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_show_logと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item $count = $mixi->get_show_log_count( [$url | $url => 'refresh' | 'refresh'] );
 
-�������ȿ���������ޤ���
-�ǥե���ȤǤϡ֤������ȡפ��оݤˤ��ޤ�����URL����ꤷ�����Ϥ��Υڡ������оݤˤ��ޤ���
-�֤��ͤ�parse_show_log_count��Ʊ���Ǥ���
+あしあと数を取得します。
+デフォルトでは「あしあと」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_show_log_countと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item $item = $mixi->get_view_message( $url [ => 'refresh'] );
 
-��å�������������ޤ���
-���Υ᥽�åɤǤϡ�URL�λ��꤬ɬ�ܤǤ���
-�֤��ͤ�parse_view_message��Ʊ���Ǥ���
+メッセージを取得します。
+このメソッドでは、URLの指定が必須です。
+返り値はparse_view_messageと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =item @items = $mixi->get_view_message_form( $url [ => 'refresh'] );
 
-��å�������������ޤ���
-���Υ᥽�åɤǤϡ�URL�λ��꤬ɬ�ܤǤ���
-�֤��ͤ�parse_view_message��Ʊ���Ǥ���
+メッセージを取得します。
+このメソッドでは、URLの指定が必須です。
+返り値はparse_view_messageと同じです。
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ������о�URL��Ʊ�����ϡ����λ��Υǡ������֤��ޤ���
-�ǿ��Υǡ�����������������ϡ�'refresh'����ꤷ�Ƥ���������
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
 
 =back
 
-=head2 ���
+=head2 投稿
 
-ľ�ܥǡ�������Ƥ��뤿��Υ᥽�åɤǤ���
+直接データを投稿するためのメソッドです。
 
-�ºݤˤϡ������Ǽ�ưŪ��Ŭ�ڤʥڡ����ؤ�post���Ԥ��ޤ���
+実際には、内部で自動的に適切なページへのpostが行われます。
 
 =over 4
 
-=item @items = $mixi->get_add_diary_preview('diary_title' => '���������ȥ�', 'diary_body' => '������ʸ' [, 'photo1' => '�̿�1�ѥ�'] [, 'photo2' => '�̿�2�ѥ�'] [, 'photo3' => '�̿�3�ѥ�']);
+=item @items = $mixi->get_add_diary_preview('diary_title' => '日記タイトル', 'diary_body' => '日記本文' [, 'photo1' => '写真1パス'] [, 'photo2' => '写真2パス'] [, 'photo3' => '写真3パス']);
 
-���������ڡ����˰����Υǡ��������������ץ�ӥ塼�ڡ�����������Ʋ��Ϥ��ޤ���
-�֤��ͤ�parse_add_diary_preview��Ʊ���Ǥ���
+日記作成ページに引数のデータを送信し、プレビューページを取得して解析します。
+返り値はparse_add_diary_previewと同じです。
 
-=item $count = $mixi->get_add_diary_confirm('diary_title' => '���������ȥ�', 'diary_body' => '������ʸ' [, 'photo1' => '�̿�1�ѥ�'] [, 'photo2' => '�̿�2�ѥ�'] [, 'photo3' => '�̿�3�ѥ�']);
+=item $count = $mixi->get_add_diary_confirm('diary_title' => '日記タイトル', 'diary_body' => '日記本文' [, 'photo1' => '写真1パス'] [, 'photo2' => '写真2パス'] [, 'photo3' => '写真3パス']);
 
-��������Ƥ��ޤ���
-�֤��ͤ���������1�����Ի���0�Ǥ���
+日記を投稿します。
+返り値は成功時は1、失敗時は0です。
 
-=item $count = $mixi->get_edit_diary_confirm('diary_id' => '����ID', 'diary_title' => '���������ȥ�', 'diary_body' => '������ʸ' [, 'photo1' => '�̿�1�ѥ�'] [, 'photo2' => '�̿�2�ѥ�'] [, 'photo3' => '�̿�3�ѥ�']);
+=item $count = $mixi->get_edit_diary_confirm('diary_id' => '日記ID', 'diary_title' => '日記タイトル', 'diary_body' => '日記本文' [, 'photo1' => '写真1パス'] [, 'photo2' => '写真2パス'] [, 'photo3' => '写真3パス']);
 
-�������Խ��ʺ���ơˤ��ޤ���
-�֤��ͤ���������1�����Ի���0�Ǥ���
+日記を編集（再投稿）します。
+返り値は成功時は1、失敗時は0です。
 
-=item $count = $mixi->get_delete_diary_confirm('diary_id' => '����ID');
+=item $count = $mixi->get_delete_diary_confirm('diary_id' => '日記ID');
 
-�����������ޤ���
-�֤��ͤ���������1�����Ի���0�Ǥ���
+日記を削除します。
+返り値は成功時は1、失敗時は0です。
 
 =back
 
-=head2 URL���Ѵ�
+=head2 URLの変換
 
-URL������URL���Ѵ�����᥽�åɤǤ���
+URLを絶対URLに変換するメソッドです。
 
 =over 4
 
 =item $url = $mixi->absolute_url($url [, $base])
 
-$base��١���URL�Ȥ��ơ�����URL���֤��ޤ���
-$base�����ꤵ��ʤ��ä����ϡ�mixi�Υȥåץڡ�����0.13�ǤǤ�"http://mixi.jp/"�ˤ�١����ˤ��ޤ���
-URL�������'login'��'show_logs'�ʤɤ�'.pl'��ʤ����ե�����̾����ꤷ�Ƥ⹽���ޤ���
+$baseをベースURLとして、絶対URLを返します。
+$baseが指定されなかった時は、mixiのトップページ（0.13版では"http://mixi.jp/"）をベースにします。
+URLの代わりに'login'、'show_logs'などの'.pl'を省いたファイル名を指定しても構いません。
 
 =item $url = $mixi->absolute_linked_url($url)
 
-�Ǹ��get�ޤ���post�᥽�åɤǼ��������ڡ�����URL��١���URL�Ȥ��ơ�����URL���֤��ޤ���
-URL�������'login'��'show_logs'�ʤɤ�'.pl'��ʤ����ե�����̾����ꤷ�Ƥ⹽���ޤ���
+最後にgetまたはpostメソッドで取得したページのURLをベースURLとして、絶対URLを返します。
+URLの代わりに'login'、'show_logs'などの'.pl'を省いたファイル名を指定しても構いません。
 
 =back
 
-=head2 Cookie��Ϣ
+=head2 Cookie関連
 
-Cookie����¸���ɹ���Ԥ�����Υ᥽�åɤǤ���
+Cookieの保存や読込を行うためのメソッドです。
 
 =over 4
 
 
 =item $mixi->save_cookies($cookie_file)
 
-cookie�����Ƥ���ꤵ�줿�ե��������¸���ޤ���
-�������ˤ�1�����Ի��ˤ�0���֤��ޤ���
+cookieの内容を指定されたファイルに保存します。
+成功時には1、失敗時には0を返します。
 
 =item $mixi->load_cookies($cookie_file)
 
-���ꤵ�줿�ե����뤫��Cookie�ǡ������ɤ߹��ߤޤ���
-�������ˤ�1�����Ի��ˤ�0���֤��ޤ���
+指定されたファイルからCookieデータを読み込みます。
+成功時には1、失敗時には0を返します。
 
 =back
 
-=head2 �����᥽�å�
+=head2 内部メソッド
 
-�ʲ���WWW::Mixi�������᥽�åɤǤ���
+以下はWWW::Mixiの内部メソッドです。
 
-����Ū�ˤ�WWW::Mixi�γƥ᥽�åɤ���Τ߻��Ѥ���뤳�Ȥ�����Ȥ��Ƥ��ꡢ��ΥС������Ǥϻ��ͤ��ѹ����줿��᥽�åɤ��ѻߤ���뤫�⤷��ޤ���
-�Ǥ���������Ѥ��ʤ������ɤ��Ȼפ��ޤ���
+基本的にはWWW::Mixiの各メソッドからのみ使用されることを前提としており、後のバージョンでは仕様が変更されたりメソッドが廃止されるかもしれません。
+できるだけ利用しない方が良いと思います。
 
 =over 4
 
 =item $mixi->log
 
-�����ν��Ϥʤɤ�Ԥ��᥽�åɤǡ����������Ѥ���ޤ���
-�ǥե���ȤǤϡ�callback_log�᥽�åɤ�ƤӽФ��ޤ���
+ログの出力などを行うメソッドで、内部で利用されます。
+デフォルトでは、callback_logメソッドを呼び出します。
 
 =item $mixi->dumper_log
 
-�����Υ���פ�����Ȥ��ƽ��Ϥޤ����ݻ�����᥽�åɤǡ����������Ѥ���ޤ���
-�ºݤν��Ϥˤϡ�log�᥽�åɤ���Ѥ��ޤ���
+引数のダンプをログとして出力または保持するメソッドで、内部で利用されます。
+実際の出力には、logメソッドを使用します。
 
 =item $mixi->abort
 
-���顼����abort������Ԥ��᥽�åɤǡ����������Ѥ���ޤ���
-�ǥե���ȤǤϡ�callback_abort�᥽�åɤ�ƤӽФ��ޤ���
+エラー時のabort処理を行うメソッドで、内部で利用されます。
+デフォルトでは、callback_abortメソッドを呼び出します。
 
 =item $mixi->callback_log
 
-����������Ȥ��ƥ��ե�JIS���Ѵ�����ɸ����Ϥ˽��Ϥ��ޤ���
-�ޤ��������˥��顼��å��������ޤޤ�Ƥ���С�abort�᥽�åɤ�ƤӽФ��ޤ���
-�����log�᥽�åɤΥǥե���Ȥμ����ǡ����������Ѥ���ޤ���
+引数をログとしてシフトJISに変換し、標準出力に出力します。
+また、ログにエラーメッセージが含まれていれば、abortメソッドを呼び出します。
+これはlogメソッドのデフォルトの実装で、内部で利用されます。
 
-����ʳ��Υ��������򤷤����Ȥ��ˤϡ����󥹥ȥ饯�Ȼ���
+これ以外のログ処理をしたいときには、コンストラクト時に
 
  $mixi = WWW::Mixi->new($mail, $pass, -log => \&my_callback_log);
 
-�Τ褦�ˤ��ơ�����Υ������ϥ᥽�åɤ�������Ƥ�äƤ���������
+のようにして、代わりのログ出力メソッドを定義してやってください。
 
 =item $mixi->callback_abort
 
-die��¹Ԥ��ޤ���
-�����abort�᥽�åɤΥǥե���Ȥμ����ǡ����������Ѥ���ޤ���
+dieを実行します。
+これはabortメソッドのデフォルトの実装で、内部で利用されます。
 
 =item $str = $mixi->rewrite
 
-�ǡ������ϻ��Υƥ������ͤν�����Ԥ��᥽�åɤǤ���
-�ǥե���ȤǤϡ�callback_rewrite�᥽�åɤ�ƤӽФ��ޤ���
+データ解析時のテキスト値の処理を行うメソッドです。
+デフォルトでは、callback_rewriteメソッドを呼び出します。
 
 =item $str = $mixi->callback_rewrite($str);
 
-HTML�����κ����HTML���������פβ���ʥ��󥨥������סˤ�Ԥ��ޤ���
-�����rewrite�᥽�åɤΥǥե���Ȥμ����ǡ����������Ѥ���ޤ���
+HTMLタグの削除とHTMLエスケープの解除（アンエスケープ）を行います。
+これはrewriteメソッドのデフォルトの実装で、内部で利用されます。
 
 =item $str = $mixi->escaped($str);
 
-HTML���������פ���ʸ������֤��ޤ���
+HTMLエスケープした文字列を返します。
 
 =item $str = $mixi->unescaped($str);
 
-HTML���󥨥������פ���ʸ������֤��ޤ���
+HTMLアンエスケープした文字列を返します。
 
 =item $str = $mixi->remove_tag($str);
 
-������������ʸ������֤��ޤ���
-HTML�˸¤餺��<��>�ΤۤȤ�ɤ�������������դ��Ƥ���������
-�̾�ϡ�unescape�����˼¹Ԥ�����ΤǤ���
+タグを削除した文字列を返します。
+HTMLに限らず、<～>のほとんどを削除する事に注意してください。
+通常は、unescapeの前に実行されるものです。
 
 =item $mixi->redirect_ok
 
-������쥯�Ȥβ��ݤ����᥽�åɤǡ�WWW::Mixi�ξ��Ͼ��1���֤��ޤ���
-�Ĥޤꡢ������쥯�ȤϾ�˼�ưŪ�˼¹Ԥ���ޤ���
+リダイレクトの可否を決めるメソッドで、WWW::Mixiの場合は常に1を返します。
+つまり、リダイレクトは常に自動的に実行されます。
 
-���Υ᥽�åɤ�LWP::RobotUA�ʤ�𤷤�LWP::UserAgent�ˤ���Ѿ�����redirect_ok�᥽�åɤ��񤭤��Ƥ��ޤ���
+このメソッドはLWP::RobotUA（を介してLWP::UserAgent）から継承したredirect_okメソッドを上書きしています。
 
 =item @items = $mixi->parse_standard_history( [$response] );
 
-ɸ��Ū������ڡ����Υᥤ����ʬ�Ѥβ��ϥ᥽�åɤǤ���
-�Ƕ�Υ����ȡ�list_comment.pl�Υᥤ�����ˡ����ߥ�˥ƥ��ǿ��񤭹��ߡ�new_bbs.pl�Υᥤ�����ˡ��ޥ��ߥ������ǿ�������new_friend_diary.pl�Υᥤ�����ˡ��ޥ��ߥ������ǿ���ӥ塼��new_review.pl�Υᥤ�����ˤ���ϤǤ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+標準的な履歴ページのメイン部分用の解析メソッドです。
+最近のコメント（list_comment.plのメイン部）、コミュニティ最新書き込み（new_bbs.plのメイン部）、マイミクシィ最新日記（new_friend_diary.plのメイン部）、マイミクシィ最新レビュー（new_review.plのメイン部）を解析できます。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '����ˤ��',
+ 	'subject' => 'こんにちわ。',
  	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx',
- 	'name' => '��������',
+ 	'name' => '塚本牧生',
  	'time' => '2004/08/18 13:18'
  }
 
-�ʤ����Ƕ�Υ��������β��ϤˤĤ��Ƥϡ����ѤΥ᥽�åɤ��Ѱդ��Ƥ���ޤ��Τǡ��������Ȥ����������Ǥ���
-���ߤϤ����Υڡ�����parse_standard_history�ǲ��ϤǤ��뤿�ᡢ�����Ǥ�parse_standard_history��ƤӽФ��Ƥ�������Ǥ���������ˤĤ��Ƥ�mixi¦���ѹ������뤫���Τ�ޤ���
-���λ��ˤ����ѥ᥽�åɤǤ������ϤǤ��ʤ��ʤꡢparse_standard_history��ȤäƤ���ȼ�ľ����ɬ�פˤʤ�Ǥ��礦��
+なお、最近のコメント等の解析については、専用のメソッドを用意してありますので、そちらを使う方が妥当です。
+現在はこれらのページをparse_standard_historyで解析できるため、内部ではparse_standard_historyを呼び出しているだけですが、将来についてはmixi側の変更があるかも知れません。
+その時には専用メソッドでしか解析できなくなり、parse_standard_historyを使っていると手直しが必要になるでしょう。
 
 =item @items = $mixi->parse_standard_history2( [$response] );
 
-ɸ��Ū������ڡ����Υᥤ����ʬ�Ѥβ��ϥ᥽�åɤǤ���
-�ޥ��ߥ������ǿ�����Х��new_album.pl�Υᥤ�����ˡ����������ȵ��������new_comment.pl�Υᥤ�����ˤ���ϤǤ��ޤ���
-�֤��ͤϡ����ܤ��Ȥ˰ʲ��Τ褦�ʥϥå����ե���󥹤ˤ�����Τ�����Ǥ���
+標準的な履歴ページのメイン部分用の解析メソッドです。
+マイミクシィ最新アルバム（new_album.plのメイン部）、日記コメント記入履歴（new_comment.plのメイン部）を解析できます。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '����ˤ��',
+ 	'subject' => 'こんにちわ。',
  	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx',
- 	'name' => '��������',
+ 	'name' => '塚本牧生',
  	'time' => '2004/08/18 13:18'
  }
 
-�ʤ����ޥ��ߥ������ǿ�����Х�ˤĤ��Ƥϡ����ѤΥ᥽�åɤ��Ѱդ��Ƥ���ޤ��Τǡ��������Ȥ����������Ǥ���
-���ߤϤ����Υڡ�����parse_standard_history2�ǲ��ϤǤ��뤿�ᡢ�����Ǥ�parse_standard_history2��ƤӽФ��Ƥ�������Ǥ���������ˤĤ��Ƥ�mixi¦���ѹ������뤫���Τ�ޤ���
-���λ��ˤ����ѥ᥽�åɤǤ������ϤǤ��ʤ��ʤꡢparse_standard_history2��ȤäƤ���ȼ�ľ����ɬ�פˤʤ�Ǥ��礦��
+なお、マイミクシィ最新アルバムについては、専用のメソッドを用意してありますので、そちらを使う方が妥当です。
+現在はこれらのページをparse_standard_history2で解析できるため、内部ではparse_standard_history2を呼び出しているだけですが、将来についてはmixi側の変更があるかも知れません。
+その時には専用メソッドでしか解析できなくなり、parse_standard_history2を使っていると手直しが必要になるでしょう。
 
 =item $url = $mixi->set_response( $url [ => 'refresh'] )
 
-response�᥽�åɤ��֤��ͤ�$url�������Υǡ����ˤʤ�褦�˥��åȤ��ޤ���
-����ˤ��碌�ơ��Ʋ��ϥ᥽�åɤΥǥե���Ȥβ����оݥǡ�����$url�Τ�Τˤʤ�ޤ���
+responseメソッドの返り値を、$url取得時のデータになるようにセットします。
+これにあわせて、各解析メソッドのデフォルトの解析対象データも$urlのものになります。
 
-�ǥե���ȤǤϡ�$url���Ǹ��get�ޤ���post�Ǽ�������URL�Ȱۤʤ��������$url��get�Ǽ������ޤ���
-����ˤ�ꡢ���פʺƼ�������٤Ȼ��֤򤫤��ʤ��褦�ˤ��Ƥ��ޤ���
-���ξ��Ǥ�ǡ�����Ƽ��������ǿ��Υǡ����ˤ��������ˤ�'refresh'����ꤷ�Ƥ���������
+デフォルトでは、$urlが最後にgetまたはpostで取得したURLと異なる時だけ、$urlをgetで取得します。
+これにより、不要な再取得の負荷と時間をかけないようにしています。
+この場合でもデータを再取得し、最新のデータにしたい時には'refresh'を指定してください。
 
-=item @items = $mixi->post_add_diary('submit' => '���������', 'diary_title' => '���������ȥ�', 'diary_body' => '������ʸ', ['photo1' => '�̿�1', 'photo2' => '�̿�2', 'photo3' => '�̿�3' [, 'orig_size' => 1]] [, 'packed' => '�ϥå�����']);
+=item @items = $mixi->post_add_diary('submit' => 'アクション', 'diary_title' => '日記タイトル', 'diary_body' => '日記本文', ['photo1' => '写真1', 'photo2' => '写真2', 'photo3' => '写真3' [, 'orig_size' => 1]] [, 'packed' => 'ハッシュ値']);
 
-���������ڡ����˰����Υǡ������������ޤ���
-�֤��ͤ���������HTTP::Response���֥������ȤǤ���
+日記作成ページに引数のデータを送信します。
+返り値は送信時のHTTP::Responseオブジェクトです。
 
-���������ˤϡ���ǧ���̤�����������"main"���ºݤ���Ƥ�����ˤ�"confirm"����ꤷ�ޤ���
-�̿�1��3�ˤϡ���ǧ���̤����������ϥե�����ѥ�����ꤷ���֤��ΤޤޤΥ������������פ�����ˤϡ�orig_size => 1����ꤷ�ޤ���
+アクションには、確認画面を取得する時は"main"、実際に投稿する時には"confirm"を指定します。
+写真1～3には、確認画面を取得する時はファイルパスを指定し、「そのままのサイズで送信」する時には、orig_size => 1も指定します。
 
-�ºݤ���Ƥ�����ˤϡ��̿�1��3�ʤɤ�����ˡ���ǧ���̤�ɽ�����줿�ϥå����͡�packed�ե�����ɤ��͡ˤ���ꤷ�ޤ���
+実際に投稿する時には、写真1～3などの代わりに、確認画面に表示されたハッシュ値（packedフィールドの値）を指定します。
 
-=item @items = $mixi->post_edit_diary('submit' => '���������', 'diary_id' => '����ID', 'diary_title' => '���������ȥ�', 'diary_body' => '������ʸ', 'photo1' => '�̿�1', 'photo2' => '�̿�2', 'photo3' => '�̿�3');
+=item @items = $mixi->post_edit_diary('submit' => 'アクション', 'diary_id' => '日記ID', 'diary_title' => '日記タイトル', 'diary_body' => '日記本文', 'photo1' => '写真1', 'photo2' => '写真2', 'photo3' => '写真3');
 
-�����Խ��ڡ����˰����Υǡ������������ޤ���
-�֤��ͤ���������HTTP::Response���֥������ȤǤ���
+日記編集ページに引数のデータを送信します。
+返り値は送信時のHTTP::Responseオブジェクトです。
 
-���������ˤϡ��Խ�������ˤ�"main"����ꤷ�ޤ���
-�̿�1��3�ˤϡ��ե�����ѥ�����ꤷ�ޤ���
+アクションには、編集する時には"main"を指定します。
+写真1～3には、ファイルパスを指定します。
 
-=item @items = $mixi->post_delete_diary('submit' => '���������', 'diary_id' => '����ID');
+=item @items = $mixi->post_delete_diary('submit' => 'アクション', 'diary_id' => '日記ID');
 
-��������ڡ����˰����Υǡ������������ޤ���
-�֤��ͤ���������HTTP::Response���֥������ȤǤ���
+日記削除ページに引数のデータを送信します。
+返り値は送信時のHTTP::Responseオブジェクトです。
 
-���������ˤϡ���ǧ���̤�����������"main"���ºݤ���Ƥ�����ˤ�"confirm"����ꤷ�ޤ���
+アクションには、確認画面を取得する時は"main"、実際に投稿する時には"confirm"を指定します。
 
 =item $time = $mixi->convert_login_time($time);
 
-�֤���������פ�ɽ��������45ʬ����פʤɤε��Ҥ�����ľ���ޤ���
+「お気に入り」に表示される「45分以内」などの記述を時刻に直します。
 
 =back
 
-=head2 ��ѥ᥽�å�
+=head2 試験用メソッド
 
-�ʲ���WWW::Mixi�λ�ѤΥ᥽�åɤǤ���
+以下はWWW::Mixiの試験用のメソッドです。
 
 =over 4
 
 =item perl -MWWW::Mixi -e "WWW::Mixi::test('email', 'password' [, 'logfile'])"
 
-WWW::Mixi�γƵ�ǽ�����뤿��Υ᥽�åɤǤ���
+WWW::Mixiの各機能を試験するためのメソッドです。
 
-0.13�ǤǤϥ��󥹥ȥ饯�����������󡢥ǡ����μ�����Cookie����¸�������ޤ���
-������������URL���Ѵ���������������μ������ڡ���������get��post�ˡ����ϤʤɤΥ᥽�åɤ���Ѥ��Ƥ��ޤ���
+0.13版ではコンストラクタ、ログイン、データの取得、Cookieの保存が試験されます。
+これらは内部でURLの変換、ログイン状況の取得、ページ取得（getとpost）、解析などのメソッドを使用しています。
 
-email��password��mixi�˥�������Ǥ����Τ���ꤷ�Ƥ���������
-�����ե�����ϲ��Ϸ�̤���Ϥ��뤿��Τ�ΤǤ���
-̤�������'LWP-Mixi-x.xx-test.log'�����Ѥ���ޤ���
+email、passwordはmixiにログインできるものを指定してください。
+ログファイルは解析結果を出力するためのものです。
+未指定時は'LWP-Mixi-x.xx-test.log'が使用されます。
 
 =back
 
