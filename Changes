@@ -1,5 +1,14 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.29  Mon Apr 25 12:00:00 2005
+	- fix "parse_add_diary_preview".
+	- fix "get_add_diary_confirm".
+	- fix "post_add_diary".
+		- they does not work because of 'post_key' required from Apr. 2005.
+	- fix "rewrite".
+		- uninvited double quote in HTML tag is allowed.
+	- PODs are explicitly specified code with "encoding utf8".
+
 0.28  Fri Apr  1 14:13:00 2005
 	- add "parse_list_outbox", "get_list_outbox". (thanks AsO)
 		- allows you to get and parse "message.pl?box=outbox".

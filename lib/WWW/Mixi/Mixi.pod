@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 WWW::Mixi - Mixiアクセス用のLWP::UserAgentモジュール
@@ -534,14 +536,16 @@ IDを取得できなかった時の返り値は0です。
  	'diary_body' => '今日は朝から晩だった。
  生まれたばかりの...',
  	'packed' => 'asjkEKJHFu.16190.diary:1:adjksHfsdk.16190.diary_s:1'
+        'post_key' => '012a34b56cd78e901fa23b45678cde90',
  }
 
 __action__というキーがあることに注意してください。
 これはこのフォームの送信先URLを表しているもので、フォーム値ではありません。
 日記を作成する（confirm）する時には、このキーは削除しておく必要があります。
 
-photo1～3のキーはプレビュー取得時に画像ファイルをおくっていれば、mixi側からランダムな文字列が返されます。
-日記を作成する時には、そのままの値を送信します。
+'post_key'は自動的にmixi側からランダムな文字列が返されます。
+また、'packed'はプレビュー取得時に画像ファイルをおくっていれば、同じくmixi側からランダムな文字列が返されます。
+日記を投稿する（postまたはget_edit_diary_confirm）際にはプレビューで取得したこれらの値も必要です。
 
 =back
 
@@ -1099,10 +1103,12 @@ WWW::Mixi is developed by TSUKAMOTO Makio <tsukamoto@gmail.com>.
 Thanks to DonaDona (http://hsj.jp/) for methods to post or delete a diary entry, to parse diary list.
 Topia (http://clovery.jp/) for some bugfixes.
 shino (http://www.freedomcat.com/) for method to parse diary entry and some bugfixes.
+AsO (http://www.bx.sakura.ne.jp/~clan/rn/cgi-bin/index.cgi) for method to parse "send message".
+makamaka (http://www.donzoko.net/) for some bugfixes.
 
 =head1 COPYRIGHT
 
-Copyright 2004-2004 TSUKAMOTO Makio.
+Copyright 2004-2005 TSUKAMOTO Makio.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

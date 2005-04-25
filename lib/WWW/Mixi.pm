@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.28$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.29$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -722,15 +722,12 @@ sub parse_view_message {
 	my $base      = $res->request->uri->as_string;
 	my $content   = $res->content;
 	my $item      = undef;
-#	my $re_link   = '<a href="?(.+?)"?>(.+?)<\/a>';
 	my $re_link   = '<a href="(.+?)">(.+?)<\/';
 	my $re_date   = '(\d{4})年(\d{2})月(\d{2})日&nbsp;&nbsp;(\d{1,2}):(\d{2})';
 	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=555>(.*?)<\/table>/s) {
 		my $message = $1;
 		my @rows = split(/<\/tr>/, $message, 4);
-#		my $image = $1 if ($rows[0] =~ s/<td ALIGN=center.*?>.*?<img SRC="(.*?)" border=0>.*?<\/td>//i);
 		my $image = $1 if ($rows[0] =~ /<td ALIGN=center.*?>.*?<img SRC="(.*?)" border=0>.*?<\/td>/i);
-#		my ($link, $name) = ($1, $2) if ($rows[0] =~ s/<td BGCOLOR=#FFF4E0.*?>.*?${re_link}.*?<\/td>//i);
 		my ($link, $name) = ($1, $2) if ($rows[0] =~ /<td BGCOLOR=#FFF4E0.*?>.*?${re_link}.*?td>/i);
 		my $time = sprintf('%04d/%02d/%02d %02d:%02d', $1, $2, $3, $4, $5) if ($rows[1] =~ /${re_date}/);
 		my $subj = $1 if ($rows[2] =~ /<\/font>&nbsp;:&nbsp;(.*)<\/td>/);
@@ -781,7 +778,7 @@ sub parse_add_diary_preview {
 		while ($content =~ s/<form action="([^<>]*?)" method=post>(.*?)<\/form>//is) {
 			my $value = {'__action__' => $self->absolute_url($1, $base)};
 			my $form = $2;
-			foreach my $field (qw(submit diary_title diary_body packed)) {
+			foreach my $field (qw(submit diary_title diary_body packed post_key)) {
 				$value->{$field} = ($form =~ /<input type=hidden name=${field} value="?(.*?)"?>/) ? $self->rewrite($1) : undef;
 			}
 			push(@items, $value);
@@ -1085,12 +1082,22 @@ sub get_add_diary_confirm {
 	my %form  = @_;
 	my $url   = 'add_diary.pl';
 	my @files = qw(photo1 photo2 photo3);
-	# 写真があればプレビュー投稿
-	if (grep { $form{$_} } @files) {
+	# POSTキー未取得、または写真があればプレビュー投稿
+	if (
+		(not $form{'post_key'}) or                               # 'post_key'対応
+		(grep { $form{$_} } @files and not $form{'packed'})      # 'packed'対応
+	) {
 		my @items = eval '$self->get_add_diary_preview(%form)';
 		@items = grep {$_->{'submit'} eq 'confirm'} @items;
 		return 0 unless (@items);
-        $form{'packed'} = $items[0]->{'packed'};
+		$form{'packed'} = $items[0]->{'packed'};
+		$form{'post_key'} = $items[0]->{post_key};
+		$self->log("[info] プレビューページを取得しました。\n");
+		$self->dumper_log(\%form);
+	}
+	# 画像ファイルは送信対象から除外（'packed'対応）
+	foreach (qw(photo1 photo2 photo3)) {
+		delete($form{$_}) if (exists($form{'post_key'}));
 	}
 	# 投稿
 	$form{'submit'} = 'confirm';
@@ -1263,7 +1270,8 @@ sub unescape {
 sub remove_tag {
 	my $self = shift;
 	my $str  = shift;
-	my $re_standard_tag = q{[^"'<>]*(?:"[^"]*"[^"'<>]*|'[^']*'[^"'<>]*)*(?:>|(?=<)|$(?!\n))}; #'}}}}
+#	my $re_standard_tag = q{[^"'<>]*(?:"[^"]*"[^"'<>]*|'[^']*'[^"'<>]*)*(?:>|(?=<)|$(?!\n))};
+	my $re_standard_tag = q{[^"'<>]*(?:"[^"]*"'?[^"'<>]*|'[^']*'"?[^"'<>]*)*(?:>|(?=<)|$(?!\n))}; # <a href='URL'">のような余計なダブルクォート対応
 	my $re_comment_tag  = '<!(?:--[^-]*-(?:[^-]+-)*?-(?:[^>-]*(?:-[^>-]+)*?)??)*(?:>|$(?!\n)|--.*$)';
 	my $re_html_tag     = qq{$re_comment_tag|<$re_standard_tag};
 	$str =~ s/$re_html_tag//g;
@@ -1342,10 +1350,10 @@ sub post_add_diary {
 	my $self     = shift;
 	my %values   = @_;
 	my $url      = 'add_diary.pl';
-	my @fields   = qw(submit diary_title diary_body photo1 photo2 photo3 orig_size packed);
+	my @fields   = qw(submit diary_title diary_body photo1 photo2 photo3 orig_size packed post_key);
 	my @required = qw(submit diary_title diary_body);
 	my @files    = qw(photo1 photo2 photo3);
-	my %label    = ('diary_title' => '日記のタイトル', 'diary_body' => '日記の本文', 'photo1' => '写真1', 'photo2' => '写真2', 'photo3' => '写真3', orig_size => '圧縮指定', packed => '送信データ');
+	my %label    = ('diary_title' => '日記のタイトル', 'diary_body' => '日記の本文', 'photo1' => '写真1', 'photo2' => '写真2', 'photo3' => '写真3', orig_size => '圧縮指定', packed => '送信データ', 'post_key' => '送信キー');
 	my @errors;
 	# データの生成とチェック
 	my %form     = map { $_ => $values{$_} } @fields;
