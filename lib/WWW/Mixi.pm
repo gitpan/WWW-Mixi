@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.29$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.30$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -54,11 +54,7 @@ sub login {
 		'next_url' => $self->absolute_url($next),
 	);
 	# Cookieの有効化
-	unless ($self->cookie_jar) {
-		my $cookie = sprintf('cookie_%s_%s.txt', $$, time);
-		$self->cookie_jar(HTTP::Cookies->new(file => $cookie, ignore_discard => 1));
-		$self->log("[info] Cookieを有効にしました。\n");
-	}
+	$self->enable_cookies;
 	# ログイン
 	$self->log("[info] 再ログインします。\n", ) if ($self->session);
 	my $res  = $self->post($page, %form);
@@ -247,6 +243,8 @@ sub parse_calendar {
 				$item->{'subject'} = ($item->{'subject'} =~ /([^\/]+)$/ and $icons{$1}) ? $icons{$1} : "不明($1)";
 				$item->{'link'} = $self->absolute_url($item->{'link'}, $base);
 				$item->{'icon'} = $self->absolute_url($item->{'icon'}, $base);
+				$item->{'subject'} = $self->rewrite($item->{'subject'});
+				$item->{'name'} = $self->rewrite($item->{'name'});
 				push(@items, $item);
 			}
 		}
@@ -1147,6 +1145,16 @@ sub absolute_linked_url {
 	return $self->absolute_url($url, $base);
 }
 
+sub enable_cookies {
+	my $self = shift;
+	unless ($self->cookie_jar) {
+		my $cookie = sprintf('cookie_%s_%s.txt', $$, time);
+		$self->cookie_jar(HTTP::Cookies->new(file => $cookie, ignore_discard => 1));
+		$self->log("[info] Cookieを有効にしました。\n");
+	}
+	return $self;
+}
+
 sub save_cookies {
 	my $self = shift;
 	my $file = shift;
@@ -1175,6 +1183,7 @@ sub load_cookies {
 		$info = "[error] Cookieファイル\"${file}\"が存在しません。\n";
 	} else {
 		$info = "[info] Cookieを\"${file}\"から読み込みます。\n";
+		$self->enable_cookies;
 		$result = eval "\$self->cookie_jar->load(\$file)";
 		$info .= "[error] $@\n" if ($@);
 	}
@@ -1460,6 +1469,7 @@ sub test {
 	my $error = undef;
 	my @items = ();
 	unless ($mail and  $pass) {
+
 		&{$logger}("mixiにログインできるメールアドレスとパスワードを指定してください。\n");
 		&{$logger}("[usage] perl -MWWW::Mixi -e \"WWW::Mixi::test('mail\@address', 'password');\"\n");
 		exit 1;

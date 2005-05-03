@@ -35,7 +35,7 @@ loginメソッドは、Cookieが無効になっていれば有効にし、オブ
 WWW::MixiはLWP::RobotUAのサブクラスとして実装されていますので、LWP::RobotUAとその親クラスであるLWP::UserAgentのメソッドを引き継いでいます。
 これらの使い方については、各クラスのドキュメントをご覧ください。
 
-=head2 コンストラクタ
+=head2 Constructor
 
 WWW::Mixiのコンストラクタです。
 
@@ -54,7 +54,7 @@ WWW::Mixiオブジェクトを作成するコンストラクタです。
 
 =back
 
-=head2 ログインとログイン情報の取得
+=head2 Login and Login information
 
 mixiにログインするためのメソッドと、現在のログイン状況、セッションIDなどの関連情報を取得するためのメソッド郡です。
 
@@ -89,7 +89,7 @@ $responseにはHTTP::Responseオブジェクト（get、post、request、simple_
 
 =back
 
-=head2 ページ取得
+=head2 Fetch URL
 
 ページを取得するためのメソッドです。
 ログイン前には使えません。
@@ -121,7 +121,7 @@ POST時のフィールドの値は、'name' => 'Mr. Mixi', 'Age' => '3years'の�
 
 =back
 
-=head2 解析用メソッド
+=head2 Parse response
 
 取得済みのページを解析します。
 
@@ -549,7 +549,7 @@ __action__というキーがあることに注意してください。
 
 =back
 
-=head2 データの取得
+=head2 Fetch data
 
 直接データを取得するためのメソッドです。
 
@@ -859,7 +859,7 @@ IDを取得できなかった時の返り値は0です。
 
 =back
 
-=head2 投稿
+=head2 Post data
 
 直接データを投稿するためのメソッドです。
 
@@ -889,7 +889,7 @@ IDを取得できなかった時の返り値は0です。
 
 =back
 
-=head2 URLの変換
+=head2 Convert URL
 
 URLを絶対URLに変換するメソッドです。
 
@@ -908,12 +908,19 @@ URLの代わりに'login'、'show_logs'などの'.pl'を省いたファイル名
 
 =back
 
-=head2 Cookie関連
+=head2 Cookies
 
 Cookieの保存や読込を行うためのメソッドです。
 
 =over 4
 
+=item $mixi->enbale_cookies($cookie_file)
+
+cookieを有効にします。
+これはログイン（login）、Cookieの読み込み（load_cookies）などの際に自動的に行われるので、通常は明示的に行う必要はありません。
+ログインなどに先立って、Cookieを操作したい時などのために用意されています。
+
+返り値はオブジェクト自身です。
 
 =item $mixi->save_cookies($cookie_file)
 
@@ -927,7 +934,7 @@ cookieの内容を指定されたファイルに保存します。
 
 =back
 
-=head2 内部メソッド
+=head2 Internal methods
 
 以下はWWW::Mixiの内部メソッドです。
 
@@ -1073,7 +1080,7 @@ responseメソッドの返り値を、$url取得時のデータになるよう�
 
 =back
 
-=head2 試験用メソッド
+=head2 Testing method
 
 以下はWWW::Mixiの試験用のメソッドです。
 

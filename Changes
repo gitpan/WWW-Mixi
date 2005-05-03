@@ -1,5 +1,10 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.30  Mon May  3 13:00:00 2005
+	- add "enable_cookies".
+	- fix "parse_calender".
+		-  title and name had not "rewrite"d.
+
 0.29  Mon Apr 25 12:00:00 2005
 	- fix "parse_add_diary_preview".
 	- fix "get_add_diary_confirm".
