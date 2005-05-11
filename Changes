@@ -1,5 +1,12 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.31  Wed May 11 12:44:20 2005
+
+	- add stamp method.
+	- add request method (overwrite LWP::RobotUA::request)
+	- fix parse_list_bookmark returns unsorted array.
+	- fix all request rejected by robots.txt
+
 0.30  Mon May  3 13:00:00 2005
 	- add "enable_cookies".
 	- fix "parse_calender".

@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.30$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.31$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -25,7 +25,8 @@ sub new {
 
 	# オブジェクトの生成
 	my $name = "WWW::Mixi/" . $VERSION;
-	my $self = new LWP::RobotUA $name, $email;
+	my $rules = WWW::Mixi::RobotRules->new($name);
+	my $self = LWP::RobotUA->new($name, $email, $rules);
 	$self = bless $self, $class;
 	$self->from($email);
 	$self->delay(1/60);
@@ -47,41 +48,37 @@ sub new {
 sub login {
 	my $self = shift;
 	my $page = 'login.pl';
-	my $next = 'home.pl';
+	my $next = ($self->{'mixi'}->{'next_url'}) ? $self->{'mixi'}->{'next_url'} : '/home.pl';
 	my %form = (
 		'email'    => $self->{'mixi'}->{'email'},
 		'password' => $self->{'mixi'}->{'password'},
 		'next_url' => $self->absolute_url($next),
 	);
-	# Cookieの有効化
 	$self->enable_cookies;
 	# ログイン
-	$self->log("[info] 再ログインします。\n", ) if ($self->session);
-	my $res  = $self->post($page, %form);
-	if ($res->is_success) {
-		$self->{'mixi'}->{'refresh'} = ($res->headers->header('refresh') =~ /url=([^ ;]+)/) ? $self->absolute_url($1) : undef;
-	} else {
-		$self->{'mixi'}->{'refresh'} = undef;
-	}
-	return (wantarray) ? ($self->session, $res) : $self->session; 
+	$self->log("[info] 再ログインします。\n") if ($self->session);
+	my $res = $self->post($page, %form);
+	$self->{'mixi'}->{'refresh'} = ($res->is_success and $res->headers->header('refresh') =~ /url=([^ ;]+)/) ? $self->absolute_url($1) : undef;
+	return $res;
 }
 
 sub is_logined {
 	my $self = shift;
-	return ($self->session) ? 1 : 0;
+	return ($self->session and $self->stamp) ? 1 : 0;
 }
 
 sub is_login_required {
 	my $self = shift;
 	my $res  = (@_) ? shift : $self->{'mixi'}->{'response'};
-	if    (not $res)             { return 'ページを取得できていません。'; }
-	elsif (not $res->is_success) { return 'ページ取得に成功していません（' . $res->message . '）。'; }
+	if    (not $res)             { return "ページを取得できていません。"; }
+	elsif (not $res->is_success) { return sprintf('ページ取得に失敗しました。（%s）', $res->message); }
 	else {
 		my $content = $res->content;
 		return 0 if ($content !~ /<form[^<>]+action=["']?([^"'\s<>]*)["']?.*?>/);
 		return 0 if ($self->absolute_url($1) ne $self->absolute_url('login.pl'));
-		return 'ログインに失敗しました。'.$1 if ($content =~ /<b><font color=#DD0000>(.*?)<\/font><\/b>/);
-		return 'ログインが必要です。';
+		$self->{'mixi'}->{'next_url'} = ($content =~ /<input type=hidden name=next_url value="(.*?)">/) ? $1 : '/home.pl';
+		return "Login Failed ($1)" if ($content =~ /<b><font color=#DD0000>(.*?)<\/font><\/b>/);
+		return 'Login Required';
 	}
 	return 0;
 }
@@ -89,12 +86,32 @@ sub is_login_required {
 sub session {
 	my $self = shift;
 	return undef unless ($self->cookie_jar);
-	my $cookie = $self->cookie_jar->as_string;
-	return undef unless ($cookie =~ /^Set-Cookie.*?:.*? BF_SESSION=(.*?);/);
-	return $1;
+	return ($self->cookie_jar->as_string =~ /\bSet-Cookie.*?:.*? BF_SESSION=(.*?);/) ? $1 : undef;
+}
+
+sub stamp {
+	my $self = shift;
+	return undef unless ($self->cookie_jar);
+	return ($self->cookie_jar->as_string =~ /\bSet-Cookie.*?:.*? BF_STAMP=(.*?);/) ? $1 : undef;
 }
 
 sub refresh { return $_[0]->{'mixi'}->{'refresh'}; }
+
+sub request {
+	my $self = shift;
+	my @args = @_;
+	my $res = $self->SUPER::request(@args);
+	
+	# check login form existence
+	if ($res->is_success and my $message = $self->is_login_required($res)) {
+		$res->code(401);
+		$res->message($message);
+	}
+	
+	# store and return response
+	$self->{'mixi'}->{'response'} = $res;
+	return $res;
+}
 
 sub get {
 	my $self = shift;
@@ -102,13 +119,8 @@ sub get {
 	$url     = $self->absolute_url($url);
 	$self->log("[info] GETメソッドで\"${url}\"を取得します。\n");
 	# 取得
-	$self->login if (not $self->is_logined);                          # 未ログイン時はログイン
-	my $res  = $self->request(HTTP::Request->new('GET', $url));       # 取得
+	my $res  = $self->request(HTTP::Request->new('GET', $url));
 	$self->log("[info] リクエストが処理されました。\n");
-	$_ = $self->is_login_required($res);
-	$self->log("[error] $_\n") if ($_);
-	# 終了
-	$self->{'mixi'}->{'response'} = $res;
 	return $res;
 }
 
@@ -124,12 +136,8 @@ sub post {
 	           &HTTP::Request::Common::POST($url, [@form]);
 	$self->log("[info] リクエストが生成されました。\n");
 	# 取得
-	my $res = $self->request($req);                                                       # 取得
+	my $res = $self->request($req);
 	$self->log("[info] リクエストが処理されました。\n");
-	$_ = $self->is_login_required($res);
-	$self->log("[error] $_\n") if ($_);
-	# 終了
-	$self->{'mixi'}->{'response'} = $res;
 	return $res;
 }
 
@@ -334,14 +342,12 @@ sub parse_list_bookmark {
 			$item->{'time'}    = $1 if ($lines[2] =~ /<td BGCOLOR=#FFFFFF WIDTH=140>(.*?)<\/td>/is);
 			# format
 			foreach (qw(image link)) { $item->{$_} = $self->absolute_url($item->{$_}, $base) if ($item->{$_}); }
-			foreach (qw(subject description gender)) {
-				$item->{$_} =~ s/<.*?>//g if ($item->{$_});
-				$item->{$_} = $self->rewrite($item->{$_});
-			}
+			foreach (qw(subject description gender)) { $item->{$_} = $self->rewrite($item->{$_}); }
 			$item->{'time'} = $self->convert_login_time($item->{'time'}) if ($item->{'time'});
 			push(@items, $item) if ($item->{'subject'} and $item->{'link'});
 		}
 	}
+	@items = sort { $b->{'time'} cmp $a->{'time'} } @items;
 	return @items;
 }
 
@@ -1464,6 +1470,7 @@ sub test {
 	my $mail = (@_) ? shift : $ENV{'MIXI_MAIL'};
 	my $pass = (@_) ? shift : $ENV{'MIXI_PASS'};
 	my $log  = (@_) ? shift : "WWW-Mixi-${VERSION}-test.log";
+
 	open(OUT, ">$log");
 	my $logger = &test_logger;
 	my $error = undef;
@@ -1548,6 +1555,8 @@ sub test_login {
 			$error = "[error] " . $mixi->is_login_required($response) . "\n";
 		} elsif (not $mixi->session) {
 			$error = "[error] セッションIDを取得できませんでした。\n";
+		} elsif (not $mixi->stamp) {
+			$error = "[error] セッションスタンプを取得できませんでした。\n";
 		} elsif (not $mixi->session) {
 			$error = "[error] リフレッシュURLを取得できませんでした。\n";
 		}
@@ -1828,6 +1837,17 @@ sub test_save_and_read_cookies {
 		exit 8;
 	}
 	unlink($cookie_file);
+}
+
+package WWW::Mixi::RobotRules;
+use vars qw($VERSION @ISA);
+require WWW::RobotRules;
+@ISA = qw(WWW::RobotRules::InCore);
+
+$VERSION = sprintf("%d.%02d", q$Revision: 0.01 $ =~ /(\d+)\.(\d+)/);
+
+sub allowed {
+	return 1;
 }
 
 1;
