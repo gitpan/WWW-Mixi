@@ -1,5 +1,37 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.32  Tue Jun 07 01:09:24 2005
+
+	- add parse_ and get_show_friend_outline
+	- add parse_ and get_show_friend_profile
+	- add parse_ and get_new_diary
+	- add parse_ and get_new_diary_next
+	- add parse_ and get_new_diary_previous
+	- add parse_ and get_send_message_preview
+	- add parse_ and get_send_message_confirm
+	- add parse_ and get_show_friend_outline
+	- add parse_ and get_show_friend_detail
+	- mod parse_add_diary_preview
+		- now it uses parse_standard_form
+	- add parse_ and get_delete_diary_preview
+	- add parse_ and get_edit_diary_preview
+	- add parse_ and get_edit_diary_image
+	- add parse_add_diary_confirm
+	- add parse_delete_diary_confirm
+	- add parse_edit_diary_confirm
+	- mod get_add_diary_confirm
+	- mod get_delete_diary_confirm
+	- mod get_edit_diary_confirm
+		- now they returns result with parsing response content
+	- add get_view_diary
+	- rename parse_diary -> parse_view_diary
+		- parse_diary remains as alias of parse_view_diary currently
+	- fix parse_standard_history
+	- del parse_standard_history2
+	- add parse_standard_form
+	- add query_sorted_url
+	- add post_send_message
+
 0.31  Wed May 11 12:44:20 2005
 
 	- add stamp method.
