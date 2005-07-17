@@ -41,9 +41,7 @@ WWW::MixiはLWP::RobotUAのサブクラスとして実装されていますの�
 
 WWW::Mixiのコンストラクタです。
 
-=over 4
-
-=item $mixi = WWW::Mixi->new($email, $password [, '-log' => \&logging_method] [, '-abort' => \&aborting_method] [, '-rewrite' => \&rewriting_method] )
+=head3 $mixi = WWW::Mixi->new($email, $password [, '-log' => \&logging_method] [, '-abort' => \&aborting_method] [, '-rewrite' => \&rewriting_method] )
 
 WWW::Mixiオブジェクトを作成するコンストラクタです。
 
@@ -54,15 +52,11 @@ WWW::Mixiオブジェクトを作成するコンストラクタです。
 
 このメソッドはLWP::RobotUA（を介してLWP::UserAgent）から継承したnewメソッドを上書きしています。
 
-=back
-
 =head2 Login and Login information
 
 mixiにログインするためのメソッドと、現在のログイン状況、セッションIDなどの関連情報を取得するためのメソッド群です。
 
-=over 4
-
-=item $response = $mixi->login
+=head3 $response = $mixi->login
 
 mixiにログインします。
 必要であれば、Cookieの有効化などが行われます。
@@ -77,11 +71,11 @@ mixiにログインします。
  $res = $mixi->login;
  $res->is_success or die $res->status_line;
 
-=item $result = $mixi->is_logined
+=head3 $result = $mixi->is_logined
 
 ログイン済みであれば1、未ログインであれば0を返します。
 
-=item $result = $mixi->is_login_required( [$response] )
+=head3 $result = $mixi->is_login_required( [$response] )
 
 最後にgetまたはpostで取得したページデータを解析して、ログインフォームが表示されていないか確認します。
 ページの取得が成功していて、ログインフォームが表示されていないときには0を返します。
@@ -90,30 +84,26 @@ mixiにログインします。
 $responseを指定したときには、最後に取得したページの変わりに$responseを解析します。
 $responseにはHTTP::Responseオブジェクト（get、post、request、simple_requestメソッドなどの返り値がそうです）を指定してください。
 
-=item $session = $mixi->session
+=head3 $session = $mixi->session
 
 現在のセッションIDを返します。
 ログイン前など、セッションIDを取得できていない時にはundefが返ります。
 
-=item $session = $mixi->stamp
+=head3 $session = $mixi->stamp
 
 現在のセッションスタンプを返します。
 ログイン前など、セッションスタンプを取得できていない時にはundefが返ります。
 
-=item $session = $mixi->refresh
+=head3 $session = $mixi->refresh
 
 ログイン時に取得したリフレッシュURLを返します。
-
-=back
 
 =head2 Fetch URL
 
 ページを取得するためのメソッドです。
 なお、ログイン前に実行した場合は、該当ページのコンテンツは取得できず、レスポンスコードは401になります。
 
-=over 4
-
-=item $response = $mixi->request($request, $arg [, $size]) )
+=head3 $response = $mixi->request($request, $arg [, $size]) )
 
 このメソッドはLWP::UserAgentのrequestメソッドとほぼ同じ動作をします。
 使い方については、LWP::UserAgentのドキュメントを参照してください。
@@ -122,14 +112,14 @@ $responseにはHTTP::Responseオブジェクト（get、post、request、simple_
 また、このメソッドはLWP::RobotUAのrequestメソッドを実行しています。
 例えばRobot exclutionを守る、指定されたアクセス間隔をあけるなどといった点は同様の動作をします。
 
-=item $response = $mixi->get($url)
+=head3 $response = $mixi->get($url)
 
 GETメソッドで指定されたURLを取得します。
 URLの代わりに'login'、'show_logs'などの'.pl'を省いたファイル名を指定しても構いません。
 
 返り値はHTTP::Responseオブジェクトで、これはLWP::UserAgentモジュールのrequestメソッドと同じです。
 
-=item $response = $mixi->post($url ['field' => value, ...])
+=head3 $response = $mixi->post($url ['field' => value, ...])
 
 POSTメソッドで指定されたURLを取得します。
 URLの代わりに'login'、'show_logs'などの'.pl'を省いたファイル名を指定しても構いません。
@@ -140,12 +130,10 @@ POST時のフィールドの値は、'name' => 'Mr. Mixi', 'Age' => '3years'の�
 
 返り値はHTTP::Responseオブジェクトで、これはLWP::UserAgentモジュールのrequestメソッドと同じです。
 
-=item $response = $mixi->response()
+=head3 $response = $mixi->response()
 
 最後に取得されたレスポンスを返します。
 返り値はHTTP::Responseオブジェクトで、これはLWP::UserAgentモジュールのrequestメソッドの返り値と同じです。
-
-=back
 
 =head2 Parse response
 
@@ -154,9 +142,7 @@ POST時のフィールドの値は、'name' => 'Mr. Mixi', 'Age' => '3years'の�
 解析系のメソッドはいずれも、引数$responseを指定したときには$responseを、未指定時は最後にgetまたはpostメソッドで取得したデータを解析します。
 $responseにはHTTP::Responseオブジェクト（get、post、request、simple_requestメソッドなどの返り値がそうです）を指定してください。
 
-=over 4
-
-=item @items = $mixi->parse_main_menu( [$response] );
+=head3 @items = $mixi->parse_main_menu( [$response] );
 
 メインメニュー（「mixi」のロゴと一体になっている部分のメニュー）の項目を取得します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -166,7 +152,7 @@ $responseにはHTTP::Responseオブジェクト（get、post、request、simple_
  	'link' => 'http://mixi.jp/home.pl'
  }
 
-=item @items = $mixi->parse_banner( [$response] );
+=head3 @items = $mixi->parse_banner( [$response] );
 
 バナー（メインメニューに埋め込まれているもの）を取得します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -180,7 +166,7 @@ $responseにはHTTP::Responseオブジェクト（get、post、request、simple_
 mixiの利用規約の「2.禁止事項」第二条には「mixi の運営またはネットワーク・システムを妨害する行為」が含まれており、バナーによる利益を得ることはmixiの運営に必要なことだと思われます。
 WWW::Mixiモジュールを使用する際は、上記を良く考慮した上で、バナーを適切に扱うことを推奨します。
 
-=item @items = $mixi->parse_tool_bar( [$response] );
+=head3 @items = $mixi->parse_tool_bar( [$response] );
 
 ツールバーの項目を取得します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -190,7 +176,7 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'link' => 'http://mixi.jp/home.pl'
  }
 
-=item @items = $mixi->parse_information( [$response] );
+=head3 @items = $mixi->parse_information( [$response] );
 
 お知らせの項目を取得します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -201,7 +187,7 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'description\' => '友人を招待'
  }
 
-=item @items = $mixi->parse_calendar( [$response] );
+=head3 @items = $mixi->parse_calendar( [$response] );
 
 カレンダー（calendar.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -214,7 +200,7 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'icon' => 'http://mixi.jp/img/i_bd.gif'
  }
 
-=item $item = $mixi->parse_calendar_term( [$response] );
+=head3 $item = $mixi->parse_calendar_term( [$response] );
 
 カレンダー（calendar.plのメイン部）の期間（年月）を解析します。
 返り値は、以下のようなハッシュリファレンスです。
@@ -224,7 +210,7 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'month' => '8'
  }
 
-=item $item = $mixi->parse_calendar_next( [$response] );
+=head3 $item = $mixi->parse_calendar_next( [$response] );
 
 カレンダー（calendar.plのメイン部）の「次の月」へのリンクを解析します。
 返り値は、「次の月」がある場合は以下のようなハッシュリファレンスです。
@@ -234,7 +220,7 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'link' => 'http://mixi.jp/calendar.pl?year=2004&month=10&pref_id=13',
  }
 
-=item $item = $mixi->parse_calendar_previous( [$response] );
+=head3 $item = $mixi->parse_calendar_previous( [$response] );
 
 カレンダー（calendar.plのメイン部）の「前の月」へのリンクを解析します。
 返り値は、「前の月」がある場合は以下のようなハッシュリファレンスです。
@@ -244,7 +230,7 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'link' => 'http://mixi.jp/calendar.pl?year=2004&month=10&pref_id=13',
  }
 
-=item @items = $mixi->parse_list_bookmark( [$response] );
+=head3 @items = $mixi->parse_list_bookmark( [$response] );
 
 お気に入り（list_bookmark.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -258,7 +244,7 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'time' => '2004/08/18 13:18'
  }
 
-=item @items = $mixi->parse_list_comment( [$response] );
+=head3 @items = $mixi->parse_list_comment( [$response] );
 
 最近のコメント（list_comment.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -270,7 +256,7 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'time' => '2004/08/18 13:18'
  }
 
-=item @items = $mixi->parse_list_community( [$response] );
+=head3 @items = $mixi->parse_list_community( [$response] );
 
 コミュニティ一覧（list_community.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -282,7 +268,7 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'count' => '20'
  }
 
-=item $item = $mixi->parse_list_community_next( [$response] );
+=head3 $item = $mixi->parse_list_community_next( [$response] );
 
 コミュニティ一覧（list_community.plのメイン部）の「次のページ」へのリンクを解析します。
 返り値は、「次のページ」がある場合は以下のようなハッシュリファレンスです。
@@ -292,7 +278,7 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'link' => 'http://mixi.jp/list_community.pl?page=x',
  }
 
-=item $item = $mixi->parse_list_community_previous( [$response] );
+=head3 $item = $mixi->parse_list_community_previous( [$response] );
 
 コミュニティ一覧（list_community.plのメイン部）の「前のページ」へのリンクを解析します。
 返り値は、「前のページ」がある場合は以下のようなハッシュリファレンスです。
@@ -302,7 +288,7 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'link' => 'http://mixi.jp/list_community.pl?page=x',
  }
 
-=item @items = $mixi->parse_list_diary( [$response] );
+=head3 @items = $mixi->parse_list_diary( [$response] );
 
 日記（list_diary.pl）のメイン部分用の解析メソッドです。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -322,7 +308,7 @@ imagesの中身はサムネイルと本体画像のURLをハッシュリファ�
  	]
  }
 
-=item $item = $mixi->parse_list_diary_capasity( [$response] );
+=head3 $item = $mixi->parse_list_diary_capasity( [$response] );
 
 日記（list_diary.plのメイン部）の「日記の使用状況」を解析します。
 返り値は、「日記の使用状況」がある場合は以下のようなハッシュリファレンスです。
@@ -332,7 +318,7 @@ imagesの中身はサムネイルと本体画像のURLをハッシュリファ�
  	'used' => '2.2',
  }
 
-=item $item = $mixi->parse_list_diary_next( [$response] );
+=head3 $item = $mixi->parse_list_diary_next( [$response] );
 
 日記（list_diary.plのメイン部）の「次のxx件」へのリンクを解析します。
 返り値は、「次のxx件」がある場合は以下のようなハッシュリファレンスです。
@@ -342,7 +328,7 @@ imagesの中身はサムネイルと本体画像のURLをハッシュリファ�
  	'link' => 'http://mixi.jp/list_diary.pl?page=x',
  }
 
-=item $item = $mixi->parse_list_diary_previous( [$response] );
+=head3 $item = $mixi->parse_list_diary_previous( [$response] );
 
 日記（list_diary.plのメイン部）の「前のxx件」へのリンクを解析します。
 返り値は、「前のxx件」がある場合は以下のようなハッシュリファレンスです。
@@ -352,7 +338,18 @@ imagesの中身はサムネイルと本体画像のURLをハッシュリファ�
  	'link' => 'http://mixi.jp/list_diary.pl?page=x',
  }
 
-=item @items = $mixi->parse_list_friend( [$response] );
+=head3 @items = $mixi->parse_list_diary_monthy_menu( [$response] );
+
+日記（list_diary.pl）の各月のインデックスへのリンクを解析します。
+返り値は、月ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'link' => 'http://mixi.jp/list_diary.pl?year=2005&month=7',
+ 	'month' => '7',
+ 	'year' => '2005'
+ },
+
+=head3 @items = $mixi->parse_list_friend( [$response] );
 
 友人・知人一覧（list_friend.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -361,13 +358,13 @@ imagesの中身はサムネイルと本体画像のURLをハッシュリファ�
  	'subject' => 'walrusさん',
  	'link' => 'http://mixi.jp/show_friend.pl?id=xxxxx',
  	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxxx_xxxxxxxxxx.jpg',
+ 	'background' => 'http://img.mixi.jp/img/bg_xxx.gif',
  	'id' => 'xxxxx',
  	'count' => 'xxx'
- 	'status' => '日記 - new!!',
-
+ 	'status' => '1時間以内',
  }
 
-=item $item = $mixi->parse_list_friend_next( [$response] );
+=head3 $item = $mixi->parse_list_friend_next( [$response] );
 
 友人・知人一覧（list_friend.plのメイン部）の「次のページ」へのリンクを解析します。
 返り値は、「次のページ」がある場合は以下のようなハッシュリファレンスです。
@@ -377,7 +374,7 @@ imagesの中身はサムネイルと本体画像のURLをハッシュリファ�
  	'link' => 'http://mixi.jp/list_friend.pl?page=x',
  }
 
-=item $item = $mixi->parse_list_friend_previous( [$response] );
+=head3 $item = $mixi->parse_list_friend_previous( [$response] );
 
 友人・知人一覧（list_friend.plのメイン部）の「前のページ」へのリンクを解析します。
 返り値は、「前のページ」がある場合は以下のようなハッシュリファレンスです。
@@ -387,7 +384,7 @@ imagesの中身はサムネイルと本体画像のURLをハッシュリファ�
  	'link' => 'http://mixi.jp/list_friend.pl?page=x',
  }
 
-=item @items = $mixi->parse_list_message( [$response] );
+=head3 @items = $mixi->parse_list_message( [$response] );
 
 最近の受信メッセージ（list_message.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -402,7 +399,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'emvelope' => 'http://mixi.jp/img/mail5.gif'
  }
 
-=item @items = $mixi->parse_list_outbox( [$response] );
+=head3 @items = $mixi->parse_list_outbox( [$response] );
 
 最近の送信メッセージ（list_message.pl?box=outboxのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -414,7 +411,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'time' => '08/18',
  }
 
-=item @items = $mixi->parse_new_album( [$response] );
+=head3 @items = $mixi->parse_new_album( [$response] );
 
 マイミクシィ最新アルバム（new_album.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -426,7 +423,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'time' => '2004/08/18 13:18'
  }
 
-=item @items = $mixi->parse_new_bbs( [$response] );
+=head3 @items = $mixi->parse_new_bbs( [$response] );
 
 コミュニティ最新書き込み（new_bbs.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -438,7 +435,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'time' => '2004/08/18 13:18'
  }
 
-=item @items = $mixi->parse_new_comment( [$response] );
+=head3 @items = $mixi->parse_new_comment( [$response] );
 
 日記コメント記入履歴（new_comment.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -450,7 +447,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'time' => '2004/08/18 13:18'
  }
 
-=item @items = $mixi->parse_new_diary( [$response] );
+=head3 @items = $mixi->parse_new_diary( [$response] );
 
 新着日記検索（new_diary.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -465,7 +462,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxxx_xxxxxxxxs.jpg',
  }
 
-=item $item = $mixi->parse_new_diary_next( [$response] );
+=head3 $item = $mixi->parse_new_diary_next( [$response] );
 
 新着日記検索（new_diary.plのメイン部）の「次のページ」へのリンクを解析します。
 返り値は、「次を表示」がある場合は以下のようなハッシュリファレンスです。
@@ -475,7 +472,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'link' => 'http://mixi.jp/new_diary.pl?page=2&keyword=xx'
  }
 
-=item $item = $mixi->parse_new_diary_previous( [$response] );
+=head3 $item = $mixi->parse_new_diary_previous( [$response] );
 
 新着日記検索（new_diary.plのメイン部）の「前のページ」へのリンクを解析します。
 返り値は、「前を表示」がある場合は以下のようなハッシュリファレンスです。
@@ -485,7 +482,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'link' => 'http://mixi.jp/new_diary.pl?page=2&keyword=xx'
  }
 
-=item @items = $mixi->parse_new_friend_diary( [$response] );
+=head3 @items = $mixi->parse_new_friend_diary( [$response] );
 
 マイミクシィ最新日記（new_friend_diary.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -497,7 +494,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'time' => '2004/08/18 13:18'
  }
 
-=item $item = $mixi->parse_new_friend_diary_next( [$response] );
+=head3 $item = $mixi->parse_new_friend_diary_next( [$response] );
 
 マイミクシィ最新日記（new_friend_diary.plのメイン部）の「次のページ」へのリンクを解析します。
 返り値は、「次のページ」がある場合は以下のようなハッシュリファレンスです。
@@ -507,7 +504,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'link' => 'http://mixi.jp/new_friend_diary.pl?page=x',
  }
 
-=item $item = $mixi->parse_new_friend_diary_previous( [$response] );
+=head3 $item = $mixi->parse_new_friend_diary_previous( [$response] );
 
 マイミクシィ最新日記（new_friend_diary.plのメイン部）の「前のページ」へのリンクを解析します。
 返り値は、「前のページ」がある場合は以下のようなハッシュリファレンスです。
@@ -517,7 +514,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'link' => 'http://mixi.jp/new_friend_diary.pl?page=x',
  }
 
-=item @items = $mixi->parse_new_review( [$response] );
+=head3 @items = $mixi->parse_new_review( [$response] );
 
 マイミクシィ最新レビュー（new_review.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -529,14 +526,14 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'time' => '2004/08/18 13:18'
  }
 
-=item $id = $mixi->parse_self_id( [$response] );
+=head3 $id = $mixi->parse_self_id( [$response] );
 
 おすすめレビュー（list_review.pl）の「レビューを書く」ボックスを解析し、自分のIDを返します。
 IDを取得できなかった時の返り値は0です。
 
 このメソッドは他の多くの解析系メソッドと違い、ハッシュリファレンスの配列ではなくただの文字列（スカラ値）を返すことに注意してください。
 
-=item $item = $mixi->parse_show_friend_outline( [$response] );
+=head3 $item = $mixi->parse_show_friend_outline( [$response] );
 
 ニックネームや写真（show_friend.plのプロフィール画像左上部）を解析します。
 返り値は、以下のようなハッシュリファレンスです。
@@ -557,7 +554,7 @@ IDを取得できなかった時の返り値は0です。
 stepはマイミクシィの場合1、マイミクシィのマイミクシィの場合2、どちらでもない場合0です。
 stepが2の時は上のように、間に挟まるマイミクシィの情報がrelationにセットされます。
 
-=item $item = $mixi->parse_show_friend_profile( [$response] );
+=head3 $item = $mixi->parse_show_friend_profile( [$response] );
 
 プロフィール（show_friend.plのメイン部）を解析し、プロフィールを返します。
 返り値は、以下のようなハッシュリファレンスです。
@@ -579,7 +576,7 @@ stepが2の時は上のように、間に挟まるマイミクシィの情報が
 
 ハッシュの項目は、その人の公開しているプロフィールの内容によって増減します。
 
-=item @items = $mixi->parse_show_log( [$response] );
+=head3 @items = $mixi->parse_show_log( [$response] );
 
 あしあと（show_log.plのメイン部）を解析し、あしあとを返します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -590,13 +587,13 @@ stepが2の時は上のように、間に挟まるマイミクシィの情報が
  	'time' => '2004/08/18 13:18'
  }
 
-=item $count = $mixi->parse_show_log_count( [$response] );
+=head3 $count = $mixi->parse_show_log_count( [$response] );
 
 あしあと（show_log.plのメイン部）を解析し、あしあと数を返します。
 
 このメソッドは他の多くの解析系メソッドと違い、ハッシュリファレンスの配列ではなくただの数値（スカラ値）を返すことに注意してください。
 
-=item $item = $mixi->parse_view_diary( [$response] );
+=head3 $item = $mixi->parse_view_diary( [$response] );
 
 日記（view_diary.plのメイン部）を解析します。
 返り値は、以下のようなハッシュリファレンスです。
@@ -624,7 +621,7 @@ stepが2の時は上のように、間に挟まるマイミクシィの情報が
 
 images、commentsは0件の時も、複数件の時もあることに注意してください。
 
-=item $item = $mixi->parse_view_message( [$response] );
+=head3 $item = $mixi->parse_view_message( [$response] );
 
 受信メッセージ（view_message.plのメイン部）のメッセージを解析します。
 返り値は、メッセージを取得できたときは以下のようなハッシュリファレンスです。
@@ -640,7 +637,7 @@ images、commentsは0件の時も、複数件の時もあることに注意し�
  	'description' => '本文...',
  }
 
-=item @items = $mixi->parse_view_message_form( [$response] );
+=head3 @items = $mixi->parse_view_message_form( [$response] );
 
 受信メッセージ（view_message.plのメイン部）のメッセージ削除、返信などのフォームを解析します。
 返り値は、フォームごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -653,7 +650,7 @@ images、commentsは0件の時も、複数件の時もあることに注意し�
 
 各フォームは、actionに対応する値のURLに対して、フォーム項目submitとしてsubmitに対応する値だけをpostで送信するものです。
 
-=item @items = $mixi->parse_add_diary_preview( [$response ]);
+=head3 @items = $mixi->parse_add_diary_preview( [$response ]);
 
 日記作成のプレビュー（add_diary.plのメイン部）を解析し、各ボタンに相当するフォームの値を返します。
 返り値は、フォームごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -676,7 +673,7 @@ __action__というキーがあることに注意してください。
 また、'packed'はプレビュー取得時に画像ファイルをおくっていれば、同じくmixi側からランダムな文字列が返されます。
 日記を投稿する（postまたはget_edit_diary_confirm）際にはプレビューで取得したこれらの値も必要です。
 
-=item $item = $mixi->parse_add_diary_confirm( [$response ]);
+=head3 $item = $mixi->parse_add_diary_confirm( [$response ]);
 
 日記作成結果（add_diary.plのメイン部）を解析します。
 返り値は、以下のようなハッシュリファレンスです。
@@ -692,7 +689,7 @@ __action__というキーがあることに注意してください。
 どちらの場合も、おそらくメッセージ送信は失敗しています。
 返り値がなかった場合、レスポンスコードが200であればレスポンスのコンテンツを、400であればレスポンスメッセージをチェックしてみてください。
 
-=item @items = $mixi->parse_delete_diary_preview( [$response ]);
+=head3 @items = $mixi->parse_delete_diary_preview( [$response ]);
 
 日記削除のプレビュー（delete_diary.plのメイン部）を解析し、各ボタンに相当するフォームの値を返します。
 返り値は、フォームごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -706,14 +703,14 @@ __action__というキーがあることに注意してください。
 これはこのフォームの送信先URLを表しているもので、フォーム値ではありません。
 日記を削除する（confirm）する時には、このキーは削除しておく必要があります。
 
-=item $item = $mixi->parse_delete_diary_confirm( [$response ]);
+=head3 $item = $mixi->parse_delete_diary_confirm( [$response ]);
 
 日記削除結果（delete_diary.plのメイン部）を解析します。
 日記の削除は成功時、レスポンスコード302によって日記（list_diary.pl）にリダイレクトされますので、解析結果はparse_list_diaryメソッドと同じになります。
 
 返り値がなかったときは、レスポンスコードと、レスポンスのpreviousメソッドで取得できるリダイレクトの履歴およびその際のレスポンスコードをチェックしてみてください。
 
-=item @items = $mixi->parse_edit_diary_preview( [$response ]);
+=head3 @items = $mixi->parse_edit_diary_preview( [$response ]);
 
 日記編集のプレビュー（edit_diary.plのメイン部）を解析し、各フォームの値を返します。
 返り値は、フォームごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -734,7 +731,7 @@ __action__というキーがあることに注意してください。
 これはこのフォームの送信先URLを表しているもので、フォーム値ではありません。
 編集内容を確定する時には、このキーは削除しておく必要があります。
 
-=item @items = $mixi->parse_edit_diary_image( [$response ]);
+=head3 @items = $mixi->parse_edit_diary_image( [$response ]);
 
 日記編集のプレビュー（edit_diary.plのメイン部）を解析します。
 返り値は、フォームごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -747,14 +744,14 @@ __action__というキーがあることに注意してください。
 
 'link'に対応するURLは、この写真を削除するためのものです。
 
-=item $item = $mixi->parse_edit_diary_confirm( [$response ]);
+=head3 $item = $mixi->parse_edit_diary_confirm( [$response ]);
 
 日記編集結果（edit_diary.plのメイン部）を解析します。
 日記の編集は成功時、レスポンスコード302によって日記（list_diary.pl）にリダイレクトされますので、解析結果はparse_list_diaryメソッドと同じになります。
 
 返り値がなかったときは、レスポンスコードと、レスポンスのpreviousメソッドで取得できるリダイレクトの履歴およびその際のレスポンスコードをチェックしてみてください。
 
-=item $item = $mixi->parse_send_message_preview( [$response ]);
+=head3 $item = $mixi->parse_send_message_preview( [$response ]);
 
 メッセージ送信のプレビュー（send_message.plのメイン部）を解析し、フォームデータを返します。
 返り値は以下のようなハッシュリファレンスです。
@@ -779,7 +776,7 @@ __action__というキーがあることに注意してください。
 なお、エラーがある場合、parse_send_message_previewはレスポンスコードを400、レスポンスメッセージを"Invalid Form Data"に変更します。
 返り値がなかった場合、再度レスポンスコードをチェックしてみてください。
 
-=item $item = $mixi->parse_send_message_confirm( [$response ]);
+=head3 $item = $mixi->parse_send_message_confirm( [$response ]);
 
 メッセージ送信結果（send_message.plのメイン部）を解析します。
 返り値は、以下のようなハッシュリファレンスです。
@@ -799,8 +796,6 @@ __action__というキーがあることに注意してください。
 どちらの場合も、おそらくメッセージ送信は失敗しています。
 返り値がなかった場合、レスポンスコードが200であればレスポンスのコンテンツを、400であればレスポンスメッセージをチェックしてみてください。
 
-=back
-
 =head2 Fetch data
 
 直接データを取得するためのメソッドです。
@@ -811,9 +806,7 @@ __action__というキーがあることに注意してください。
 データ取得メソッドはコーディングを簡単にしますが、返り値がないときにはエラーが起きたのか、それとも本当に該当レコードがないのかの判断が難しいことに注意してください。
 こうした時には、logメソッドを上書きしておいてエラーメッセージ等を拾う、responseメソッドで直接HTTPレスポンスを取得して解析する、といった方法を考えてください（とは言え、そこまでしてしまうとgetメソッド＋parse_～メソッドを使うより手間でしょう）。
 
-=over 4
-
-=item @items = $mixi->get_main_menu( [$url | $url => 'refresh'] )
+=head3 @items = $mixi->get_main_menu( [$url | $url => 'refresh'] )
 
 指定されたURLのメインメニューを取得します。
 返り値はparse_main_menuと同じです。
@@ -821,7 +814,7 @@ __action__というキーがあることに注意してください。
 指定されたURLが最後にgetまたはpostメソッドで取得したURLと同じとき、またはURLが指定されなかったときは、最後にgetまたはpostメソッドで取得したデータのメインメニューを返します。
 同一URLでも再取得したいときには、'refresh'を指定してください。
 
-=item @items = $mixi->get_banner( [$url | $url => 'refresh'] )
+=head3 @items = $mixi->get_banner( [$url | $url => 'refresh'] )
 
 指定されたURLのバナーを取得します。
 返り値はparse_bannerと同じです。
@@ -829,7 +822,7 @@ __action__というキーがあることに注意してください。
 指定されたURLが最後にgetまたはpostメソッドで取得したURLと同じとき、またはURLが指定されなかったときは、最後にgetまたはpostメソッドで取得したデータのメインメニューを返します。
 同一URLでも再取得したいときには、'refresh'を指定してください。
 
-=item @items = $mixi->get_tool_bar( [$url | $url => 'refresh'] )
+=head3 @items = $mixi->get_tool_bar( [$url | $url => 'refresh'] )
 
 指定されたURLのツールバーを取得します。
 返り値はparse_tool_barと同じです。
@@ -837,7 +830,7 @@ __action__というキーがあることに注意してください。
 指定されたURLが最後にgetまたはpostメソッドで取得したURLと同じとき、またはURLが指定されなかったときは、最後にgetまたはpostメソッドで取得したデータのメインメニューを返します。
 同一URLでも再取得したいときには、'refresh'を指定してください。
 
-=item @items = $mixi->get_information( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_information( [$url | $url => 'refresh' | 'refresh'] );
 
 指定されたURLから、「管理者からのお知らせ」を取得します。
 URLを指定しなかった時は「ホーム」を対象にします。
@@ -846,7 +839,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_calendar( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_calendar( [$url | $url => 'refresh' | 'refresh'] );
 
 カレンダーを取得します。
 デフォルトでは今月のカレンダーを対象にしますが、URLを指定した時はそのページを対象にします。
@@ -855,7 +848,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_calendar_term( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $item = $mixi->get_calendar_term( [$url | $url => 'refresh' | 'refresh'] );
 
 カレンダーの期間（年月）を取得します。
 デフォルトでは今月のカレンダーを対象にしますが、URLを指定した時はそのページを対象にします。
@@ -864,7 +857,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_calendar_next( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $item = $mixi->get_calendar_next( [$url | $url => 'refresh' | 'refresh'] );
 
 カレンダーの「次の月」へのリンクを取得します。
 デフォルトでは「カレンダー」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -873,7 +866,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_calendar_previous( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $item = $mixi->get_calendar_previous( [$url | $url => 'refresh' | 'refresh'] );
 
 カレンダーの「前の月」へのリンクを取得します。
 デフォルトでは「カレンダー」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -882,7 +875,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_list_bookmark( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_list_bookmark( [$url | $url => 'refresh' | 'refresh'] );
 
 お気に入りを取得します。
 デフォルトではホームの「お気に入り」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -891,7 +884,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_list_comment( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_list_comment( [$url | $url => 'refresh' | 'refresh'] );
 
 最新のコメントを取得します。
 デフォルトでは「最新のコメント」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -900,7 +893,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_list_community( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_list_community( [$url | $url => 'refresh' | 'refresh'] );
 
 コミュニティ一覧を取得します。
 デフォルトでは「コミュニティ一覧」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -909,7 +902,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_list_community_next( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $item = $mixi->get_list_community_next( [$url | $url => 'refresh' | 'refresh'] );
 
 コミュニティ一覧の「次のページ」へのリンクを取得します。
 デフォルトでは「コミュニティ一覧」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -918,7 +911,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_list_community_previous( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $item = $mixi->get_list_community_previous( [$url | $url => 'refresh' | 'refresh'] );
 
 コミュニティ一覧の「前のページ」へのリンクを取得します。
 デフォルトでは「コミュニティ一覧」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -927,7 +920,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_list_diary( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_list_diary( [$url | $url => 'refresh' | 'refresh'] );
 
 日記一覧を取得します。
 デフォルトでは「日記」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -936,7 +929,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_list_diary_capacity( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $item = $mixi->get_list_diary_capacity( [$url | $url => 'refresh' | 'refresh'] );
 
 日記の「日記の使用状況」を取得します。
 デフォルトでは「日記」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -945,7 +938,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_list_diary_next( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $item = $mixi->get_list_diary_next( [$url | $url => 'refresh' | 'refresh'] );
 
 日記の「次のページ」へのリンクを取得します。
 デフォルトでは「日記」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -954,7 +947,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_list_diary_previous( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $item = $mixi->get_list_diary_previous( [$url | $url => 'refresh' | 'refresh'] );
 
 日記の「前のページ」へのリンクを取得します。
 デフォルトでは「日記」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -963,7 +956,16 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_list_friend( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_list_diary_monthy_menu( [$url | $url => 'refresh' | 'refresh'] );
+
+日記の各月のインデックスへのリンクを取得します。
+デフォルトでは「日記」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_diary_monthy_menuと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 @items = $mixi->get_list_friend( [$url | $url => 'refresh' | 'refresh'] );
 
 友人・知人一覧を取得します。
 デフォルトでは「友人・知人一覧」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -972,7 +974,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_list_friend_next( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $item = $mixi->get_list_friend_next( [$url | $url => 'refresh' | 'refresh'] );
 
 友人・知人一覧の「次のページ」へのリンクを取得します。
 デフォルトでは「友人・知人一覧」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -981,7 +983,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_list_friend_previous( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $item = $mixi->get_list_friend_previous( [$url | $url => 'refresh' | 'refresh'] );
 
 友人・知人一覧の「前のページ」へのリンクを取得します。
 デフォルトでは「友人・知人一覧」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -990,7 +992,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_list_message( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_list_message( [$url | $url => 'refresh' | 'refresh'] );
 
 「最近の受信メッセージ」を取得します。
 デフォルトでは「最近の受信メッセージ」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -999,13 +1001,13 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_list_outbox( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_list_outbox( [$url | $url => 'refresh' | 'refresh'] );
 
 「最近の送信メッセージ」を取得します。
 デフォルトでは「送信メッセージ」の最初のページを対象にしますが、URLを指定した時はそのページを対象にします。
 返り値はparse_list_messageと同じです。
 
-=item @items = $mixi->get_new_album( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_new_album( [$url | $url => 'refresh' | 'refresh'] );
 
 マイミクシィ最新アルバムを取得します。
 デフォルトでは「マイミクシィ最新アルバム」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -1014,7 +1016,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_new_bbs( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_new_bbs( [$url | $url => 'refresh' | 'refresh'] );
 
 コミュニティ最新書き込みを取得します。
 デフォルトでは「コミュニティ最新書込み」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -1023,7 +1025,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_new_comment( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_new_comment( [$url | $url => 'refresh' | 'refresh'] );
 
 日記コメント記入履歴を取得します。
 デフォルトでは「日記コメント記入履歴」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -1032,7 +1034,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_new_diary( [$url | $url => 'refresh' | 'refresh']  [,'keyword' => $keyword]);
+=head3 @items = $mixi->get_new_diary( [$url | $url => 'refresh' | 'refresh']  [,'keyword' => $keyword]);
 
 新着日記検索を取得します。
 デフォルトでは「新着日記検索」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -1045,7 +1047,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_new_diary_next( [$url | $url => 'refresh' | 'refresh'] [,'keyword' => $keyword]);
+=head3 $item = $mixi->get_new_diary_next( [$url | $url => 'refresh' | 'refresh'] [,'keyword' => $keyword]);
 
 新着日記検索の「次のページ」へのリンクを取得します。
 デフォルトでは「新着日記検索」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -1057,7 +1059,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_new_diary_previous( [$url | $url => 'refresh' | 'refresh']  [,'keyword' => $keyword]);
+=head3 $item = $mixi->get_new_diary_previous( [$url | $url => 'refresh' | 'refresh']  [,'keyword' => $keyword]);
 
 新着日記検索の「前のページ」へのリンクを取得します。
 デフォルトでは「新着日記検索」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -1069,7 +1071,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_new_friend_diary( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_new_friend_diary( [$url | $url => 'refresh' | 'refresh'] );
 
 マイミクシィ最新日記を取得します。
 デフォルトでは「マイミクシィ最新日記」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -1078,7 +1080,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_new_friend_diary_next( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $item = $mixi->get_new_friend_diary_next( [$url | $url => 'refresh' | 'refresh'] );
 
 マイミクシィ最新日記の「次のページ」へのリンクを取得します。
 デフォルトでは「マイミクシィ最新日記」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -1087,7 +1089,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_new_friend_diary_previous( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $item = $mixi->get_new_friend_diary_previous( [$url | $url => 'refresh' | 'refresh'] );
 
 マイミクシィ最新日記の「前のページ」へのリンクを取得します。
 デフォルトでは「マイミクシィ最新日記」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -1096,7 +1098,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_new_review( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_new_review( [$url | $url => 'refresh' | 'refresh'] );
 
 マイミクシィ最新レビューを取得します。
 デフォルトでは「マイミクシィ最新レビュー」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -1105,7 +1107,7 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $id = $mixi->get_self_id( ['refresh'] );
+=head3 $id = $mixi->get_self_id( ['refresh'] );
 
 おすすめレビュー（list_review.pl）の「レビューを書く」ボックスを解析し、
 自分のIDを返します。
@@ -1116,7 +1118,7 @@ IDを取得できなかった時の返り値は0です。
 最後にgetまたはpostメソッドで取得したページが「おすすめレビュー」の時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_show_log( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_show_log( [$url | $url => 'refresh' | 'refresh'] );
 
 あしあとを取得します。
 デフォルトでは「あしあと」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -1125,7 +1127,7 @@ IDを取得できなかった時の返り値は0です。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $count = $mixi->get_show_log_count( [$url | $url => 'refresh' | 'refresh'] );
+=head3 $count = $mixi->get_show_log_count( [$url | $url => 'refresh' | 'refresh'] );
 
 あしあと数を取得します。
 デフォルトでは「あしあと」を対象にしますが、URLを指定した時はそのページを対象にします。
@@ -1134,7 +1136,7 @@ IDを取得できなかった時の返り値は0です。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_show_friend_outline( $url [ => 'refresh'] );
+=head3 $item = $mixi->get_show_friend_outline( $url [ => 'refresh'] );
 
 ニックネームや写真などの情報を取得します。
 このメソッドでは、URLの指定が必須です。
@@ -1143,7 +1145,7 @@ IDを取得できなかった時の返り値は0です。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_show_friend_profile( $url [ => 'refresh'] );
+=head3 $item = $mixi->get_show_friend_profile( $url [ => 'refresh'] );
 
 プロフィールを取得します。
 このメソッドでは、URLの指定が必須です。
@@ -1152,7 +1154,7 @@ IDを取得できなかった時の返り値は0です。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_view_diary( $url [ => 'refresh'] );
+=head3 $item = $mixi->get_view_diary( $url [ => 'refresh'] );
 
 日記を取得します。
 このメソッドでは、URLの指定が必須です。
@@ -1161,7 +1163,7 @@ IDを取得できなかった時の返り値は0です。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item $item = $mixi->get_view_message( $url [ => 'refresh'] );
+=head3 $item = $mixi->get_view_message( $url [ => 'refresh'] );
 
 メッセージを取得します。
 このメソッドでは、URLの指定が必須です。
@@ -1170,7 +1172,7 @@ IDを取得できなかった時の返り値は0です。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=item @items = $mixi->get_view_message_form( $url [ => 'refresh'] );
+=head3 @items = $mixi->get_view_message_form( $url [ => 'refresh'] );
 
 メッセージを取得します。
 このメソッドでは、URLの指定が必須です。
@@ -1178,8 +1180,6 @@ IDを取得できなかった時の返り値は0です。
 
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
-
-=back
 
 =head2 Post data
 
@@ -1187,73 +1187,67 @@ IDを取得できなかった時の返り値は0です。
 
 実際には、内部で自動的に適切なページへのpostが行われます。
 
-=over 4
-
-=item @items = $mixi->get_add_diary_preview('diary_title' => '日記タイトル', 'diary_body' => '日記本文' [, 'photo1' => '写真1パス'] [, 'photo2' => '写真2パス'] [, 'photo3' => '写真3パス']);
+=head3 @items = $mixi->get_add_diary_preview('diary_title' => $title, 'diary_body' => $body [, 'photo1' => $path_to_photo1] [, 'photo2' => $path_to_photo2] [, 'photo3' => $path_to_photo3]);
 
 日記作成ページに引数のデータを送信し、プレビューページを取得して解析します。
 返り値はparse_add_diary_previewと同じです。
 
-=item @items = $mixi->get_add_diary_confirm('diary_title' => '日記タイトル', 'diary_body' => '日記本文' [, 'photo1' => '写真1パス'] [, 'photo2' => '写真2パス'] [, 'photo3' => '写真3パス']);
+=head3 @items = $mixi->get_add_diary_confirm('diary_title' => $title, 'diary_body' => $body, 'post_key' => $key [, 'photo1' => $path_to_photo1] [, 'photo2' => $path_to_photo2] [, 'photo3' => $path_to_photo3]);
 
 日記を投稿します。
 返り値はparse_add_diary_confirmと同じです。
 
-=item @items = $mixi->get_delete_diary_preview('id' => '日記ID');
+=head3 @items = $mixi->get_delete_diary_preview('id' => $id);
 
 日記削除の確認画面を取得し、解析します。
 返り値はparse_delete_diary_previewと同じです。
 
-=item @items = $mixi->get_delete_diary_confirm('id' => '日記ID');
+=head3 @items = $mixi->get_delete_diary_confirm('id' => $id, 'post_key' => $key);
 
 日記を削除します。
 返り値はparse_delete_diary_confirmと同じです。
 
-=item @items = $mixi->get_edit_diary_preview($url|'id' => '日記ID');
+=head3 @items = $mixi->get_edit_diary_preview($url|'id' => $id);
 
 日記を編集（再投稿）ページを取得し、解析します。
 返り値はparse_edit_diary_previewと同じです。
 
-=item @items = $mixi->get_edit_diary_image($url|'id' => '日記ID');;
+=head3 @items = $mixi->get_edit_diary_image($url|'id' => $id);
 
 日記を編集（再投稿）ページを取得し、解析します。
 返り値はparse_edit_diary_imageと同じです。
 
-=item @items = $mixi->get_edit_diary_confirm('id' => '日記ID', 'diary_title' => '日記タイトル', 'diary_body' => '日記本文' [, 'photo1' => '写真1パス'] [, 'photo2' => '写真2パス'] [, 'photo3' => '写真3パス']);
+=head3 @items = $mixi->get_edit_diary_confirm('id' => $id, 'diary_title' => $title, 'diary_body' => $body [, 'photo1' => $path_to_photo1] [, 'photo2' => $path_to_photo2] [, 'photo3' => $path_to_photo3]);
 
 日記を編集（再投稿）します。
 返り値はparse_edit_diary_confirmと同じです。
 
-=item @items = $mixi->get_send_message_preview('id' => '受信者のID', 'subject' => 'メッセージのタイトル', 'body' => 'メッセージの本文');
+=head3 @items = $mixi->get_send_message_preview('id' => $id, 'subject' => $subject, 'body' => $body);
 
-メッセージ送信ページに引数のデータを送信し、プレビューページを取得して解析します。
+$idのユーザー宛のメッセージ送信ページに引数のデータを送信し、プレビューページを取得して解析します。
 返り値はparse_send_message_previewと同じです。
 
-=item @items = $mixi->get_send_message_confirm('id' => '受信者のID', 'subject' => 'メッセージのタイトル', 'body' => 'メッセージの本文' [, 'post_key' => '送信キー']);
+=head3 @items = $mixi->get_send_message_confirm('id' => $id, 'subject' => $subject, 'body' => $body [, 'post_key' => $key]);
 
-メッセージを送信します。
+$idのユーザー宛のメッセージを送信します。
 返り値はparse_send_message_confirmと同じです。
-
-=back
 
 =head2 Convert URL
 
 URLを絶対URLに変換するメソッドです。
 
-=over 4
-
-=item $url = $mixi->absolute_url($url [, $base])
+=head3 $url = $mixi->absolute_url($url [, $base])
 
 $baseをベースURLとして、絶対URLを返します。
 $baseが指定されなかった時は、mixiのトップページ（0.13版では"http://mixi.jp/"）をベースにします。
 URLの代わりに'login'、'show_logs'などの'.pl'を省いたファイル名を指定しても構いません。
 
-=item $url = $mixi->absolute_linked_url($url)
+=head3 $url = $mixi->absolute_linked_url($url)
 
 最後にgetまたはpostメソッドで取得したページのURLをベースURLとして、絶対URLを返します。
 URLの代わりに'login'、'show_logs'などの'.pl'を省いたファイル名を指定しても構いません。
 
-=item $url = $mixi->query_sorted_url($url)
+=head3 $url = $mixi->query_sorted_url($url)
 
 URLのクエリ部分（"?"から後ろ）をキーの昇順で並べ替えます。
 また、値の空白が"%20"に変換されているところがあれば+に置換します。
@@ -1261,15 +1255,11 @@ URLのクエリ部分（"?"から後ろ）をキーの昇順で並べ替えま�
 
 このメソッドは試験用の内部メソッドで使用するために設けられましたが、URLをキーとしたキャッシュなどをする際には有用でしょう。
 
-=back
-
 =head2 Cookies
 
 Cookieの保存や読込を行うためのメソッドです。
 
-=over 4
-
-=item $mixi->enable_cookies($cookie_file)
+=head3 $mixi->enable_cookies($cookie_file)
 
 cookieを有効にします。
 これはログイン（login）、Cookieの読み込み（load_cookies）などの際に自動的に行われるので、通常は明示的に行う必要はありません。
@@ -1277,17 +1267,15 @@ cookieを有効にします。
 
 返り値はオブジェクト自身です。
 
-=item $mixi->save_cookies($cookie_file)
+=head3 $mixi->save_cookies($cookie_file)
 
 cookieの内容を指定されたファイルに保存します。
 成功時には1、失敗時には0を返します。
 
-=item $mixi->load_cookies($cookie_file)
+=head3 $mixi->load_cookies($cookie_file)
 
 指定されたファイルからCookieデータを読み込みます。
 成功時には1、失敗時には0を返します。
-
-=back
 
 =head2 Internal methods
 
@@ -1296,24 +1284,22 @@ cookieの内容を指定されたファイルに保存します。
 基本的にはWWW::Mixiの各メソッドからのみ使用されることを前提としており、後のバージョンでは仕様が変更されたりメソッドが廃止されるかもしれません。
 できるだけ利用しない方が良いと思います。
 
-=over 4
-
-=item $mixi->log
+=head3 $mixi->log
 
 ログの出力などを行うメソッドで、内部で利用されます。
 デフォルトでは、callback_logメソッドを呼び出します。
 
-=item $mixi->dumper_log
+=head3 $mixi->dumper_log
 
 引数のダンプをログとして出力または保持するメソッドで、内部で利用されます。
 実際の出力には、logメソッドを使用します。
 
-=item $mixi->abort
+=head3 $mixi->abort
 
 エラー時のabort処理を行うメソッドで、内部で利用されます。
 デフォルトでは、callback_abortメソッドを呼び出します。
 
-=item $mixi->callback_log
+=head3 $mixi->callback_log
 
 引数をログとしてシフトJISに変換し、標準出力に出力します。
 また、ログにエラーメッセージが含まれていれば、abortメソッドを呼び出します。
@@ -1325,43 +1311,50 @@ cookieの内容を指定されたファイルに保存します。
 
 のようにして、代わりのログ出力メソッドを定義してやってください。
 
-=item $mixi->callback_abort
+=head3 $mixi->callback_abort
 
 dieを実行します。
 これはabortメソッドのデフォルトの実装で、内部で利用されます。
 
-=item $str = $mixi->rewrite
+=head3 $str = $mixi->rewrite
 
 データ解析時のテキスト値の処理を行うメソッドです。
 デフォルトでは、callback_rewriteメソッドを呼び出します。
 
-=item $str = $mixi->callback_rewrite($str);
+=head3 $str = $mixi->callback_rewrite($str);
 
 HTMLタグの削除とHTMLエスケープの解除（アンエスケープ）を行います。
 これはrewriteメソッドのデフォルトの実装で、内部で利用されます。
 
-=item $str = $mixi->escape($str);
+=head3 $str = $mixi->escape($str);
 
 HTMLエスケープした文字列を返します。
 
-=item $str = $mixi->unescape($str);
+=head3 $str = $mixi->unescape($str);
 
 HTMLアンエスケープした文字列を返します。
 
-=item $str = $mixi->remove_tag($str);
+=head3 $str = $mixi->remove_tag($str);
 
 タグを削除した文字列を返します。
 HTMLに限らず、<～>のほとんどを削除する事に注意してください。
 通常は、unescapeの前に実行されるものです。
 
-=item $mixi->redirect_ok
+=head3 $str = $mixi->remove_diary_tag($str);
+
+日記に使われているものと思われるタグを削除します。
+新着日記中に混入する、エスケープされた日記用のタグなどを取り除くのに使用することができます。
+
+タグが途中で切れている場合には、削除されません。
+
+=head3 $mixi->redirect_ok
 
 リダイレクトの可否を決めるメソッドで、WWW::Mixiの場合は常に1を返します。
 つまり、リダイレクトは常に自動的に実行されます。
 
 このメソッドはLWP::RobotUA（を介してLWP::UserAgent）から継承したredirect_okメソッドを上書きしています。
 
-=item @items = $mixi->parse_standard_history( [$response] );
+=head3 @items = $mixi->parse_standard_history( [$response] );
 
 標準的な履歴ページのメイン部分用の解析メソッドです。
 最近のコメント（list_comment.plのメイン部）、コミュニティ最新書き込み（new_bbs.plのメイン部）、マイミクシィ最新日記（new_friend_diary.plのメイン部）、マイミクシィ最新アルバム（new_albumのメイン部）、マイミクシィ最新レビュー（new_review.plのメイン部）、日記コメント記入履歴（new_comment）を解析できます。
@@ -1379,7 +1372,7 @@ HTMLに限らず、<～>のほとんどを削除する事に注意してくだ�
 現在はこれらのページをparse_standard_historyで解析できるため、内部ではparse_standard_historyを呼び出しているだけですが、将来についてはmixi側の変更があるかも知れません。
 その時には専用メソッドでしか解析できなくなり、parse_standard_historyを使っていると手直しが必要になるでしょう。
 
-=item @items = $mixi->parse_standard_form( [$response] );
+=head3 @items = $mixi->parse_standard_form( [$response] );
 
 標準的なプレビューページ用のフォーム解析メソッドです。
 ページ内のフォームを抽出し、formタグのactionアトリビュートで指定されているURL、inputタグのアトリビュートで指定されているnameとvalueのペア、textareタグのnameと内容のペアを解析できます。
@@ -1399,7 +1392,7 @@ __action__以外のキーは解析するフォームごとに異なることに�
  	'time' => '2004/08/18 13:18'
  }
 
-=item $url = $mixi->set_response( $url [ => 'refresh'] )
+=head3 $url = $mixi->set_response( $url [ => 'refresh'] )
 
 responseメソッドの返り値を、$url取得時のデータになるようにセットします。
 これにあわせて、各解析メソッドのデフォルトの解析対象データも$urlのものになります。
@@ -1408,7 +1401,7 @@ responseメソッドの返り値を、$url取得時のデータになるよう�
 これにより、不要な再取得の負荷と時間をかけないようにしています。
 この場合でもデータを再取得し、最新のデータにしたい時には'refresh'を指定してください。
 
-=item @items = $mixi->post_add_diary('submit' => 'アクション', 'diary_title' => '日記タイトル', 'diary_body' => '日記本文', ['photo1' => '写真1', 'photo2' => '写真2', 'photo3' => '写真3' [, 'orig_size' => 1]] [, 'packed' => 'ハッシュ値']);
+=head3 @items = $mixi->post_add_diary('submit' => $action, 'diary_title' => $title, 'diary_body' => $body, [, 'photo1' => $path_to_photo1, 'photo2' => $path_to_photo2, 'photo3' => $path_to_photo3] [, 'orig_size' => 1]] [, 'packed' => $hash_value]);
 
 日記作成ページに引数のデータを送信します。
 返り値は送信時のHTTP::Responseオブジェクトです。
@@ -1418,7 +1411,7 @@ responseメソッドの返り値を、$url取得時のデータになるよう�
 
 実際に投稿する時には、写真1～3などの代わりに、確認画面に表示されたハッシュ値（packedフィールドの値）を指定します。
 
-=item @items = $mixi->post_edit_diary('submit' => 'アクション', 'diary_id' => '日記ID', 'diary_title' => '日記タイトル', 'diary_body' => '日記本文', 'photo1' => '写真1', 'photo2' => '写真2', 'photo3' => '写真3');
+=head3 @items = $mixi->post_edit_diary('submit' => $action, 'diary_id' => $id, 'diary_title' => $title, 'diary_body' => $body, 'photo1' => $path_to_photo1, 'photo2' => $path_to_photo2, 'photo3' => $path_to_photo3);
 
 日記編集ページに引数のデータを送信します。
 返り値は送信時のHTTP::Responseオブジェクトです。
@@ -1426,26 +1419,22 @@ responseメソッドの返り値を、$url取得時のデータになるよう�
 アクションには、編集する時には"main"を指定します。
 写真1～3には、ファイルパスを指定します。
 
-=item @items = $mixi->post_delete_diary('submit' => 'アクション', 'diary_id' => '日記ID');
+=head3 @items = $mixi->post_delete_diary('submit' => $action, 'diary_id' => $id);
 
 日記削除ページに引数のデータを送信します。
 返り値は送信時のHTTP::Responseオブジェクトです。
 
 アクションには、確認画面を取得する時は"main"、実際に投稿する時には"confirm"を指定します。
 
-=item $time = $mixi->convert_login_time($time);
+=head3 $time = $mixi->convert_login_time($time);
 
 「お気に入り」に表示される「45分以内」などの記述を時刻に直します。
-
-=back
 
 =head2 Testing method
 
 以下はWWW::Mixiの試験用のメソッドです。
 
-=over 4
-
-=item perl -MWWW::Mixi -e "WWW::Mixi::test('email', 'password' [, 'logfile'])"
+=head3 perl -MWWW::Mixi -e "WWW::Mixi::test('email', 'password' [, 'logfile'])"
 
 WWW::Mixiの各機能を試験するためのメソッドです。
 
@@ -1456,18 +1445,19 @@ email、passwordはmixiにログインできるものを指定してください
 ログファイルは解析結果を出力するためのものです。
 未指定時は'LWP-Mixi-x.xx-test.log'が使用されます。
 
-=back
-
 =head1 RESPONSE CODE
+
+いくつかのケースでは、mixiがレスポンスコード"200"などを返す場合でも、実際のコンテンツの内容からWWW::Mixiがレスポンスコードとレスポンスメッセージを置き換えます。
+これにより、WWW::Mixiはユーザーのリクエストが"実質的に"成功した場合にのみis_successが真になり、"実質的に"失敗した場合には偽になる（is_errorが真になる）ように振舞います。
+
+ここで使用されるレスポンスコードは一般的なものなので、例えばレスポンスコード"400"は本当にmixiからBad Requestが返された場合もありますし、コンテンツが「データがありません」というものである場合もあります。
+レスポンスメッセージはWWW::Mixiが独自のものをセットしますので、こちらで区別してください。
 
 =over 4
 
 =item "400"
 
-いくつかのケースでは、mixiがレスポンスコード"200"などを返す場合でも、実際のコンテンツの内容からWWW::Mixiがレスポンスコードを400に置き換えます。
-mixiからのレスポンスコードが当初から400である可能性もあるため、原因はレスポンスメッセージを確認してください。
-
-この場合、レスポンスメッセージは以下の2種類になります。
+以下のケースで、レスポンスコードは400に置き換えられます。
 
 =over 8
 
@@ -1500,16 +1490,14 @@ Invalid Form Dataに続くエラーメッセージはmixiが返したもので�
 
 =item "401"
 
-すべてのリクエストについて、取得したコンテンツにログインフォームが表示されている場合は、レスポンスコードは401になります。
+以下のケースで、レスポンスコードは401に置き換えられます。
 現在のところ、mixiはベーシック認証などを求めないため、エラーコード401はすべてこのケースとみなして問題ないでしょう。
-
-この場合、レスポンスメッセージは以下の2種類になります。
 
 =over 8
 
 =item Login Required
 
-エラーメッセージがなく、ログインフォームだけが表示されています。
+ログインフォームが表示されています。
 おそらく未ログインか、別のブラウザなどでログアウトしたため、再ログインが必要な状態です。
 
 =item Login Failed (エラーメッセージ)
@@ -1522,6 +1510,37 @@ Invalid Form Dataに続くエラーメッセージはmixiが返したもので�
 ログイン失敗時のエラーメッセージはmixiが返したもので、通常は日本語（文字コードはEUC）であることに注意してください。
 このメッセージをそのまま出力する際には、文字コードを適切に変換してやるべきです。
 
+=item "403"
+
+以下のケースで、レスポンスコードは403に置き換えられます。
+
+=over 8
+
+=item Closed content
+
+「アクセスできません。」という一言だけのページが返ってきます。
+おそらく、公開範囲が「友人まで」など、アクセス者が閲覧できないコンテンツ（日記など）にアクセスした場合です。
+
+=back
+
+=item "503"
+
+以下のケースで、レスポンスコードは503に置き換えられます。
+
+=over 8
+
+=item Too frequently requests
+
+「間隔を空けない連続的なページの遷移・更新を頻繁におこなわれているため...」という一文だけのページが返ってきます。
+おそらく、Mixi側で設定されているアクセス制限間隔より短い間隔でアクセスしたことにより、アクセスが拒否されています。
+この状況は、数分から数十分後に解除されるようです。
+
+通常、WWW::Mixiは十分に長いインターバルを置いてアクセスするため、この問題は起こらないはずです。
+明示的にアクセス間隔を短くしたか、多重に動かしているなどによることが考えられます。
+WWW::Mixiはmixiに多大な負荷をかけないなどの考慮を前提に配布・公開を黙認されていますので、このエラーが出るようであればツールの設計を見直すことを強く推奨します。
+
+=back
+
 =back
 
 =head1 SEE ALSO
@@ -1532,8 +1551,8 @@ L<LWP::UserAgent>, L<WWW::RobotUA>, L<HTTP::Request::Common>
 
 WWW::Mixi is written by TSUKAMOTO Makio <tsukamoto@gmail.com>
 
-Some bug fixes submitted by Topia (http://clovery.jp/), shino (http://www.freedomcat.com/), makamaka (http://www.donzoko.net/), あっしゅ.
-get_ and post_add_diary, get_ and post_delete_diary, parse_list_diary and parse_new_diary contributed by DonaDona (http://hsj.jp/).
+Some bug fixes submitted by Topia (http://clovery.jp/), shino (http://www.freedomcat.com/), makamaka (http://www.donzoko.net/), あっしゅ, slash/onigawara (http://www.okoshi.org/), Mami Komura (http://www.warehouse56.com/).
+get_ and post_add_diary, get_ and post_delete_diary, parse_list_diary, parse_list_diary_monthly_menu and parse_new_diary contributed by DonaDona (http://hsj.jp/).
 get_ and parse_view_diary contributed by shino (http://www.freedomcat.com/).
 get_ and parse_list_outbox contributed by AsO (http://www.bx.sakura.ne.jp/~clan/rn/cgi-bin/index.cgi).
 get_ and post_send_message contributed by noname (http://untitled.rootkit.jp/diary/).

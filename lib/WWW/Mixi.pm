@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.32$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.33$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -104,9 +104,17 @@ sub request {
 	
 	if ($res->is_success) {
 		# check contents existence
-		if ($res->content and $res->content =~ /^(\Qデータはありません。\E)<html>/) {
+		if ($res->content and $res->content =~ /^\Qデータはありません。\E<html>/) {
 			$res->code(400);
 			$res->message('No Data');
+		# check rejcted by too frequent requests.
+		} elsif ($res->content and $res->content =~ /^\Q間隔を空けない連続的なページの遷移・更新を頻繁におこなわれている\E/) {
+			$res->code(503);
+			$res->message('Too frequently requests');
+		# check rejcted since content is closed.
+		} elsif ($res->content and $res->content =~ /^\Qアクセスできません\E<html>/) {
+			$res->code(403);
+			$res->message('Closed content');
 		# check login form existence
 		} elsif (my $message = $self->is_login_required($res)) {
 			$res->code(401);
@@ -362,21 +370,26 @@ sub parse_list_community {
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
 	my @items   = ();
+	my $status_backgrounds = {
+		'http://img.mixi.jp/img/bg_orange1-.gif' => '管理者',
+	};
 	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=2 WIDTH=560>(.+?)<\/table>/s) {
 		$content = $1;
 		while ($content =~ s/<tr ALIGN=center BGCOLOR=#FFFFFF>(.*?)<tr ALIGN=center BGCOLOR=#FFF4E0>(.*?)<\/tr>//is) {
 			my ($image_part, $text_part) = ($1, $2);
-			my @images = ($image_part =~ /<td WIDTH=20% HEIGHT=100 background=http:\/\/img.mixi.jp\/img\/bg_line.gif>(.*?)<\/td>/gi);
+			my @images = ($image_part =~ /<td WIDTH=20% HEIGHT=100 background=http:\/\/img.mixi.jp\/img\/bg_[a-z0-9-]+.gif>.*?<\/td>/gi);
 			my @texts  = ($text_part =~ /<td>(.*?)<\/td>/gi);
 			for (my $i = 0; $i < @images or $i < @texts; $i++) {
 				my $item = {};
 				my ($image, $text) = ($images[$i], $texts[$i]);
 				($item->{'subject'}, $item->{'count'}) = ($1, $2) if ($text =~ /^\s*(.*?)\((\d+)\)\s*$/);
-				($item->{'link'},    $item->{'image'}) = ($1, $2) if ($image =~ /<a href=(.*?)><img SRC=(.*?) border=0><\/a>/);
+				($item->{'background'}, $item->{'link'}, $item->{'image'}) = ($1, $2, $3) if ($image =~ /<td .*? background=([^<> ]*).*?><a href=(.*?)><img SRC=(.*?) border=0><\/a>/);
 				if ($item->{'link'}) {
-					$item->{'subject'} = $self->rewrite($item->{'subject'});
-					$item->{'link'}    = $self->absolute_url($item->{'link'}, $base);
-					$item->{'image'}   = $self->absolute_url($item->{'image'}, $base);
+					$item->{'subject'}    = $self->rewrite($item->{'subject'});
+					$item->{'link'}       = $self->absolute_url($item->{'link'}, $base);
+					$item->{'image'}      = $self->absolute_url($item->{'image'}, $base);
+					$item->{'background'} = $self->absolute_url($item->{'background'}, $base);
+					$item->{'status'}     = $status_backgrounds->{$item->{'background'}};
 					push(@items, $item);
 				}
 			}
@@ -483,6 +496,22 @@ sub parse_list_diary_previous {
 	return $next;
 }
 
+sub parse_list_diary_monthly_menu {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	if ($content =~ /<!-- start: monthly menu -->(.+)<!-- end: monthly menu -->/s) {
+		$content = $1;
+		while ($content =~ s/<a HREF=['"]?(list_diary.pl\?year=(\d+)\&month=(\d+))['"]?.*?>.*?<\/a>//is) {
+			push(@items, {'link' => $self->absolute_url($1, $base), 'year' => $2, 'month' => $3});
+		}
+	}
+	return @items;
+}
+
 sub parse_list_friend {
 	my $self    = shift;
 	my $res     = (@_) ? shift : $self->response();
@@ -490,26 +519,30 @@ sub parse_list_friend {
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
 	my @items   = ();
-	my %status_icons = (
-		'http://img.mixi.jp/img/new6.gif' => '日記 - new!!',
-	);
+	my $status_backgrounds = {
+		'http://img.mixi.jp/img/bg_orange1-.gif' => '1時間以内',
+		'http://img.mixi.jp/img/bg_orange2-.gif' => '1日以内',
+	};
+	my @time1   = reverse((localtime(time - 3600))[0..5]);
+	my @time2   = reverse((localtime(time - 3600 * 24))[0..5]);
 	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=2 WIDTH=560>(.+?)<\/table>/s) {
 		$content = $1 ;
 		while ($content =~ s/<tr ALIGN=center BGCOLOR=#FFFFFF>(.*?)<tr ALIGN=center BGCOLOR=#FFF4E0>(.*?)<\/tr>//is) {
 			my ($image_part, $text_part) = ($1, $2);
-			my @images = ($image_part =~ /<td WIDTH=20% HEIGHT=100 background=http:\/\/img.mixi.jp\/img\/bg_line.gif>(.*?)<\/td>/gi);
+			my @images = ($image_part =~ /<td WIDTH=20% HEIGHT=100 background=http:\/\/img.mixi.jp\/img\/bg_[a-z0-9-]+.gif>.*?<\/td>/gi);
 			my @texts  = ($text_part =~ /<td>(.*?)<\/td>/gi);
 			for (my $i = 0; $i < @images or $i < @texts; $i++) {
 				my $item = {};
 				my ($image, $text) = ($images[$i], $texts[$i]);
 				($item->{'subject'}, $item->{'count'}) = ($1, $2) if ($text =~ /^\s*(.+?)\((\d+)\)/);
-				($item->{'link'},    $item->{'image'}) = ($1, $2) if ($image =~ /<a href=(.*?)><img SRC=(.*?) border=0><\/a>/);
-				$item->{'status'} = $status_icons{$1} if ($text =~ /<img src=["']?([^\s'"<>]+)/);
+				($item->{'background'}, $item->{'link'}, $item->{'image'}) = ($1, $2, $3) if ($image =~ /<td .*? background=([^<> ]*).*?><a href=(.*?)><img SRC=(.*?) border=0><\/a>/);
 				if ($item->{'link'}) {
-					$item->{'subject'} = $self->rewrite($item->{'subject'});
-					$item->{'link'}    = $self->absolute_url($item->{'link'}, $base);
-					$item->{'id'}      = $2 if ($item->{'link'} =~ /(.*?)?id=(\d*)/); 
-					$item->{'image'}   = $self->absolute_url($item->{'image'}, $base);
+					$item->{'subject'}    = $self->rewrite($item->{'subject'});
+					$item->{'link'}       = $self->absolute_url($item->{'link'}, $base);
+					$item->{'id'}         = $2 if ($item->{'link'} =~ /(.*?)?id=(\d*)/); 
+					$item->{'image'}      = $self->absolute_url($item->{'image'}, $base);
+					$item->{'background'} = $self->absolute_url($item->{'background'}, $base);
+					$item->{'status'}     = $status_backgrounds->{$item->{'background'}};
 					push(@items, $item);
 				}
 			}
@@ -1160,6 +1193,14 @@ sub get_list_diary_previous {
 	return $self->parse_list_diary_previous();
 }
 
+sub get_list_diary_monthly_menu {
+	my $self = shift;
+	my $url  = 'list_diary.pl';
+	$url     = shift if (@_ and $_[0] ne 'refresh');
+	$self->set_response($url, @_) or return;
+	return $self->parse_list_diary_monthly_menu();
+}
+
 sub get_list_friend {
 	my $self = shift;
 	my $url  = 'list_friend.pl';
@@ -1631,6 +1672,21 @@ sub remove_tag {
 	return $str;
 }
 
+sub remove_diary_tag {
+	my $self = shift;
+	my $str  = shift;
+	my $re_diary_tag = join('|', 
+		q{<a HREF="[^"]*" target="_blank">},
+		q{<a href="[^"]*" onClick="MM_openBrWindow\([^"]*\)">},
+		q{<img alt=写真 src=\S* border=0>},
+		q{<span (?:class|style)="[^"]*">},
+		q{<(?:blockquote|u|em|strong)>},
+		q{<\/(?:a|blockquote|u|em|span|strong)>}
+	);
+	$str =~ s/$re_diary_tag//g;
+	return $str;
+}
+
 sub redirect_ok {
 	return 1;
 }
@@ -1643,7 +1699,7 @@ sub parse_standard_history {
 	my $content = $res->content;
 	my @items   = ();
 	my $re_date = '(?:(\d{4})年)?(\d{2})月(\d{2})日 (\d{1,2}):(\d{2})';
-	my $re_name = '\((.*?)\)';
+	my $re_name = '\(([^\r\n]*)\)';
 	my $re_link = '<a href="?(.+?)"?>(.+?)\s*<\/a>';
 	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>(.+?)<\/table>/s) {
 		$content = $1;
@@ -1781,9 +1837,9 @@ sub post_delete_diary {
 	my $self     = shift;
 	my %values   = @_;
 	my $url      = 'delete_diary.pl';
-	my @fields   = qw(submit id);
-	my @required = qw(id);
-	my %label    = ('id' => '日記ID');
+	my @fields   = qw(submit id post_key);
+	my @required = qw(id post_key);
+	my %label    = ('id' => '日記ID', 'post_key' => '送信キー');
 	# データの生成とチェック
 	my %form     = map {$_ => $values{$_}} @fields;
 	$form{'id'}  = $values{'diary_id'} if (not $form{'id'} and defined($values{'diary_id'}));
@@ -1860,7 +1916,6 @@ sub test {
 	$mixi->test_save_and_read_cookies;                      # Cookieの読み書き
 	# 終了
 	$mixi->log("終了しました。\n");
-	$mixi->dumper_log($mixi->{'__test_record'});
 	exit 0;
 }
 
@@ -2024,6 +2079,7 @@ sub test_get_mainly_categories {
 		'list_community'   => 'コミュニティ一覧',
 		'list_diary'       => '日記',
 		'list_diary_capacity' => '日記容量',
+		'list_diary_monthly_menu' => '日記月別ページ',
 		'list_friend'      => '友人・知人一覧',
 		'list_message'     => '受信メッセージ',
 		'list_outbox'      => '送信メッセージ',

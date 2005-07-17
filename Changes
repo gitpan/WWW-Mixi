@@ -1,5 +1,14 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.33  Mon Jul 18 01:10:19 2005
+
+	- add parse_ and get_list_diary_monthly_menu (thanks DonaDona)
+	- mod request
+		- now it can return code 403 and 503 when contents means that.
+	- fix parse_list_community.
+	- fix parse_list_friend (thanks slash/onigawara)
+	- fix post_delete_diary submitted (thanks Mami Komura)
+
 0.32  Tue Jun 07 01:09:24 2005
 
 	- add parse_ and get_show_friend_outline
