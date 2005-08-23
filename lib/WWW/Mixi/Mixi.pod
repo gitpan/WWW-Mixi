@@ -41,11 +41,12 @@ WWW::MixiはLWP::RobotUAのサブクラスとして実装されていますの�
 
 WWW::Mixiのコンストラクタです。
 
-=head3 $mixi = WWW::Mixi->new($email, $password [, '-log' => \&logging_method] [, '-abort' => \&aborting_method] [, '-rewrite' => \&rewriting_method] )
+=head3 $mixi = WWW::Mixi->new($email [, $password] [, '-log' => \&logging_method] [, '-abort' => \&aborting_method] [, '-rewrite' => \&rewriting_method] )
 
 WWW::Mixiオブジェクトを作成するコンストラクタです。
 
-最初の二つの引数は、mixiにログインするためのメールアドレスとパスワードで、いずれも必須です。
+最初に引数は、mixiにログインするためのメールアドレスで、必須です。
+二番目の引数は、mixiにログインするためのパスワードです。
 '-log'はオプションで、ログを出力するためのメソッドを指定します。
 '-abort'はオプションで、エラー時の終了処理を行うためのメソッドを指定します。
 '-rewrite'はオプションで、解析時のテキスト値のリフォーマットをするためのメソッドを指定します。
@@ -56,10 +57,14 @@ WWW::Mixiオブジェクトを作成するコンストラクタです。
 
 mixiにログインするためのメソッドと、現在のログイン状況、セッションIDなどの関連情報を取得するためのメソッド群です。
 
-=head3 $response = $mixi->login
+=head3 $response = $mixi->login( [$password] );
 
 mixiにログインします。
 必要であれば、Cookieの有効化などが行われます。
+
+ログイン時のパスワードは、$passwordが指定されればこの値を使用します。
+未指定時は、コンストラクタで指定されたパスワードを使用します。
+コンストラクタでもパスワードを指定していない場合、このメソッドは何のアクションも行わず、undefを返します。
 
 返り値はログイン時のHTTP::Responseオブジェクトです。
 ログイン失敗時のレスポンスコードは401になりますので、以下のようなエラーハンドリングが可能です。
@@ -84,15 +89,19 @@ mixiにログインします。
 $responseを指定したときには、最後に取得したページの変わりに$responseを解析します。
 $responseにはHTTP::Responseオブジェクト（get、post、request、simple_requestメソッドなどの返り値がそうです）を指定してください。
 
-=head3 $session = $mixi->session
+=head3 $session = $mixi->session( [$session] );
 
 現在のセッションIDを返します。
 ログイン前など、セッションIDを取得できていない時にはundefが返ります。
 
-=head3 $session = $mixi->stamp
+$sessionを指定したときには、セッションIDを指定した値で置き換えます。
+
+=head3 $session = $mixi->stamp( [$stamp] );
 
 現在のセッションスタンプを返します。
 ログイン前など、セッションスタンプを取得できていない時にはundefが返ります。
+
+$stampを指定したときには、セッションスタンプを指定した値で置き換えます。
 
 =head3 $session = $mixi->refresh
 
@@ -435,6 +444,26 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'time' => '2004/08/18 13:18'
  }
 
+=head3 $item = $mixi->parse_new_friend_diary_next( [$response] );
+
+コミュニティ最新書き込み（new_bbs.plのメイン部）の「次のページ」へのリンクを解析します。
+返り値は、「次のページ」がある場合は以下のようなハッシュリファレンスです。
+
+ {
+ 	'subject' => '次のxx件を表示',
+ 	'link' => 'http://mixi.jp/new_friend_diary.pl?page=x',
+ }
+
+=head3 $item = $mixi->parse_new_friend_diary_previous( [$response] );
+
+コミュニティ最新書き込み（new_bbs.plのメイン部）の「前のページ」へのリンクを解析します。
+返り値は、「前のページ」がある場合は以下のようなハッシュリファレンスです。
+
+ {
+ 	'subject' => '前の50件を表示',
+ 	'link' => 'http://mixi.jp/new_friend_diary.pl?page=x',
+ }
+
 =head3 @items = $mixi->parse_new_comment( [$response] );
 
 日記コメント記入履歴（new_comment.plのメイン部）を解析します。
@@ -528,7 +557,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
 
 =head3 $id = $mixi->parse_self_id( [$response] );
 
-おすすめレビュー（list_review.pl）の「レビューを書く」ボックスを解析し、自分のIDを返します。
+プロフィール（show_profile.pl）を解析し、自分のIDを返します。
 IDを取得できなかった時の返り値は0です。
 
 このメソッドは他の多くの解析系メソッドと違い、ハッシュリファレンスの配列ではなくただの文字列（スカラ値）を返すことに注意してください。
@@ -1021,6 +1050,24 @@ URLを指定しなかった時は「ホーム」を対象にします。
 コミュニティ最新書き込みを取得します。
 デフォルトでは「コミュニティ最新書込み」を対象にしますが、URLを指定した時はそのページを対象にします。
 返り値はparse_new_bbsと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_new_bbs_next( [$url | $url => 'refresh' | 'refresh'] );
+
+コミュニティ最新書き込みの「次のページ」へのリンクを取得します。
+デフォルトでは「コミュニティ最新書き込み」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_new_bbs_nextと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_new_bbs_previous( [$url | $url => 'refresh' | 'refresh'] );
+
+コミュニティ最新書き込みの「前のページ」へのリンクを取得します。
+デフォルトでは「コミュニティ最新書き込み」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_new_bbs_previousと同じです。
 
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。

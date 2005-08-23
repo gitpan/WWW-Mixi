@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.33$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.34$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -21,7 +21,7 @@ sub new {
 
 	# オプションの処理
 	Carp::croak('WWW::Mixi mail address required') unless $email;
-	Carp::croak('WWW::Mixi password required') unless $password;
+	# Carp::croak('WWW::Mixi password required') unless $password;
 
 	# オブジェクトの生成
 	my $name = "WWW::Mixi/" . $VERSION;
@@ -49,9 +49,11 @@ sub login {
 	my $self = shift;
 	my $page = 'login.pl';
 	my $next = ($self->{'mixi'}->{'next_url'}) ? $self->{'mixi'}->{'next_url'} : '/home.pl';
+	my $password = (@_) ? shift : $self->{'mixi'}->{'password'};
+	return undef unless (defined($password) and length($password));
 	my %form = (
 		'email'    => $self->{'mixi'}->{'email'},
-		'password' => $self->{'mixi'}->{'password'},
+		'password' => $password,
 		'next_url' => $self->absolute_url($next),
 	);
 	$self->enable_cookies;
@@ -59,6 +61,7 @@ sub login {
 	$self->log("[info] 再ログインします。\n") if ($self->session);
 	my $res = $self->post($page, %form);
 	$self->{'mixi'}->{'refresh'} = ($res->is_success and $res->headers->header('refresh') =~ /url=([^ ;]+)/) ? $self->absolute_url($1) : undef;
+	$self->{'mixi'}->{'password'} = $password if ($res->is_success);
 	return $res;
 }
 
@@ -85,12 +88,22 @@ sub is_login_required {
 
 sub session {
 	my $self = shift;
+	if (@_) {
+		my $session = shift;
+		$self->enable_cookies;
+		$self->cookie_jar->set_cookie(undef, 'BF_SESSION', $session, '/', 'mixi.jp', undef, 1, undef, undef, 1);
+	}
 	return undef unless ($self->cookie_jar);
 	return ($self->cookie_jar->as_string =~ /\bSet-Cookie.*?:.*? BF_SESSION=(.*?);/) ? $1 : undef;
 }
 
 sub stamp {
 	my $self = shift;
+	if (@_) {
+		my $stamp = shift;
+		$self->enable_cookies;
+		$self->cookie_jar->set_cookie(undef, 'BF_STAMP', $stamp, '/', 'mixi.jp', undef, 1, undef, undef, 1);
+	}
 	return undef unless ($self->cookie_jar);
 	return ($self->cookie_jar->as_string =~ /\bSet-Cookie.*?:.*? BF_STAMP=(.*?);/) ? $1 : undef;
 }
@@ -535,7 +548,7 @@ sub parse_list_friend {
 				my $item = {};
 				my ($image, $text) = ($images[$i], $texts[$i]);
 				($item->{'subject'}, $item->{'count'}) = ($1, $2) if ($text =~ /^\s*(.+?)\((\d+)\)/);
-				($item->{'background'}, $item->{'link'}, $item->{'image'}) = ($1, $2, $3) if ($image =~ /<td .*? background=([^<> ]*).*?><a href=(.*?)><img SRC=(.*?) border=0><\/a>/);
+				($item->{'background'}, $item->{'link'}, $item->{'image'}) = ($1, $2, $3) if ($image =~ /<td .*? background=([^<> ]*).*?><a href=(.*?)><img alt=(?:.*?) SRC=(.*?) border=0><\/a>/);
 				if ($item->{'link'}) {
 					$item->{'subject'}    = $self->rewrite($item->{'subject'});
 					$item->{'link'}       = $self->absolute_url($item->{'link'}, $base);
@@ -557,7 +570,7 @@ sub parse_list_friend_next {
 	return unless ($res and $res->is_success);
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
-	return unless ($content =~ /&nbsp;&nbsp;<a href=([^<>]*?list_friend.pl\?page=.*?)>(.*?)<\/a>/);
+	return unless ($content =~ /&nbsp;&nbsp;<a href=([^<>]*?list_friend.pl\?[^<>\s]*page=[^<>\s]*)>((?:(?!<\/a>).)*)<\/a>/);
 	my $subject = $2;
 	my $link    = $self->absolute_url($1, $base);
 	my $next    = {'link' => $link, 'subject' => $2};
@@ -570,7 +583,7 @@ sub parse_list_friend_previous {
 	return unless ($res and $res->is_success);
 	my $base     = $res->request->uri->as_string;
 	my $content  = $res->content;
-	return unless ($content =~ /<a href=([^<>]*?list_friend.pl\?page=.*?)>(.*?)<\/a>&nbsp;&nbsp;/);
+	return unless ($content =~ /<a href=([^<>\s]*list_friend.pl\?[^<>\s]*page=[^<>\s]*)>((?:(?!<\/a>).)*)<\/a>&nbsp;&nbsp;/);
 	my $subject  = $2;
 	my $link     = $self->absolute_url($1, $base);
 	my $previous = {'link' => $link, 'subject' => $2};
@@ -653,6 +666,16 @@ sub parse_new_bbs {
 	return $self->parse_standard_history(@_);
 }
 
+sub parse_new_bbs_next {
+	my $self    = shift;
+	return $self->parse_standard_history_next(@_);
+}
+
+sub parse_new_bbs_previous {
+	my $self    = shift;
+	return $self->parse_standard_history_previous(@_);
+}
+
 sub parse_new_comment {
 	my $self    = shift;
 	return $self->parse_standard_history(@_);
@@ -727,28 +750,32 @@ sub parse_new_friend_diary {
 
 sub parse_new_friend_diary_next {
 	my $self    = shift;
-	my $res     = (@_) ? shift : $self->response();
-	return unless ($res and $res->is_success);
-	my $base    = $res->base->as_string;
-	my $content = $res->content;
-	return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5>[^\r\n]*?<a href=["']?(.+?)['"]?>([^<>]+)<\/a><\/td><\/tr>/);
-	my $subject = $2;
-	my $link    = $self->absolute_url($1, $base);
-	my $next    = {'link' => $link, 'subject' => $2};
-	return $next;
+	return $self->parse_standard_history_next(@_);
+#		my $self    = shift;
+#		my $res     = (@_) ? shift : $self->response();
+#		return unless ($res and $res->is_success);
+#		my $base    = $res->base->as_string;
+#		my $content = $res->content;
+#	#	return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5>[^\r\n]*?<a href=["']?(.+?)['"]?>([^<>]+)<\/a><\/td><\/tr>/);
+#		return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5>[^\r\n]*?<a href=["']?([^>]+?)['"]?>([^<>]+)<\/a><\/td><\/tr>/);
+#		my $subject = $2;
+#		my $link    = $self->absolute_url($1, $base);
+#		my $next    = {'link' => $link, 'subject' => $2};
+#		return $next;
 }
 
 sub parse_new_friend_diary_previous {
-	my $self     = shift;
-	my $res      = (@_) ? shift : $self->response();
-	return unless ($res and $res->is_success);
-	my $base     = $res->request->uri->as_string;
-	my $content  = $res->content;
-	return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5><a href=["']?(.+?)['"]?>([^<>]+)<\/a>[^\r\n]*?<\/td><\/tr>/);
-	my $subject  = $2;
-	my $link     = $self->absolute_url($1, $base);
-	my $previous = {'link' => $link, 'subject' => $2};
-	return $previous;
+	my $self    = shift;
+	return $self->parse_standard_history_previous(@_);
+#		my $res      = (@_) ? shift : $self->response();
+#		return unless ($res and $res->is_success);
+#		my $base     = $res->request->uri->as_string;
+#		my $content  = $res->content;
+#		return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5><a href=["']?(.+?)['"]?>([^<>]+)<\/a>[^\r\n]*?<\/td><\/tr>/);
+#		my $subject  = $2;
+#		my $link     = $self->absolute_url($1, $base);
+#		my $previous = {'link' => $link, 'subject' => $2};
+#		return $previous;
 }
 
 sub parse_new_review {
@@ -762,7 +789,7 @@ sub parse_self_id {
 	return unless ($res and $res->is_success);
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
-	my $self_id = ($content =~ /<form action="list_review.pl\?id=(\d+)" method=post>/) ? $1 : 0;
+	my $self_id = ($content =~ /\(URL は http:\/\/mixi.jp\/show_friend.pl\?id=(\d+) です。\)/) ? $1 : 0;
 	return $self_id;
 }
 
@@ -1257,6 +1284,22 @@ sub get_new_bbs {
 	return $self->parse_new_bbs();
 }
 
+sub get_new_bbs_next {
+	my $self = shift;
+	my $url  = 'new_bbs.pl';
+	$url     = shift if (@_ and $_[0] ne 'refresh');
+	$self->set_response($url, @_) or return;
+	return $self->parse_new_bbs_next();
+}
+
+sub get_new_bbs_previous {
+	my $self = shift;
+	my $url  = 'new_bbs.pl';
+	$url     = shift if (@_ and $_[0] ne 'refresh');
+	$self->set_response($url, @_) or return;
+	return $self->parse_new_bbs_previous();
+}
+
 sub get_new_comment {
 	my $self = shift;
 	my $url  = 'new_comment.pl';
@@ -1344,7 +1387,7 @@ sub get_new_review {
 
 sub get_self_id {
 	my $self = shift;
-	my $url  = 'list_review.pl';
+	my $url  = 'show_profile.pl';
 	$self->set_response($url, @_) or return;
 	return $self->parse_self_id();
 }
@@ -1717,6 +1760,32 @@ sub parse_standard_history {
 		}
 	}
 	return @items;
+}
+
+sub parse_standard_history_next {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5>[^\r\n]*?<a href=["']?([^>]+?)['"]?>([^<>]+)<\/a><\/td><\/tr>/);
+	my $subject = $2;
+	my $link    = $self->absolute_url($1, $base);
+	my $next    = {'link' => $link, 'subject' => $2};
+	return $next;
+}
+
+sub parse_standard_history_previous {
+	my $self     = shift;
+	my $res      = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base     = $res->request->uri->as_string;
+	my $content  = $res->content;
+	return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5><a href=["']?(.+?)['"]?>([^<>]+)<\/a>[^\r\n]*?<\/td><\/tr>/);
+	my $subject  = $2;
+	my $link     = $self->absolute_url($1, $base);
+	my $previous = {'link' => $link, 'subject' => $2};
+	return $previous;
 }
 
 sub parse_standard_form {
@@ -2121,6 +2190,7 @@ sub test_get_mainly_categories_pagelinks {
 		'list_community'   => 'コミュニティ一覧',
 		'list_diary'       => '日記',
 		'list_friend'      => '友人・知人一覧',
+		'new_bbs'          => 'コミュニティ最新書き込み',
 		'new_diary'        => '新着日記検索',
 		'new_friend_diary' => 'マイミクシィ最新日記',
 	);

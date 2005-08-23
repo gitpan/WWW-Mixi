@@ -1,5 +1,25 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.34  Tue Aug 23 22:28:02 2005
+	- add parse_ and get_new_bbs_next
+	- add parse_ and get_new_bbs_previous
+	- mod new
+		- now pssword is not necessary.
+	- mod login
+		- now it is able to speciied password.
+	- mod session, stam
+		- now it is able to used to speciiy cookie value(BF_SESSION, BF_STAMP).
+	- mod parse_new_friend_diary_next
+	- mod parse_new_friend_diary_previous
+		- now they uses parse_standard_history_next/previous
+	- fix parse_list_friend_previous
+	- fix parse_new_friend_diary_next
+	- fix parse_list_friend
+	- fix get/parse_self_id
+		- now it targets "show_profile.pl".
+	- add parse_standard_history_next
+	- add parse_standard_history_previous
+
 0.33  Mon Jul 18 01:10:19 2005
 
 	- add parse_ and get_list_diary_monthly_menu (thanks DonaDona)
