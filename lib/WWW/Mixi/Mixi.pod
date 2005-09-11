@@ -198,45 +198,76 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
 
 =head3 @items = $mixi->parse_calendar( [$response] );
 
-カレンダー（calendar.plのメイン部）を解析します。
-返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+parse_show_calendarメソッドの別名です。
 
- {
- 	'subject' => '誕生日',
- 	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx',
- 	'name' => '塚本牧生',
- 	'time' => '2004/08/18'
- 	'icon' => 'http://mixi.jp/img/i_bd.gif'
- }
+mixiのカレンダ表示URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
 
 =head3 $item = $mixi->parse_calendar_term( [$response] );
 
-カレンダー（calendar.plのメイン部）の期間（年月）を解析します。
-返り値は、以下のようなハッシュリファレンスです。
+parse_show_calendar_termメソッドの別名です。
 
- {
- 	'year' => '2004',
- 	'month' => '8'
- }
+mixiのカレンダ表示URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
 
 =head3 $item = $mixi->parse_calendar_next( [$response] );
 
-カレンダー（calendar.plのメイン部）の「次の月」へのリンクを解析します。
-返り値は、「次の月」がある場合は以下のようなハッシュリファレンスです。
+parse_show_calendar_nextメソッドの別名です。
 
- {
- 	'subject' => '次の月',
- 	'link' => 'http://mixi.jp/calendar.pl?year=2004&month=10&pref_id=13',
- }
+mixiのカレンダ表示URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
 
 =head3 $item = $mixi->parse_calendar_previous( [$response] );
 
-カレンダー（calendar.plのメイン部）の「前の月」へのリンクを解析します。
-返り値は、「前の月」がある場合は以下のようなハッシュリファレンスです。
+parse_show_calendar_previousメソッドの別名です。
+
+mixiのカレンダ表示URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
+
+=head3 $id = $mixi->parse_community_id( [$response] );
+
+コミュニティ（view_community.pl）を解析し、このコミュニティのIDを返します。
+IDを取得できなかった時の返り値は0です。
+
+このメソッドは他の多くの解析系メソッドと違い、ハッシュリファレンスの配列ではなくただの文字列（スカラ値）を返すことに注意してください。
+
+=head3 @items = $mixi->parse_list_bbs( [$response] );
+
+トピック一覧（list_bbs.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => '前の月',
- 	'link' => 'http://mixi.jp/calendar.pl?year=2004&month=10&pref_id=13',
+ 	'link' => 'http://mixi.jp/view_bbs.pl?id=1492858',
+ 	'images' => [
+ 		{
+ 			'thumb_link' => 'http://img1.mixi.jp/photo/bbs/xx/xx/xxxxxxx_xxs.jpg',
+ 			'link' => 'show_picture.pl?img_src=http://img1.mixi.jp/photo/bbs/xx/xx/xxxxxxx_xx.jpg'}
+ 		},
+ 	],
+ 	'count' => '3',
+ 	'subject' => '0.33版公開。',
+ 	'time' => '08/16 13:38',
+ 	'description' => '0.33版を公開しました。CPANにもアップロード済みで、今日、明日中にはCPANモジュールでのインストールが可能になると思います。'
+ }
+
+=head3 $item = $mixi->parse_list_bbs_next( [$response] );
+
+トピック一覧（list_bbs.plのメイン部）の「次を表示」へのリンクを解析します。
+返り値は、「次を表示」がある場合は以下のようなハッシュリファレンスです。
+
+ {
+ 	'subject' => '次を表示',
+ 	'link' => 'http://mixi.jp/list_bbs.pl?page=2&id=43735',
+ }
+
+=head3 $item = $mixi->parse_list_bbs_previous( [$response] );
+
+トピック一覧（list_bbs.plのメイン部）の「前を表示」へのリンクを解析します。
+返り値は、「前を表示」がある場合は以下のようなハッシュリファレンスです。
+
+ {
+ 	'subject' => '前を表示',
+ 	'link' => 'http://mixi.jp/list_bbs.pl?page=1&id=43735',
  }
 
 =head3 @items = $mixi->parse_list_bookmark( [$response] );
@@ -317,7 +348,7 @@ imagesの中身はサムネイルと本体画像のURLをハッシュリファ�
  	]
  }
 
-=head3 $item = $mixi->parse_list_diary_capasity( [$response] );
+=head3 $item = $mixi->parse_list_diary_capacity( [$response] );
 
 日記（list_diary.plのメイン部）の「日記の使用状況」を解析します。
 返り値は、「日記の使用状況」がある場合は以下のようなハッシュリファレンスです。
@@ -347,7 +378,7 @@ imagesの中身はサムネイルと本体画像のURLをハッシュリファ�
  	'link' => 'http://mixi.jp/list_diary.pl?page=x',
  }
 
-=head3 @items = $mixi->parse_list_diary_monthy_menu( [$response] );
+=head3 @items = $mixi->parse_list_diary_monthly_menu( [$response] );
 
 日記（list_diary.pl）の各月のインデックスへのリンクを解析します。
 返り値は、月ごとに以下のようなハッシュリファレンスにしたものの配列です。
@@ -393,6 +424,40 @@ imagesの中身はサムネイルと本体画像のURLをハッシュリファ�
  	'link' => 'http://mixi.jp/list_friend.pl?page=x',
  }
 
+=head3 @items = $mixi->parse_list_member( [$response] );
+
+メンバー一覧（list_member.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'link' => 'http://mixi.jp/show_friend.pl?id=xxxxxx',
+ 	'count' => 'xx',
+ 	'subject' => 'walrusさん',
+ 	'background' => 'http://img.mixi.jp/img/bg_line.gif',
+ 	'id' => 'xxxxx',
+ 	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxxxx_xxxxxxxxxxs.jpg'
+ }
+
+=head3 $item = $mixi->parse_list_member_next( [$response] );
+
+メンバー一覧（list_member.plのメイン部）の「次を表示」へのリンクを解析します。
+返り値は、「次を表示」がある場合は以下のようなハッシュリファレンスです。
+
+ {
+ 	'subject' => '次を表示',
+ 	'link' => 'http://mixi.jp/list_member.pl?page=2&id=xxxxx',
+ }
+
+=head3 $item = $mixi->parse_list_member_previous( [$response] );
+
+メンバー一覧（list_member.plのメイン部）の「前を表示」へのリンクを解析します。
+返り値は、「前を表示」がある場合は以下のようなハッシュリファレンスです。
+
+ {
+ 	'subject' => '前を表示',
+ 	'link' => 'http://mixi.jp/list_member.pl?page=1&id=xxxxx',
+ }
+
 =head3 @items = $mixi->parse_list_message( [$response] );
 
 最近の受信メッセージ（list_message.plのメイン部）を解析します。
@@ -420,6 +485,15 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'time' => '08/18',
  }
 
+=head3 @items = $mixi->parse_list_request( [$response] );
+
+承認待ち一覧（list_request.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	（未稿）
+ }
+
 =head3 @items = $mixi->parse_new_album( [$response] );
 
 マイミクシィ最新アルバム（new_album.plのメイン部）を解析します。
@@ -438,30 +512,30 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'subject' => 'こんにちわ。',
  	'link' => 'http://mixi.jp/view_bbs.pl?id=xxxxxx',
- 	'name' => '塚本牧生',
- 	'time' => '2004/08/18 13:18'
+ 	'subject' => 'はじめまして (59)',
+ 	'time' => '2005/09/11 16:49',
+ 	'name' => 'WWW::Mixi'
  }
 
-=head3 $item = $mixi->parse_new_friend_diary_next( [$response] );
+=head3 $item = $mixi->parse_new_bbs_next( [$response] ); New!
 
-コミュニティ最新書き込み（new_bbs.plのメイン部）の「次のページ」へのリンクを解析します。
-返り値は、「次のページ」がある場合は以下のようなハッシュリファレンスです。
+コミュニティ最新書き込み（new_bbs.plのメイン部）の「次を表示」へのリンクを解析します。
+返り値は、「次を表示」がある場合は以下のようなハッシュリファレンスです。
 
  {
- 	'subject' => '次のxx件を表示',
- 	'link' => 'http://mixi.jp/new_friend_diary.pl?page=x',
+ 	'link' => 'http://mixi.jp/new_bbs.pl?page=2',
+ 	'subject' => '次を表示'
  }
 
-=head3 $item = $mixi->parse_new_friend_diary_previous( [$response] );
+=head3 $item = $mixi->parse_new_bbs_previous( [$response] ); New!
 
-コミュニティ最新書き込み（new_bbs.plのメイン部）の「前のページ」へのリンクを解析します。
-返り値は、「前のページ」がある場合は以下のようなハッシュリファレンスです。
+コミュニティ最新書き込み（new_bbs.plのメイン部）の「前を表示」へのリンクを解析します。
+返り値は、「前を表示」がある場合は以下のようなハッシュリファレンスです。
 
  {
- 	'subject' => '前の50件を表示',
- 	'link' => 'http://mixi.jp/new_friend_diary.pl?page=x',
+ 	'link' => 'http://mixi.jp/new_bbs.pl?page=1',
+ 	'subject' => '前を表示'
  }
 
 =head3 @items = $mixi->parse_new_comment( [$response] );
@@ -478,38 +552,24 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
 
 =head3 @items = $mixi->parse_new_diary( [$response] );
 
-新着日記検索（new_diary.plのメイン部）を解析します。
-返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+parse_search_diaryメソッドの別名です。
 
- {
- 	'subject' => 'こんにちわ。',
- 	'description' => 'mixiはじめました。皆様、よろしくお願いしま',
- 	'time' => '2005/05/20 13:32'
- 	'name' => '塚本牧生',
- 	'gender' => '男性',
- 	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx&owner_id=xxxxx',
- 	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxxx_xxxxxxxxs.jpg',
- }
+mixiの新着日記検索URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
 
 =head3 $item = $mixi->parse_new_diary_next( [$response] );
 
-新着日記検索（new_diary.plのメイン部）の「次のページ」へのリンクを解析します。
-返り値は、「次を表示」がある場合は以下のようなハッシュリファレンスです。
+parse_search_diary_nextメソッドの別名です。
 
- {
- 	'subject' => '次を表示',
- 	'link' => 'http://mixi.jp/new_diary.pl?page=2&keyword=xx'
- }
+mixiの新着日記検索URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
 
 =head3 $item = $mixi->parse_new_diary_previous( [$response] );
 
-新着日記検索（new_diary.plのメイン部）の「前のページ」へのリンクを解析します。
-返り値は、「前を表示」がある場合は以下のようなハッシュリファレンスです。
+parse_search_diary_previousメソッドの別名です。
 
- {
- 	'subject' => '前を表示',
- 	'link' => 'http://mixi.jp/new_diary.pl?page=2&keyword=xx'
- }
+mixiの新着日記検索URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
 
 =head3 @items = $mixi->parse_new_friend_diary( [$response] );
 
@@ -555,12 +615,104 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'time' => '2004/08/18 13:18'
  }
 
+=head3 @items = $mixi->parse_release_info( [$response] );
+
+新機能リリース・障害のご報告（release_info.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'subject' => '「○○」に関して',
+ 	'time' => '2005/09/01',
+ 	'description' => '「○○」のメンテナンスを行うため、9月1日(水)11:10頃より、○○を停止いたします。
+ 	ユーザーの皆様には大変ご不便をおかけいたしますが、メンテナンス完了までしばらくお待ちいただきますようお願い申し上げます。
+ 	追記
+ 	13:30頃、メンテナンスが完了したことをお知らせ致します。'
+ }
+
 =head3 $id = $mixi->parse_self_id( [$response] );
 
 プロフィール（show_profile.pl）を解析し、自分のIDを返します。
 IDを取得できなかった時の返り値は0です。
 
 このメソッドは他の多くの解析系メソッドと違い、ハッシュリファレンスの配列ではなくただの文字列（スカラ値）を返すことに注意してください。
+
+=head3 @items = $mixi->parse_search_diary( [$response] );
+
+新着日記検索（search_diary.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'subject' => 'こんにちわ。',
+ 	'description' => 'mixiはじめました。皆様、よろしくお願いしま',
+ 	'time' => '2005/05/20 13:32'
+ 	'name' => '塚本牧生',
+ 	'gender' => '男性',
+ 	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx&owner_id=xxxxx',
+ 	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxxx_xxxxxxxxs.jpg',
+ }
+
+=head3 $item = $mixi->parse_search_diary_next( [$response] );
+
+新着日記検索（search_diary.plのメイン部）の「次のページ」へのリンクを解析します。
+返り値は、「次を表示」がある場合は以下のようなハッシュリファレンスです。
+
+ {
+ 	'subject' => '次を表示',
+ 	'link' => 'http://mixi.jp/search_diary.pl?page=2&keyword=xx'
+ }
+
+=head3 $item = $mixi->parse_search_diary_previous( [$response] );
+
+新着日記検索（search_diary.plのメイン部）の「前のページ」へのリンクを解析します。
+返り値は、「前を表示」がある場合は以下のようなハッシュリファレンスです。
+
+ {
+ 	'subject' => '前を表示',
+ 	'link' => 'http://mixi.jp/search_diary.pl?page=2&keyword=xx'
+ }
+
+=head3 @items = $mixi->parse_show_calendar( [$response] );
+
+カレンダー（show_calendar.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'subject' => '誕生日',
+ 	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx',
+ 	'name' => '塚本牧生',
+ 	'time' => '2004/08/18'
+ 	'icon' => 'http://mixi.jp/img/i_bd.gif'
+ }
+
+=head3 $item = $mixi->parse_show_calendar_term( [$response] );
+
+カレンダー（show_calendar.plのメイン部）の期間（年月）を解析します。
+返り値は、以下のようなハッシュリファレンスです。
+
+ {
+ 	'year' => '2004',
+ 	'month' => '8'
+ }
+
+=head3 $item = $mixi->parse_show_calendar_next( [$response] );
+
+カレンダー（show_calendar.plのメイン部）の「次の月」へのリンクを解析します。
+返り値は、「次の月」がある場合は以下のようなハッシュリファレンスです。
+
+ {
+ 	'subject' => '次の月',
+ 	'link' => 'http://mixi.jp/show_calendar.pl?year=2004&month=10&pref_id=13',
+ }
+
+=head3 $item = $mixi->parse_show_calendar_previous( [$response] );
+
+カレンダー（show_calendar.plのメイン部）の「前の月」へのリンクを解析します。
+返り値は、「前の月」がある場合は以下のようなハッシュリファレンスです。
+
+ {
+ 	'subject' => '前の月',
+ 	'link' => 'http://mixi.jp/show_calendar.pl?year=2004&month=10&pref_id=13',
+ }
 
 =head3 $item = $mixi->parse_show_friend_outline( [$response] );
 
@@ -621,6 +773,34 @@ stepが2の時は上のように、間に挟まるマイミクシィの情報が
 あしあと（show_log.plのメイン部）を解析し、あしあと数を返します。
 
 このメソッドは他の多くの解析系メソッドと違い、ハッシュリファレンスの配列ではなくただの数値（スカラ値）を返すことに注意してください。
+
+=head3 $item = $mixi->parse_view_bbs( [$response] );
+
+トピック（view_bbs.plのメイン部）を解析します。
+返り値は、以下のようなハッシュリファレンスです。
+
+ {
+ 	'link' => 'http://mixi.jp/view_bbs.pl?id=xxxxxx',
+ 	'images' => [
+ 		{
+ 			'thumb_link' => 'http://img1.mixi.jp/photo/bbs/xx/xx/xxxxxxx_xxs.jpg',
+ 			'link' => 'show_picture.pl?img_src=http://img1.mixi.jp/photo/bbs/xx/xx/xxxxxxx_xx.jpg'}
+ 		},
+ 	],
+ 	'subject' => 'リリース情報',
+ 	'time' => '2005/09/01 00:00',
+ 	'name' => 'walrus',
+ 	'name_link' => 'http://mixi.jp/show_friend.pl?id=xxxxx',
+ 	'description' => 'リリース情報はこのトピックに掲載していきます。'
+ 	'comments' => [
+ 		{
+ 			'link' => 'http://mixi.jp/show_friend.pl?id=xxxxx',
+ 			'time' => '2005/09/01 05:34',
+ 			'name' => 'walrus',
+ 			'description' => '1.00版をリリースしました。'
+ 		}
+ 	]
+ }
 
 =head3 $item = $mixi->parse_view_diary( [$response] );
 
@@ -870,36 +1050,73 @@ URLを指定しなかった時は「ホーム」を対象にします。
 
 =head3 @items = $mixi->get_calendar( [$url | $url => 'refresh' | 'refresh'] );
 
-カレンダーを取得します。
-デフォルトでは今月のカレンダーを対象にしますが、URLを指定した時はそのページを対象にします。
-返り値はparse_calendarと同じです。
+get_show_calendarメソッドの別名です。
 
-最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
-最新のデータを取得したい時は、'refresh'を指定してください。
+mixiのカレンダ表示URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
 
 =head3 $item = $mixi->get_calendar_term( [$url | $url => 'refresh' | 'refresh'] );
 
-カレンダーの期間（年月）を取得します。
-デフォルトでは今月のカレンダーを対象にしますが、URLを指定した時はそのページを対象にします。
-返り値はparse_calendar_termと同じです。
+get_show_calendar_termメソッドの別名です。
 
-最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
-最新のデータを取得したい時は、'refresh'を指定してください。
+mixiのカレンダ表示URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
 
 =head3 $item = $mixi->get_calendar_next( [$url | $url => 'refresh' | 'refresh'] );
 
-カレンダーの「次の月」へのリンクを取得します。
-デフォルトでは「カレンダー」を対象にしますが、URLを指定した時はそのページを対象にします。
-返り値はparse_calendar_nextと同じです。
+get_show_calendar_nextメソッドの別名です。
+
+mixiのカレンダ表示URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
+
+=head3 $item = $mixi->get_calendar_previous( [$url | $url => 'refresh' | 'refresh'] );
+
+get_show_calendar_previousメソッドの別名です。
+
+mixiのカレンダ表示URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
+
+=head3 $item = $mixi->get_community_id( $url | $url => 'refresh' );
+
+コミュニティのIDを取得します。
+このメソッドでは、URLの指定が必須です。
+返り値はparse_community_idと同じです。
 
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=head3 $item = $mixi->get_calendar_previous( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_list_bbs( $url | $url => 'refresh' | 'refresh', 'id' => $community_id | 'id' => $community_id);
 
-カレンダーの「前の月」へのリンクを取得します。
-デフォルトでは「カレンダー」を対象にしますが、URLを指定した時はそのページを対象にします。
-返り値はparse_calendar_previousと同じです。
+コミュニティのトピック一覧を取得します。
+このメソッドでは、コミュニティIDの指定が必須です。
+返り値はparse_list_bbsと同じです。
+
+コミュニティIDは、URLのクエリ部で'id=xxxxx'のように指定するか、引数で与えてください。
+両方指定された場合は、URL中のコミュニティIDが優先されます。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_list_bbs_next( $url | $url => 'refresh' | 'refresh', 'id' => $community_id | 'id' => $community_id);
+
+コミュニティのトピック一覧の「次のページ」へのリンクを取得します。
+このメソッドでは、コミュニティIDの指定が必須です。
+返り値はparse_list_bbs_nextと同じです。
+
+コミュニティIDは、URLのクエリ部で'id=xxxxx'のように指定するか、引数で与えてください。
+両方指定された場合は、URL中のコミュニティIDが優先されます。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_list_bbs_previous( $url | $url => 'refresh' | 'refresh', 'id' => $community_id | 'id' => $community_id);
+
+コミュニティのトピック一覧の「前のページ」へのリンクを取得します。
+このメソッドでは、コミュニティIDの指定が必須です。
+返り値はparse_list_bbs_previousと同じです。
+
+コミュニティIDは、URLのクエリ部で'id=xxxxx'のように指定するか、引数で与えてください。
+両方指定された場合は、URL中のコミュニティIDが優先されます。
 
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
@@ -985,11 +1202,11 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=head3 @items = $mixi->get_list_diary_monthy_menu( [$url | $url => 'refresh' | 'refresh'] );
+=head3 @items = $mixi->get_list_diary_monthly_menu( [$url | $url => 'refresh' | 'refresh'] );
 
 日記の各月のインデックスへのリンクを取得します。
 デフォルトでは「日記」を対象にしますが、URLを指定した時はそのページを対象にします。
-返り値はparse_list_diary_monthy_menuと同じです。
+返り値はparse_list_diary_monthly_menuと同じです。
 
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
@@ -1021,6 +1238,42 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
+=head3 @items = $mixi->get_list_member( $url | $url => 'refresh' | 'refresh', 'id' => $community_id | 'id' => $community_id);
+
+コミュニティのメンバー一覧を取得します。
+このメソッドでは、コミュニティIDの指定が必須です。
+返り値はparse_list_memberと同じです。
+
+コミュニティIDは、URLのクエリ部で'id=xxxxx'のように指定するか、引数で与えてください。
+両方指定された場合は、URL中のコミュニティIDが優先されます。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_list_member_next( $url | $url => 'refresh' | 'refresh', 'id' => $community_id | 'id' => $community_id);
+
+コミュニティのメンバー一覧の「次のページ」へのリンクを取得します。
+このメソッドでは、コミュニティIDの指定が必須です。
+返り値はparse_list_member_nextと同じです。
+
+コミュニティIDは、URLのクエリ部で'id=xxxxx'のように指定するか、引数で与えてください。
+両方指定された場合は、URL中のコミュニティIDが優先されます。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_list_member_previous( $url | $url => 'refresh' | 'refresh', 'id' => $community_id | 'id' => $community_id);
+
+コミュニティのメンバー一覧の「前のページ」へのリンクを取得します。
+このメソッドでは、コミュニティIDの指定が必須です。
+返り値はparse_list_member_previousと同じです。
+
+コミュニティIDは、URLのクエリ部で'id=xxxxx'のように指定するか、引数で与えてください。
+両方指定された場合は、URL中のコミュニティIDが優先されます。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
 =head3 @items = $mixi->get_list_message( [$url | $url => 'refresh' | 'refresh'] );
 
 「最近の受信メッセージ」を取得します。
@@ -1035,6 +1288,12 @@ URLを指定しなかった時は「ホーム」を対象にします。
 「最近の送信メッセージ」を取得します。
 デフォルトでは「送信メッセージ」の最初のページを対象にしますが、URLを指定した時はそのページを対象にします。
 返り値はparse_list_messageと同じです。
+
+=head3 @items = $mixi->get_list_request( [$url | $url => 'refresh' | 'refresh'] );
+
+「承認待ちの友人」を取得します。
+デフォルトでは「承認待ちの友人」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_list_requestと同じです。
 
 =head3 @items = $mixi->get_new_album( [$url | $url => 'refresh' | 'refresh'] );
 
@@ -1083,40 +1342,24 @@ URLを指定しなかった時は「ホーム」を対象にします。
 
 =head3 @items = $mixi->get_new_diary( [$url | $url => 'refresh' | 'refresh']  [,'keyword' => $keyword]);
 
-新着日記検索を取得します。
-デフォルトでは「新着日記検索」を対象にしますが、URLを指定した時はそのページを対象にします。
-返り値はparse_new_diaryと同じです。
+get_search_diaryメソッドの別名です。
 
-検索キーワードを指定する時は、URLに埋め込むか、引数で与えてください。
-どちらもなければ検索キーワード無しでの検索結果が返されます。
-両方指定された場合は、URL中のキーワードが優先されます。
-
-最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
-最新のデータを取得したい時は、'refresh'を指定してください。
+mixiの新着日記検索URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
 
 =head3 $item = $mixi->get_new_diary_next( [$url | $url => 'refresh' | 'refresh'] [,'keyword' => $keyword]);
 
-新着日記検索の「次のページ」へのリンクを取得します。
-デフォルトでは「新着日記検索」を対象にしますが、URLを指定した時はそのページを対象にします。
-返り値はparse_new_diary_nextと同じです。
+get_search_diary_nextメソッドの別名です。
 
-検索キーワードは、URLに埋め込むか、引数で与えてください。
-新着日記検索ではキーワードを指定しないと「次のページ」「前のページ」が見れないので、URL中にも引数にもキーワードがない時は、確実に失敗することに注意してください。
-
-最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
-最新のデータを取得したい時は、'refresh'を指定してください。
+mixiの新着日記検索URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
 
 =head3 $item = $mixi->get_new_diary_previous( [$url | $url => 'refresh' | 'refresh']  [,'keyword' => $keyword]);
 
-新着日記検索の「前のページ」へのリンクを取得します。
-デフォルトでは「新着日記検索」を対象にしますが、URLを指定した時はそのページを対象にします。
-返り値はparse_new_diary_previousと同じです。
+get_search_diary_previousメソッドの別名です。
 
-検索キーワードは、URLに埋め込むか、引数で与えてください。
-新着日記検索ではキーワードを指定しないと「次のページ」「前のページ」が見れないので、URL中にも引数にもキーワードがない時は、確実に失敗することに注意してください。
-
-最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
-最新のデータを取得したい時は、'refresh'を指定してください。
+mixiの新着日記検索URLの変更に伴い、メソッド名が変更されました。
+現時点では互換性の観点からこのメソッド名でも利用できるようになっていますが、将来の版ではこのメソッドは使用できなくなります。
 
 =head3 @items = $mixi->get_new_friend_diary( [$url | $url => 'refresh' | 'refresh'] );
 
@@ -1154,6 +1397,15 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
+=head3 @items = $mixi->get_release_info( [$url | $url => 'refresh' | 'refresh'] );
+
+新機能リリース・障害のご報告を取得します。
+デフォルトでは「新機能リリース・障害のご報告」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_release_infoと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
 =head3 $id = $mixi->get_self_id( ['refresh'] );
 
 おすすめレビュー（list_review.pl）の「レビューを書く」ボックスを解析し、
@@ -1163,6 +1415,79 @@ IDを取得できなかった時の返り値は0です。
 返り値はparse_self_idと同じです。
 
 最後にgetまたはpostメソッドで取得したページが「おすすめレビュー」の時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 @items = $mixi->get_search_diary( [$url | $url => 'refresh' | 'refresh']  [,'keyword' => $keyword]);
+
+新着日記検索を取得します。
+デフォルトでは「新着日記検索」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_search_diaryと同じです。
+
+検索キーワードを指定する時は、URLに埋め込むか、引数で与えてください。
+どちらもなければ検索キーワード無しでの検索結果が返されます。
+両方指定された場合は、URL中のキーワードが優先されます。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_search_diary_next( [$url | $url => 'refresh' | 'refresh'] [,'keyword' => $keyword]);
+
+新着日記検索の「次のページ」へのリンクを取得します。
+デフォルトでは「新着日記検索」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_search_diary_nextと同じです。
+
+検索キーワードは、URLに埋め込むか、引数で与えてください。
+新着日記検索ではキーワードを指定しないと「次のページ」「前のページ」が見れないので、URL中にも引数にもキーワードがない時は、確実に失敗することに注意してください。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_search_diary_previous( [$url | $url => 'refresh' | 'refresh']  [,'keyword' => $keyword]);
+
+新着日記検索の「前のページ」へのリンクを取得します。
+デフォルトでは「新着日記検索」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_search_diary_previousと同じです。
+
+検索キーワードは、URLに埋め込むか、引数で与えてください。
+新着日記検索ではキーワードを指定しないと「次のページ」「前のページ」が見れないので、URL中にも引数にもキーワードがない時は、確実に失敗することに注意してください。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 @items = $mixi->get_show_calendar( [$url | $url => 'refresh' | 'refresh'] );
+
+カレンダーを取得します。
+デフォルトでは今月のカレンダーを対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_show_calendarと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_show_calendar_term( [$url | $url => 'refresh' | 'refresh'] );
+
+カレンダーの期間（年月）を取得します。
+デフォルトでは今月のカレンダーを対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_show_calendar_termと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_show_calendar_next( [$url | $url => 'refresh' | 'refresh'] );
+
+カレンダーの「次の月」へのリンクを取得します。
+デフォルトでは「カレンダー」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_show_calendar_nextと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_show_calendar_previous( [$url | $url => 'refresh' | 'refresh'] );
+
+カレンダーの「前の月」へのリンクを取得します。
+デフォルトでは「カレンダー」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_show_calendar_previousと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
 =head3 @items = $mixi->get_show_log( [$url | $url => 'refresh' | 'refresh'] );
@@ -1197,6 +1522,15 @@ IDを取得できなかった時の返り値は0です。
 プロフィールを取得します。
 このメソッドでは、URLの指定が必須です。
 返り値はparse_show_friend_profileと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_view_bbs( $url [ => 'refresh'] ); New!
+
+トピックを取得します。
+このメソッドでは、URLの指定が必須です。
+返り値はparse_view_bbsと同じです。
 
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
@@ -1401,6 +1735,23 @@ HTMLに限らず、<～>のほとんどを削除する事に注意してくだ�
 
 このメソッドはLWP::RobotUA（を介してLWP::UserAgent）から継承したredirect_okメソッドを上書きしています。
 
+=head3 @items = $mixi->get_standard_data($parse_method, $ur_definition [, $url] [, 'refresh']);
+
+get_xxxxメソッドの主要処理を代替する、標準的なデータ取得メソッドです。
+引数にはデータ解析に使うメソッド名（parse_xxx）、URL定義、取得するURL、最新情報の(再)取得フラグを指定します。
+URL、最新情報の取得フラグは省略可能です。
+
+URL定義に文字列を指定した場合、これはデフォルトURLと見なされます。
+この時、URLの指定を省略すると、URL定義で渡されたデフォルトURLを取得します。
+これは、クエリ部が不要でURLをアプリケーション側で自動的に指定してよい場合に有用です。
+
+URL定義に正規表現を指定した場合、これはURLが従うべきパターンと見なされます。
+この時はURLの指定は省略できません。
+指定されたURLは、URL定義で渡されたパターンとのマッチが指定され、マッチしない時はエラーになります。
+これは、クエリ部が必須で、URLをユーザからの入力に頼らなければいけない場合に有用です。
+
+URLが決定、検査されると、あとはデータの取得、指定されたメソッドでの解析が行われ、その結果が返されます。
+
 =head3 @items = $mixi->parse_standard_history( [$response] );
 
 標準的な履歴ページのメイン部分用の解析メソッドです。
@@ -1418,6 +1769,38 @@ HTMLに限らず、<～>のほとんどを削除する事に注意してくだ�
 なお、それぞれ専用のメソッドを用意してありますので、そちらを使う方が無難です。
 現在はこれらのページをparse_standard_historyで解析できるため、内部ではparse_standard_historyを呼び出しているだけですが、将来についてはmixi側の変更があるかも知れません。
 その時には専用メソッドでしか解析できなくなり、parse_standard_historyを使っていると手直しが必要になるでしょう。
+
+=head3 $item = $mixi->parse_standard_history_next( [$response] );
+
+標準的な履歴ページの次ページへのリンクの解析メソッドです。
+コミュニティ最新書き込み（new_bbs.plのメイン部）、マイミクシィ最新日記（new_friend_diary.plのメイン部）を解析できます。
+
+返り値は、次ページがある場合は以下のようなハッシュリファレンスです。
+
+ {
+ 	'link' => 'http://mixi.jp/new_bbs.pl?page=2',
+ 	'subject' => '次を表示'
+ }
+
+なお、それぞれ専用のメソッドを用意してありますので、そちらを使う方が無難です。
+現在はこれらのページをparse_standard_history_nextで解析できるため、内部ではparse_standard_history_nextを呼び出しているだけですが、将来についてはmixi側の変更があるかも知れません。
+その時には専用メソッドでしか解析できなくなり、parse_standard_history_nextを使っていると手直しが必要になるでしょう。
+
+=head3 $item = $mixi->parse_standard_history_previous( [$response] );
+
+標準的な履歴ページの前ページへのリンクの解析メソッドです。
+コミュニティ最新書き込み（new_bbs.plのメイン部）、マイミクシィ最新日記（new_friend_diary.plのメイン部）を解析できます。
+
+返り値は、前ページがある場合は以下のようなハッシュリファレンスです。
+
+ {
+ 	'link' => 'http://mixi.jp/new_bbs.pl?page=1',
+ 	'subject' => '前を表示'
+ }
+
+なお、それぞれ専用のメソッドを用意してありますので、そちらを使う方が無難です。
+現在はこれらのページをparse_standard_history_previousで解析できるため、内部ではparse_standard_history_previousを呼び出しているだけですが、将来についてはmixi側の変更があるかも知れません。
+その時には専用メソッドでしか解析できなくなり、parse_standard_history_previousを使っていると手直しが必要になるでしょう。
 
 =head3 @items = $mixi->parse_standard_form( [$response] );
 
@@ -1448,7 +1831,7 @@ responseメソッドの返り値を、$url取得時のデータになるよう�
 これにより、不要な再取得の負荷と時間をかけないようにしています。
 この場合でもデータを再取得し、最新のデータにしたい時には'refresh'を指定してください。
 
-=head3 @items = $mixi->post_add_diary('submit' => $action, 'diary_title' => $title, 'diary_body' => $body, [, 'photo1' => $path_to_photo1, 'photo2' => $path_to_photo2, 'photo3' => $path_to_photo3] [, 'orig_size' => 1]] [, 'packed' => $hash_value]);
+=head3 $response = $mixi->post_add_diary('submit' => $action, 'diary_title' => $title, 'diary_body' => $body, [, 'photo1' => $path_to_photo1, 'photo2' => $path_to_photo2, 'photo3' => $path_to_photo3] [, 'orig_size' => 1]] [, 'packed' => $hash_value]);
 
 日記作成ページに引数のデータを送信します。
 返り値は送信時のHTTP::Responseオブジェクトです。
@@ -1458,7 +1841,7 @@ responseメソッドの返り値を、$url取得時のデータになるよう�
 
 実際に投稿する時には、写真1～3などの代わりに、確認画面に表示されたハッシュ値（packedフィールドの値）を指定します。
 
-=head3 @items = $mixi->post_edit_diary('submit' => $action, 'diary_id' => $id, 'diary_title' => $title, 'diary_body' => $body, 'photo1' => $path_to_photo1, 'photo2' => $path_to_photo2, 'photo3' => $path_to_photo3);
+=head3 $response = $mixi->post_edit_diary('submit' => $action, 'diary_id' => $id, 'diary_title' => $title, 'diary_body' => $body, 'photo1' => $path_to_photo1, 'photo2' => $path_to_photo2, 'photo3' => $path_to_photo3);
 
 日記編集ページに引数のデータを送信します。
 返り値は送信時のHTTP::Responseオブジェクトです。
@@ -1466,12 +1849,17 @@ responseメソッドの返り値を、$url取得時のデータになるよう�
 アクションには、編集する時には"main"を指定します。
 写真1～3には、ファイルパスを指定します。
 
-=head3 @items = $mixi->post_delete_diary('submit' => $action, 'diary_id' => $id);
+=head3 $response = $mixi->post_delete_diary('submit' => $action, 'diary_id' => $id);
 
 日記削除ページに引数のデータを送信します。
 返り値は送信時のHTTP::Responseオブジェクトです。
 
 アクションには、確認画面を取得する時は"main"、実際に投稿する時には"confirm"を指定します。
+
+=head3 $response = $mixi->post_send_message('id' => $id, 'subject' => $subject, 'body' => $body, 'post_key' => $key);
+
+メッセージ送信ページに引数のデータを送信します。
+返り値は送信時のHTTP::Responseオブジェクトです。
 
 =head3 $time = $mixi->convert_login_time($time);
 

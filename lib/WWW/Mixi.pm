@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.34$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.35$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -76,8 +76,9 @@ sub is_login_required {
 	if    (not $res)             { return "ページを取得できていません。"; }
 	elsif (not $res->is_success) { return sprintf('ページ取得に失敗しました。（%s）', $res->message); }
 	else {
+		my $re_attr = '(?:"[^"]+"|\'[^\']+\|[^\s<>]+)\s+';
 		my $content = $res->content;
-		return 0 if ($content !~ /<form[^<>]+action=["']?([^"'\s<>]*)["']?.*?>/);
+		return 0 if ($content !~ /<form (?:$re_attr)*action=("[^""]+"|'[^'']+'|[^\s<>]+)/);
 		return 0 if ($self->absolute_url($1) ne $self->absolute_url('login.pl'));
 		$self->{'mixi'}->{'next_url'} = ($content =~ /<input type=hidden name=next_url value="(.*?)">/) ? $1 : '/home.pl';
 		return "Login Failed ($1)" if ($content =~ /<b><font color=#DD0000>(.*?)<\/font><\/b>/);
@@ -233,9 +234,9 @@ sub parse_information {
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
 	my @items   = ();
-	if ($content =~ /<!-- start: お知らせ -->(.*?)<\/table>/s) {
+	if ($content =~ /<!-- start: お知らせ -->(.*?)<\/table>/is) {
 		$content = $1;
-		$content =~ s/[\r\n]//g;
+		$content =~ s/[\r\n]+//gs;
 		$content =~ s/<!--.*?-->//g;
 		while ($content =~ s/<tr><td>(.*?)<\/td><td>(.*?)<\/td><td>(.*?)<\/td><\/tr>//i) {
 			my ($subject, $linker) = ($1, $3);
@@ -253,93 +254,81 @@ sub parse_information {
 	return @items;
 }
 
-sub parse_calendar {
-	my $self     = shift;
-	my $res      = (@_) ? shift : $self->response();
+sub parse_calendar { my $self = shift; return $self->parse_show_calendar(@_); }
+sub parse_calendar_term { my $self = shift; return $self->parse_show_calendar_term(@_); }
+sub parse_calendar_next { my $self = shift; return $self->parse_show_calendar_next(@_); }
+sub parse_calendar_previous { my $self = shift; return $self->parse_show_calendar_previous(@_); }
+
+sub parse_community_id {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
 	return unless ($res and $res->is_success);
-	my $base     = $res->base->as_string;
-	my $content  = $res->content;
-	my %icons    = ('i_sc-.gif' => '予定', 'i_bd.gif' => '誕生日', 'i_iv1.gif' => '参加イベント', 'i_iv2.gif' => 'イベント');
-	my %whethers = ('1' => '晴', '2' => '曇', '3' => '雨', '4' => '雪', '8' => 'のち', '9' => 'ときどき');
-	my @items    = ();
-	my $term     = $self->parse_calendar_term($res) or return undef; 
-	if ($content =~ /<table width="670" border="0" cellspacing="1" cellpadding="3">(.+?)<\/table>/s) {
-		$content = $1;
-		$content =~ s/<tr ALIGN=center BGCOLOR=#FFF1C4>.*?<\/tr>//is;
-		while ($content =~ s/<td HEIGHT=65 [^<>]*><font COLOR=#996600>(\S*?)<\/font>(.*?)<\/td>//is) {
-			my $date = $1;
-			my $text = $2;
-			next unless ($date =~ /(\d+)/);
-			$date = sprintf('%04d/%02d/%02d', $term->{'year'}, $term->{'month'}, $1);
-			if ($text =~ s/<img SRC=(.*?) WIDTH=23 HEIGHT=16 ALIGN=absmiddle>(.*?)<\/font><\/font>//) {
-				my $item = { 'subject' => "天気", 'link' => undef, 'name' => $2, 'time' => $date, 'icon' => $1};
-				$item->{'icon'} = $self->absolute_url($item->{'icon'}, $base);
-				my $weather = ($item->{'icon'} =~ /i_w(\d+).gif$/) ? $1 : '不明';
-				$weather    =~ s/(\d)/$whethers{$1}/g;
-				$item->{'name'} = sprintf("%s(%s\%)", $weather, $self->rewrite($item->{'name'}));
-				push(@items, $item);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my $item;
+	if ($content =~ /view_community.pl\?id=(\d+) /) {
+		$item = $1;
+	}
+	return $item;
+}
+
+sub parse_list_bbs {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	my $re_date = '<td ALIGN=center ROWSPAN=3 NOWRAP bgcolor=#FFD8B0>(\d{2})月(\d{2})日<br>(\d{1,2}):(\d{2})</td>';
+	my $re_subj = '<td bgcolor=#FFF4E0>&nbsp;(.+?)</td>';
+	my $re_desc = '<td CLASS=h120>\n\n\n(.*?)\n</td>';
+	my $re_name = '\((.*?)\)';
+	my $re_link = '<a href="?(.+?)"?>書き込み\((\d+)\)<\/a>';
+	if ($content =~ /<table BORDER=0 cellspacing=1 cellpadding=3 width=630>(.+)<\/table>/s) {
+		$content = $1 ;
+		while ($content =~ s/<tr VALIGN=top>.*?${re_date}.*?${re_subj}(.*?)${re_desc}.*?${re_link}.*?<\/tr>//is) {
+			my $time     = sprintf('%02d/%02d %02d:%02d', $1, $2, $3, $4);
+			my ($subj, $thumbs, $desc, $link, $count) = ($5, $6, $7, $8, $9);
+			$subj = $self->rewrite($subj);
+			$desc = $self->rewrite($desc);
+			$desc =~ s/^$//g;
+			$link = $self->absolute_url($link, $base);
+			my @images = ();
+			while ($thumbs =~ s/MM_openBrWindow\('(.*?)',.+?<img src=["']?([^<>]*?)['"]? border//is){
+				my $img      = $self->absolute_url($1, $base);
+				my $thumbimg = $self->absolute_url($2, $base);
+				push(@images,  {'thumb_link' => $thumbimg, 'link' => $img});
 			}
-			my @events = split(/<br>/, $text);
-			foreach my $event (@events) {
-				my $item = {};
-				if ($event =~ /<img SRC=(.*?) WIDTH=16 HEIGHT=16 ALIGN=middle><a HREF=(.*?)>(.*?)<\/a>/) {
-					$item = { 'subject' => $1, 'link' => $2, 'name' => $3, 'time' => $date, 'icon' => $1};
-				} elsif ($event =~ /<a href=".*?" onClick="MM_openBrWindow\('(view_schedule.pl\?id=\d+)'.*?\)"><img src=(.*?) .*?>(.*?)<\/a>/) {
-					$item = { 'subject' => $2, 'link' => $1, 'name' => $3, 'time' => $date, 'icon' => $2};
-				} else {
-					next;
-				}
-				$item->{'subject'} = ($item->{'subject'} =~ /([^\/]+)$/ and $icons{$1}) ? $icons{$1} : "不明($1)";
-				$item->{'link'} = $self->absolute_url($item->{'link'}, $base);
-				$item->{'icon'} = $self->absolute_url($item->{'icon'}, $base);
-				$item->{'subject'} = $self->rewrite($item->{'subject'});
-				$item->{'name'} = $self->rewrite($item->{'name'});
-				push(@items, $item);
-			}
+			push(@items, {'time' => $time, 'description' => $desc, 'subject' => $subj, 'link' => $link, 'count' => $count, 'images' => [@images]});
 		}
 	}
 	return @items;
 }
 
-sub parse_calendar_term {
+sub parse_list_bbs_next {
 	my $self    = shift;
 	my $res     = (@_) ? shift : $self->response();
 	return unless ($res and $res->is_success);
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
-	return unless ($content =~ /<a href="calendar.pl\?year=(\d+)&month=(\d+)&pref_id=13">[^&]*?<\/a>/);
-	return {'year' => $1, 'month' => $2};
-}
-
-sub parse_calendar_next {
-	my $self    = shift;
-	my $res     = (@_) ? shift : $self->response();
-	return unless ($res and $res->is_success);
-	my $base    = $res->base->as_string;
-	my $content = $res->content;
-	return unless ($content =~ /<a href="(calendar.pl\?.*?)">([^<>]+?)&nbsp;&gt;&gt;/);
+	return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5>.*?<a href=([^<>]*?list_bbs.pl[^<>]*?)>([^<>]*?)<\/a><\/td>/);
 	my $subject = $2;
 	my $link    = $self->absolute_url($1, $base);
-	my $next    = {'link' => $link, 'subject' => $subject};
+	my $next    = {'link' => $link, 'subject' => $2};
 	return $next;
 }
 
-sub parse_calendar_previous {
+sub parse_list_bbs_previous {
 	my $self    = shift;
 	my $res     = (@_) ? shift : $self->response();
 	return unless ($res and $res->is_success);
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
-	return unless ($content =~ /<a href="(calendar.pl\?.*?)">&lt;&lt;&nbsp;([^<>]+)/);
+	return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5><a href=([^<>]*?list_bbs.pl[^<>]*?)>([^<>]*?)<\/a>/);
 	my $subject = $2;
 	my $link    = $self->absolute_url($1, $base);
-	my $next    = {'link' => $link, 'subject' => $subject};
+	my $next    = {'link' => $link, 'subject' => $2};
 	return $next;
-}
-
-sub parse_diary {
-	my $self = shift;
-	return $self->parse_view_diary(@_);
 }
 
 sub parse_list_bookmark {
@@ -590,6 +579,64 @@ sub parse_list_friend_previous {
 	return $previous;
 }
 
+sub parse_list_member {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=2 WIDTH=560>(.+?)<\/table>/s) {
+		$content = $1 ;
+		while ($content =~ s/<tr ALIGN=center BGCOLOR=#FFFFFF>(.*?)<tr ALIGN=center BGCOLOR=#FFF4E0>(.*?)<\/tr>//is) {
+			my ($image_part, $text_part) = ($1, $2);
+			my @images = ($image_part =~ /<td WIDTH=20% HEIGHT=100 background=http:\/\/img.mixi.jp\/img\/bg_line.gif>.*?<\/td>/gi);
+			my @texts  = ($text_part =~ /<td>(.*?)<\/td>/gi);
+			for (my $i = 0; $i < @images or $i < @texts; $i++) {
+				my $item = {};
+				my ($image, $text) = ($images[$i], $texts[$i]);
+				($item->{'subject'}, $item->{'count'}) = ($1, $2) if ($text =~ /^\s*(.+?)\((\d+)\)/);
+				($item->{'background'}, $item->{'link'}, $item->{'image'}) = ($1, $2, $3) if ($image =~ /<td .*? background=([^<> ]*).*?><a href=(.*?)><img SRC=(.*?) border=0><\/a>/i);
+				if ($item->{'link'}) {
+					$item->{'subject'}    = $self->rewrite($item->{'subject'});
+					$item->{'link'}       = $self->absolute_url($item->{'link'}, $base);
+					$item->{'id'}         = $2 if ($item->{'link'} =~ /(.*?)?id=(\d*)/); 
+					$item->{'image'}      = $self->absolute_url($item->{'image'}, $base);
+					$item->{'background'} = $self->absolute_url($item->{'background'}, $base);
+					push(@items, $item);
+				}
+			}
+		}
+	}
+	return @items;
+}
+
+sub parse_list_member_next {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	return unless ($content =~ /&nbsp;&nbsp;<a href=([^<>]*?list_member.pl\?[^<>\s]*page=[^<>\s]*)>((?:(?!<\/a>).)*)<\/a>/);
+	my $subject = $2;
+	my $link    = $self->absolute_url($1, $base);
+	my $next    = {'link' => $link, 'subject' => $2};
+	return $next;
+}
+
+sub parse_list_member_previous {
+	my $self     = shift;
+	my $res      = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base     = $res->request->uri->as_string;
+	my $content  = $res->content;
+	return unless ($content =~ /<a href=([^<>\s]*list_member.pl\?[^<>\s]*page=[^<>\s]*)>((?:(?!<\/a>).)*)<\/a>&nbsp;&nbsp;/);
+	my $subject  = $2;
+	my $link     = $self->absolute_url($1, $base);
+	my $previous = {'link' => $link, 'subject' => $2};
+	return $previous;
+}
+
 sub parse_list_message {
 	my $self      = shift;
 	my $res       = (@_) ? shift : $self->response();
@@ -656,6 +703,36 @@ sub parse_list_outbox {
 	return @items;
 }
 
+sub parse_list_request {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>(.+?)<!--フッタ-->/s) {
+		$content = $1;
+		while ($content =~ s/<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=550>(.*?)<\/table>//is) {
+			my $record = $1;
+			my @lines = ($record =~ /<tr.*?>(.*?)<\/tr>/gis);
+			my $item = {};
+			# parse record
+			($item->{'link'}, $item->{'image'})  = ($1, $2) if ($lines[0] =~ /<td WIDTH=90 .*?><a href="([^"]*show_friend.pl\?id=\d+)"><img SRC="([^"]*)".*?>/is);
+			($item->{'subject'}, $item->{'gender'}) = ($1, $2) if ($lines[0] =~ /<td COLSPAN=2 BGCOLOR=#FFFFFF>(.*?) \((.*?)\)<\/td>/is);
+			$item->{'description'} = $1 if ($lines[1] =~ /<td COLSPAN=2 BGCOLOR=#FFFFFF>(.*?)<\/td>/is);
+			$item->{'message'} = $1 if ($lines[2] =~ /<td COLSPAN=2 BGCOLOR=#FFFFFF>(.*?)<\/td>/is);
+			$item->{'time'} = $1 if ($lines[3] =~ /<td BGCOLOR=#FFFFFF WIDTH=140>(.*?)<\/td>/is);
+			# format
+			foreach (qw(image link)) { $item->{$_} = $self->absolute_url($item->{$_}, $base) if ($item->{$_}); }
+			foreach (qw(subject description gender)) { $item->{$_} = $self->rewrite($item->{$_}); }
+			$item->{'time'} = $self->convert_login_time($item->{'time'}) if ($item->{'time'});
+			push(@items, $item) if ($item->{'subject'} and $item->{'link'});
+		}
+	}
+	@items = sort { $b->{'time'} cmp $a->{'time'} } @items;
+	return @items;
+}
+
 sub parse_new_album {
 	my $self    = shift;
 	return $self->parse_standard_history(@_);
@@ -681,7 +758,66 @@ sub parse_new_comment {
 	return $self->parse_standard_history(@_);
 }
 
-sub parse_new_diary {
+sub parse_new_diary { my $self = shift; return $self->parse_search_diary(@_); }
+sub parse_new_diary_next { my $self = shift; return $self->parse_search_diary_next(@_); }
+sub parse_new_diary_previous { my $self = shift; return $self->parse_search_diary_previous(@_); }
+
+sub parse_new_friend_diary {
+	my $self    = shift;
+	return $self->parse_standard_history(@_);
+}
+
+sub parse_new_friend_diary_next {
+	my $self    = shift;
+	return $self->parse_standard_history_next(@_);
+}
+
+sub parse_new_friend_diary_previous {
+	my $self    = shift;
+	return $self->parse_standard_history_previous(@_);
+}
+
+sub parse_new_review {
+	my $self    = shift;
+	return $self->parse_standard_history(@_);
+}
+
+sub parse_release_info {
+	my $self     = shift;
+	my $res      = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base     = $res->base->as_string;
+	my $content  = $res->content;
+	my @items    = ();
+	my $re_subj  = '<b><font COLOR=#605048>(.+?)</font></b>';
+	my $re_date  = '<td ALIGN=right><font COLOR=#605048>(\d{4}).(\d{2}).(\d{2})</font></td>';
+	my $re_desc  = '<td CLASS=h130>(.*?)</td>';
+	if ($content =~ /新機能リリース・障害のご報告(.*?)<!--フッタ-->/s) {
+		$content = $1;
+		while ($content =~ s/<table BORDER=0 CELLSPACING=0 CELLPADDING=2 WIDTH=520 BGCOLOR=#F7F0E6>.*?${re_subj}.*?${re_date}.*?${re_desc}.*?<!--▼1つ分ここまで-->//is) {
+			my $subj = $1;
+			my $date = sprintf('%04d/%02d/%02d', $2, $3, $4);
+			my $desc = $5;
+			$subj = $self->rewrite($subj);
+			$desc = $self->rewrite($desc);
+			$desc =~ s/^$//g;
+			push(@items, {'time' => $date, 'description' => $desc, 'subject' => $subj});
+		}
+	}
+	return @items;
+}
+
+sub parse_self_id {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my $self_id = ($content =~ /\(URL は http:\/\/mixi.jp\/show_friend.pl\?id=(\d+) です。\)/) ? $1 : 0;
+	return $self_id;
+}
+
+sub parse_search_diary {
 	my $self    = shift;
 	my $res     = (@_) ? shift : $self->response();
 	return unless ($res and $res->is_success);
@@ -690,7 +826,7 @@ sub parse_new_diary {
 	my @items   = ();
 	my @time    = localtime();
 	my ($month, $year) = ($time[4] + 1, $time[5] + 1900);
-	if ($content =~ /<!--\/\/\/\/\/ 最新日記検索ここまで \/\/\/\/\/-->(.+?)<!--フッタ-->/s) {
+	if ($content =~ m{<!--///// 最新日記検索ここまで /////-->(.+?)<!--フッタ-->}s) {
 		$content = $1;
 		while ($content =~ s/<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=550>(.*?)<\/table>//is) {
 			my $record = $1;
@@ -717,80 +853,114 @@ sub parse_new_diary {
 	return @items;
 }
 
-sub parse_new_diary_next {
+sub parse_search_diary_next {
 	my $self    = shift;
 	my $res     = (@_) ? shift : $self->response();
 	return unless ($res and $res->is_success);
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
-	return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5>.*?<a href=([^<>]*?new_diary.pl[^<>]*?)>([^<>]*?)<\/a><\/td>/);
+	return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5>.*?<a href=([^<>]*?search_diary.pl[^<>]*?)>([^<>]*?)<\/a><\/td>/);
 	my $subject = $2;
 	my $link    = $self->absolute_url($1, $base);
 	my $next    = {'link' => $link, 'subject' => $2};
 	return $next;
 }
 
-sub parse_new_diary_previous {
+sub parse_search_diary_previous {
 	my $self    = shift;
 	my $res     = (@_) ? shift : $self->response();
 	return unless ($res and $res->is_success);
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
-	return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5><a href=([^<>]*?new_diary.pl[^<>]*?)>([^<>]*?)<\/a>/);
+	return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5><a href=([^<>]*?search_diary.pl[^<>]*?)>([^<>]*?)<\/a>/);
 	my $subject = $2;
 	my $link    = $self->absolute_url($1, $base);
 	my $next    = {'link' => $link, 'subject' => $2};
 	return $next;
 }
 
-sub parse_new_friend_diary {
-	my $self    = shift;
-	return $self->parse_standard_history(@_);
+sub parse_show_calendar {
+	my $self     = shift;
+	my $res      = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base     = $res->base->as_string;
+	my $content  = $res->content;
+	my %icons    = ('i_sc-.gif' => '予定', 'i_bd.gif' => '誕生日', 'i_iv1.gif' => '参加イベント', 'i_iv2.gif' => 'イベント');
+	my %whethers = ('1' => '晴', '2' => '曇', '3' => '雨', '4' => '雪', '8' => 'のち', '9' => 'ときどき');
+	my @items    = ();
+	my $term     = $self->parse_show_calendar_term($res) or return undef; 
+	if ($content =~ /<table width="670" border="0" cellspacing="1" cellpadding="3">(.+?)<\/table>/s) {
+		$content = $1;
+		$content =~ s/<tr ALIGN=center BGCOLOR=#FFF1C4>.*?<\/tr>//is;
+		while ($content =~ s/<td HEIGHT=65 [^<>]*><font COLOR=#996600>(\S*?)<\/font>(.*?)<\/td>//is) {
+			my $date = $1;
+			my $text = $2;
+			next unless ($date =~ /(\d+)/);
+			$date = sprintf('%04d/%02d/%02d', $term->{'year'}, $term->{'month'}, $1);
+			if ($text =~ s/<img SRC=(.*?) WIDTH=23 HEIGHT=16 ALIGN=absmiddle>(.*?)<\/font><\/font>//) {
+				my $item = { 'subject' => "天気", 'link' => undef, 'name' => $2, 'time' => $date, 'icon' => $1};
+				$item->{'icon'} = $self->absolute_url($item->{'icon'}, $base);
+				my $weather = ($item->{'icon'} =~ /i_w(\d+).gif$/) ? $1 : '不明';
+				$weather    =~ s/(\d)/$whethers{$1}/g;
+				$item->{'name'} = sprintf("%s(%s%%)", $weather, $self->rewrite($item->{'name'}));
+				push(@items, $item);
+			}
+			my @events = split(/<br>/, $text);
+			foreach my $event (@events) {
+				my $item = {};
+				if ($event =~ /<img SRC=(.*?) WIDTH=16 HEIGHT=16 ALIGN=middle><a HREF=(.*?)>(.*?)<\/a>/) {
+					$item = { 'subject' => $1, 'link' => $2, 'name' => $3, 'time' => $date, 'icon' => $1};
+				} elsif ($event =~ /<a href=".*?" onClick="MM_openBrWindow\('(view_schedule.pl\?id=\d+)'.*?\)"><img src=(.*?) .*?>(.*?)<\/a>/) {
+					$item = { 'subject' => $2, 'link' => $1, 'name' => $3, 'time' => $date, 'icon' => $2};
+				} else {
+					next;
+				}
+				$item->{'subject'} = ($item->{'subject'} =~ /([^\/]+)$/ and $icons{$1}) ? $icons{$1} : "不明($1)";
+				$item->{'link'} = $self->absolute_url($item->{'link'}, $base);
+				$item->{'icon'} = $self->absolute_url($item->{'icon'}, $base);
+				$item->{'subject'} = $self->rewrite($item->{'subject'});
+				$item->{'name'} = $self->rewrite($item->{'name'});
+				push(@items, $item);
+			}
+		}
+	}
+	return @items;
 }
 
-sub parse_new_friend_diary_next {
-	my $self    = shift;
-	return $self->parse_standard_history_next(@_);
-#		my $self    = shift;
-#		my $res     = (@_) ? shift : $self->response();
-#		return unless ($res and $res->is_success);
-#		my $base    = $res->base->as_string;
-#		my $content = $res->content;
-#	#	return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5>[^\r\n]*?<a href=["']?(.+?)['"]?>([^<>]+)<\/a><\/td><\/tr>/);
-#		return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5>[^\r\n]*?<a href=["']?([^>]+?)['"]?>([^<>]+)<\/a><\/td><\/tr>/);
-#		my $subject = $2;
-#		my $link    = $self->absolute_url($1, $base);
-#		my $next    = {'link' => $link, 'subject' => $2};
-#		return $next;
-}
-
-sub parse_new_friend_diary_previous {
-	my $self    = shift;
-	return $self->parse_standard_history_previous(@_);
-#		my $res      = (@_) ? shift : $self->response();
-#		return unless ($res and $res->is_success);
-#		my $base     = $res->request->uri->as_string;
-#		my $content  = $res->content;
-#		return unless ($content =~ /<td ALIGN=right BGCOLOR=#EED6B5><a href=["']?(.+?)['"]?>([^<>]+)<\/a>[^\r\n]*?<\/td><\/tr>/);
-#		my $subject  = $2;
-#		my $link     = $self->absolute_url($1, $base);
-#		my $previous = {'link' => $link, 'subject' => $2};
-#		return $previous;
-}
-
-sub parse_new_review {
-	my $self    = shift;
-	return $self->parse_standard_history(@_);
-}
-
-sub parse_self_id {
+sub parse_show_calendar_term {
 	my $self    = shift;
 	my $res     = (@_) ? shift : $self->response();
 	return unless ($res and $res->is_success);
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
-	my $self_id = ($content =~ /\(URL は http:\/\/mixi.jp\/show_friend.pl\?id=(\d+) です。\)/) ? $1 : 0;
-	return $self_id;
+	return unless ($content =~ /<a href="show_calendar.pl\?year=(\d+)&month=(\d+)&pref_id=13">[^&]*?<\/a>/);
+	return {'year' => $1, 'month' => $2};
+}
+
+sub parse_show_calendar_next {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	return unless ($content =~ /<a href="(show_calendar.pl\?.*?)">([^<>]+?)&nbsp;&gt;&gt;/);
+	my $subject = $2;
+	my $link    = $self->absolute_url($1, $base);
+	my $next    = {'link' => $link, 'subject' => $subject};
+	return $next;
+}
+
+sub parse_show_calendar_previous {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	return unless ($content =~ /<a href="(show_calendar.pl\?.*?)">&lt;&lt;&nbsp;([^<>]+)/);
+	my $subject = $2;
+	my $link    = $self->absolute_url($1, $base);
+	my $next    = {'link' => $link, 'subject' => $subject};
+	return $next;
 }
 
 sub parse_show_friend_outline {
@@ -887,6 +1057,37 @@ sub parse_show_log_count {
 	my $content = $res->content;
 	my $count   = ($content =~ /ページ全体のアクセス数：<b>(\d+)<\/b> アクセス/) ? $1 : 0;
 	return $count;
+}
+
+sub parse_view_bbs {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	my $re_date = '<td rowspan="3" width="110" bgcolor="#ffd8b0" align="center" valign="top" nowrap>(\d{4})年(\d{2})月(\d{2})日<br>(\d{1,2}):(\d{2})</td>';
+	my $re_subj = '<td bgcolor="#fff4e0">&nbsp;(.+?)</td>';
+	my $re_desc = '</table>(.+?)</td>';
+	my $re_c_date = '<td rowspan="2" width="110" bgcolor="#f2ddb7" align="center" nowrap>\n(\d{4})年(\d{2})月(\d{2})日<br>\n(\d{1,2}):(\d{2})';
+	my $re_c_desc = '<td class="h120">(.+?)</td>';
+	my $re_link   = '<a href="?(.+?)"?>(.+?)<\/a>';
+	if ($content =~ s/<!-- TOPIC: start -->.*?${re_date}.*?${re_subj}.*?${re_link}(.*?)${re_desc}(.*?)$//is) {
+		my ($time, $subj, $link, $name, $imgs, $desc, $comm) = (sprintf('%04d/%02d/%02d %02d:%02d', $1,$2,$3,$4,$5), $6, $7, $8, $9, $10, $11);
+		($desc, $subj) = map { s/[\r\n]+//g; s/<br>/\n/g; $_ = $self->rewrite($_); } ($desc, $subj);
+		my $item = { 'time' => $time, 'description' => $desc, 'subject' => $subj, 'link' => $res->request->uri->as_string, 'images' => [], 'comments' => [] , 'name' => $name, 'name_link' => $self->absolute_url($link, $base)};
+		foreach my $image ($imgs =~ /<td width=130[^<>]*>(.*?)<\/td>/g) {
+			next unless ($image =~ /<a [^<>]*'show_picture.pl\?img_src=(.*?)'[^<>]*><img src=([^ ]*) border=0>/);
+			push(@{$item->{'images'}}, {'link' => $self->absolute_url($1, $base), 'thumb_link' => $self->absolute_url($2, $base)});
+		}
+		while ($comm =~ s/.*?${re_c_date}.*?${re_link}.*?${re_c_desc}.*?<\/table>//is){
+			my ($time, $link, $name, $desc) = (sprintf('%04d/%02d/%02d %02d:%02d', $1,$2,$3,$4,$5), $6, $7, $8);
+			($name, $desc) = map { s/[\r\n]+//g; s/<br>/\n/g; $_ = $self->rewrite($_); } ($name, $desc);
+			push(@{$item->{'comments'}}, {'time' => $time, 'link' => $self->absolute_url($link, $base), 'name' => $name, 'description' => $desc});
+		}
+		push(@items, $item);
+	}
+	return @items;
 }
 
 sub parse_view_diary {
@@ -1110,42 +1311,55 @@ sub get_tool_bar {
 
 sub get_information {
 	my $self = shift;
-	my $url  = 'home.pl';
-	$url     = shift if (@_ and $_[0] ne 'refresh');
-	$self->set_response($url, @_) or return;
-	return $self->parse_information();
+	return $self->get_standard_data('parse_information', 'home.pl', @_);
 }
 
-sub get_calendar {
+sub get_calendar { my $self = shift; return $self->get_show_calendar(@_); }
+sub get_calendar_term { my $self = shift; return $self->get_show_calendar_term(@_); }
+sub get_calendar_next { my $self = shift; return $self->get_show_calendar_next(@_); }
+sub get_calendar_previous { my $self = shift; return $self->get_show_calendar_previous(@_); }
+
+sub get_community_id {
 	my $self = shift;
-	my $url  = 'calendar.pl';
-	$url     = shift if (@_ and $_[0] ne 'refresh');
-	$self->set_response($url, @_) or return;
-	return $self->parse_calendar();
+	return $self->get_standard_data('parse_community_id', qr/view_community\.pl/, @_);
 }
 
-sub get_calendar_term {
-	my $self = shift;
-	my $url  = 'calendar.pl';
-	$url     = shift if (@_ and $_[0] ne 'refresh');
-	$self->set_response($url, @_) or return;
-	return $self->parse_calendar_term();
+sub get_list_bbs {
+	my $self    = shift;
+	my $url     = 'list_bbs.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'id'}) and length($param{'id'}) and $url !~ /[\?\&]id=/) {
+		$url .= ($url =~ /\?/) ? "&id=$param{'id'}" : "?id=$param{'id'}";
+	}
+	return $self->get_standard_data('parse_list_bbs', qr/list_bbs\.pl/, $url, $refresh);
 }
 
-sub get_calendar_next {
-	my $self = shift;
-	my $url  = 'calendar.pl';
-	$url     = shift if (@_ and $_[0] ne 'refresh');
-	$self->set_response($url, @_) or return;
-	return $self->parse_calendar_next();
+sub get_list_bbs_next {
+	my $self    = shift;
+	my $url     = 'list_bbs.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'id'}) and length($param{'id'}) and $url !~ /[\?\&]id=/) {
+		$url .= ($url =~ /\?/) ? "&id=$param{'id'}" : "?id=$param{'id'}";
+	}
+	$self->set_response($url, $refresh) or return;
+	return $self->parse_list_bbs_next();
 }
 
-sub get_calendar_previous {
-	my $self = shift;
-	my $url  = 'calendar.pl';
-	$url     = shift if (@_ and $_[0] ne 'refresh');
-	$self->set_response($url, @_) or return;
-	return $self->parse_calendar_previous();
+sub get_list_bbs_previous {
+	my $self    = shift;
+	my $url     = 'list_bbs.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'id'}) and length($param{'id'}) and $url !~ /[\?\&]id=/) {
+		$url .= ($url =~ /\?/) ? "&id=$param{'id'}" : "?id=$param{'id'}";
+	}
+	$self->set_response($url, $refresh) or return;
+	return $self->parse_list_bbs_previous();
 }
 
 sub get_list_bookmark {
@@ -1252,6 +1466,44 @@ sub get_list_friend_previous {
 	return $self->parse_list_friend_previous();
 }
 
+sub get_list_member {
+	my $self    = shift;
+	my $url     = 'list_member.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'id'}) and length($param{'id'}) and $url !~ /[\?\&]id=/) {
+		$url .= ($url =~ /\?/) ? "&id=$param{'id'}" : "?id=$param{'id'}";
+	}
+	return $self->get_standard_data('parse_list_member', qr/list_member\.pl/, $url, $refresh);
+}
+
+sub get_list_member_next {
+	my $self    = shift;
+	my $url     = 'list_member.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'id'}) and length($param{'id'}) and $url !~ /[\?\&]id=/) {
+		$url .= ($url =~ /\?/) ? "&id=$param{'id'}" : "?id=$param{'id'}";
+	}
+	$self->set_response($url, $refresh) or return;
+	return $self->parse_list_member_next();
+}
+
+sub get_list_member_previous {
+	my $self    = shift;
+	my $url     = 'list_member.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'id'}) and length($param{'id'}) and $url !~ /[\?\&]id=/) {
+		$url .= ($url =~ /\?/) ? "&id=$param{'id'}" : "?id=$param{'id'}";
+	}
+	$self->set_response($url, $refresh) or return;
+	return $self->parse_list_member_previous();
+}
+
 sub get_list_message {
 	my $self = shift;
 	my $url  = 'list_message.pl';
@@ -1266,6 +1518,14 @@ sub get_list_outbox {
 	$url     = shift if (@_ and $_[0] ne 'refresh');
 	$self->set_response($url, @_) or return;
 	return $self->parse_list_outbox();
+}
+
+sub get_list_request {
+	my $self = shift;
+	my $url  = 'list_request.pl';
+	$url     = shift if (@_ and $_[0] ne 'refresh');
+	$self->set_response($url, @_) or return;
+	return $self->parse_list_request();
 }
 
 sub get_new_album {
@@ -1308,50 +1568,9 @@ sub get_new_comment {
 	return $self->parse_new_comment();
 }
 
-sub get_new_diary {
-	my $self    = shift;
-	my $url     = 'new_diary.pl';
-	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'keyword');
-	my $refresh = shift if (@_ and $_[0] eq 'refresh');
-	my %param   = @_;
-	if (defined($param{'keyword'}) and length($param{'keyword'}) and $url !~ /[\?\&]keyword=/) {
-		$param{'keyword'} =~ s/([^\w ])/'%' . unpack('H2', $1)/eg;
-		$param{'keyword'} =~ tr/ /+/;
-		$url .= ($url =~ /\?/) ? "&keyword=$param{'keyword'}" : "?keyword=$param{'keyword'}";
-	}
-	$self->set_response($url, $refresh) or return;
-	return $self->parse_new_diary();
-}
-
-sub get_new_diary_next {
-	my $self = shift;
-	my $url     = 'new_diary.pl';
-	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'keyword');
-	my $refresh = shift if (@_ and $_[0] eq 'refresh');
-	my %param   = @_;
-	if (defined($param{'keyword'}) and length($param{'keyword'}) and $url !~ /[\?\&]keyword=/) {
-		$param{'keyword'} =~ s/([^\w ])/'%' . unpack('H2', $1)/eg;
-		$param{'keyword'} =~ tr/ /+/;
-		$url .= ($url =~ /\?/) ? "&keyword=$param{'keyword'}" : "?keyword=$param{'keyword'}";
-	}
-	$self->set_response($url, $refresh) or return;
-	return $self->parse_new_diary_next();
-}
-
-sub get_new_diary_previous {
-	my $self = shift;
-	my $url     = 'new_diary.pl';
-	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'keyword');
-	my $refresh = shift if (@_ and $_[0] eq 'refresh');
-	my %param   = @_;
-	if (defined($param{'keyword'}) and length($param{'keyword'}) and $url !~ /[\?\&]keyword=/) {
-		$param{'keyword'} =~ s/([^\w ])/'%' . unpack('H2', $1)/eg;
-		$param{'keyword'} =~ tr/ /+/;
-		$url .= ($url =~ /\?/) ? "&keyword=$param{'keyword'}" : "?keyword=$param{'keyword'}";
-	}
-	$self->set_response($url, $refresh) or return;
-	return $self->parse_new_diary_previous();
-}
+sub get_new_diary { my $self = shift; return $self->get_search_diary(@_); }
+sub get_new_diary_next { my $self = shift; return $self->get_search_diary_next(@_); }
+sub get_new_diary_previous { my $self = shift; return $self->get_search_diary_previous(@_); }
 
 sub get_new_friend_diary {
 	my $self = shift;
@@ -1385,11 +1604,97 @@ sub get_new_review {
 	return $self->parse_new_review();
 }
 
+sub get_release_info {
+	my $self = shift;
+	my $url  = 'release_info.pl';
+	$url     = shift if (@_ and $_[0] ne 'refresh');
+	$self->set_response($url, @_) or return;
+	return $self->parse_release_info();
+}
+
 sub get_self_id {
 	my $self = shift;
 	my $url  = 'show_profile.pl';
 	$self->set_response($url, @_) or return;
 	return $self->parse_self_id();
+}
+
+sub get_search_diary {
+	my $self    = shift;
+	my $url     = 'search_diary.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'keyword');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'keyword'}) and length($param{'keyword'}) and $url !~ /[\?\&]keyword=/) {
+		$param{'keyword'} =~ s/([^\w ])/'%' . unpack('H2', $1)/eg;
+		$param{'keyword'} =~ tr/ /+/;
+		$url .= ($url =~ /\?/) ? "&keyword=$param{'keyword'}" : "?keyword=$param{'keyword'}";
+	}
+	@_ = grep { defined($_) } ($url, $refresh);
+	$self->set_response(@_) or return;
+	return $self->parse_search_diary();
+}
+
+sub get_search_diary_next {
+	my $self = shift;
+	my $url     = 'search_diary.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'keyword');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'keyword'}) and length($param{'keyword'}) and $url !~ /[\?\&]keyword=/) {
+		$param{'keyword'} =~ s/([^\w ])/'%' . unpack('H2', $1)/eg;
+		$param{'keyword'} =~ tr/ /+/;
+		$url .= ($url =~ /\?/) ? "&keyword=$param{'keyword'}" : "?keyword=$param{'keyword'}";
+	}
+	$self->set_response($url, $refresh) or return;
+	return $self->parse_search_diary_next();
+}
+
+sub get_search_diary_previous {
+	my $self = shift;
+	my $url     = 'search_diary.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'keyword');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'keyword'}) and length($param{'keyword'}) and $url !~ /[\?\&]keyword=/) {
+		$param{'keyword'} =~ s/([^\w ])/'%' . unpack('H2', $1)/eg;
+		$param{'keyword'} =~ tr/ /+/;
+		$url .= ($url =~ /\?/) ? "&keyword=$param{'keyword'}" : "?keyword=$param{'keyword'}";
+	}
+	$self->set_response($url, $refresh) or return;
+	return $self->parse_search_diary_previous();
+}
+
+sub get_show_calendar {
+	my $self = shift;
+	my $url  = 'show_calendar.pl';
+	$url     = shift if (@_ and $_[0] ne 'refresh');
+	$self->set_response($url, @_) or return;
+	return $self->parse_calendar();
+}
+
+sub get_show_calendar_term {
+	my $self = shift;
+	my $url  = 'show_calendar.pl';
+	$url     = shift if (@_ and $_[0] ne 'refresh');
+	$self->set_response($url, @_) or return;
+	return $self->parse_show_calendar_term();
+}
+
+sub get_show_calendar_next {
+	my $self = shift;
+	my $url  = 'show_calendar.pl';
+	$url     = shift if (@_ and $_[0] ne 'refresh');
+	$self->set_response($url, @_) or return;
+	return $self->parse_show_calendar_next();
+}
+
+sub get_show_calendar_previous {
+	my $self = shift;
+	my $url  = 'show_calendar.pl';
+	$url     = shift if (@_ and $_[0] ne 'refresh');
+	$self->set_response($url, @_) or return;
+	return $self->parse_show_calendar_previous();
 }
 
 sub get_show_log {
@@ -1408,18 +1713,25 @@ sub get_show_log_count {
 	return $self->parse_show_log_count();
 }
 
-sub get_show_show_friend_outline {
+sub get_show_friend_outline {
 	my $self = shift;
 	my $url  = shift or return undef;
 	$self->set_response($url, @_) or return undef;
 	return $self->parse_show_friend_outline();
 }
 
-sub get_show_show_friend_profile {
+sub get_show_friend_profile {
 	my $self = shift;
 	my $url  = shift or return undef;
 	$self->set_response($url, @_) or return undef;
 	return $self->parse_show_friend_profile();
+}
+
+sub get_view_bbs {
+	my $self = shift;
+	my $url  = shift or return;
+	$self->set_response($url, @_) or return undef;
+	return $self->parse_view_bbs();
 }
 
 sub get_view_diary {
@@ -1541,8 +1853,9 @@ sub get_send_message_confirm {
 sub absolute_url {
 	my $self = shift;
 	my $url  = shift;
-	return undef unless ($url);
 	my $base = (@_) ? shift : $self->{'mixi'}->{'base'};
+	return undef unless (length($url));
+	$url     =~ s/^"(.*)"$/$1/ or $url =~ s/^'(.*)'$/$1/;
 	$url     .= '.pl' if ($url and $url !~ /[\/\.]/);
 	return URI->new($url)->abs($base)->as_string;
 }
@@ -1551,8 +1864,7 @@ sub absolute_linked_url {
 	my $self = shift;
 	my $url  = shift;
 	return $url unless ($url and $self->response());
-	my $res  = $self->response();
-	my $base = $res->request->uri->as_string;
+	my $base = $self->response->base->as_string;
 	return $self->absolute_url($url, $base);
 }
 
@@ -1708,7 +2020,6 @@ sub remove_tag {
 	my $self = shift;
 	my $str  = shift;
 	my $re_standard_tag = q{[^"'<>]*(?:"[^"]*"[^"'<>]*|'[^']*'[^"'<>]*)*(?:>|(?=<)|$(?!\n))};
-#	my $re_standard_tag = q{[^"'<>]*(?:"[^"]*"'?[^"'<>]*|'[^']*'"?[^"'<>]*)*(?:>|(?=<)|$(?!\n))}; # <a href='URL'">のような余計なダブルクォート対応
 	my $re_comment_tag  = '<!(?:--[^-]*-(?:[^-]+-)*?-(?:[^>-]*(?:-[^>-]+)*?)??)*(?:>|$(?!\n)|--.*$)';
 	my $re_html_tag     = qq{$re_comment_tag|<$re_standard_tag};
 	$str =~ s/$re_html_tag//g;
@@ -1732,6 +2043,24 @@ sub remove_diary_tag {
 
 sub redirect_ok {
 	return 1;
+}
+
+sub get_standard_data {
+	# default url is pased, so url is not necessary.
+	my $self    = shift;
+	my $parser  = shift;
+	my $def_url = shift;                                    # defined url
+	my $url     = shift if (@_ and $_[0] ne 'refresh');     # specified url
+	if (defined($def_url) and ref($def_url) eq 'Regexp') {
+		return unless (defined($url) and length($url));
+		return unless ($url =~ $def_url);
+	} elsif (not (ref($url) eq '' and length($url))) {
+		$url = $def_url;
+	}
+	$self->abort("url \"$url\" is invalid.") unless (defined($url) and length($url));     # invalid url
+	$self->can($parser) or $self->abort("parser \"$parser\" is not available.");          # invalid method
+	$self->set_response($url, @_) or $self->abort("set_response failed.");                # request can not processed
+	return $self->$parser();
 }
 
 sub parse_standard_history {
@@ -1830,7 +2159,7 @@ sub parse_standard_form {
 sub set_response {
 	my $self    = shift;
 	my $url     = shift;
-	my $refresh = (@_ and $_[0] eq 'refresh') ? 1 : 0;
+	my $refresh = (@_ and defined($_[0]) and $_[0] eq 'refresh') ? 1 : 0;
 	my $latest  = ($self->response) ? $self->response->request->uri->as_string : undef;
 	$url        = $self->query_sorted_url($self->absolute_url($url));
 	return 0 unless ($url);
@@ -1944,9 +2273,9 @@ sub convert_login_time {
 	my $self = shift;
 	my $time = @_ ? shift : 0;
 	if ($time =~ /^\d+$/) { 1; }
-	elsif ($time =~ /^(\d+)分/)   { $time = $time * 60; }
-	elsif ($time =~ /^(\d+)時間/) { $time = $time * 60 * 60; }
-	elsif ($time =~ /^(\d+)日/)   { $time = $time * 60 * 60 * 24; }
+	elsif ($time =~ /^(\d+)分/)   { $time = $1 * 60; }
+	elsif ($time =~ /^(\d+)時間/) { $time = $1 * 60 * 60; }
+	elsif ($time =~ /^(\d+)日/)   { $time = $1 * 60 * 60 * 24; }
 	else { $self->log("[error] ログイン時刻\"$time\"を解析できませんでした。\n"); }
 	$time = time() - $time;
 	my @date = localtime($time);
@@ -1975,12 +2304,7 @@ sub test {
 	my $mixi = &test_new($mail, $pass, $logger);            # オブジェクトの生成
 	$mixi->test_login;                                      # ログイン
 	$mixi->test_get;                                        # GET（トップページ）
-	$mixi->test_get_main_menu;                              # メインメニューの解析
-	$mixi->test_get_banner;                                 # バナーの解析
-	$mixi->test_get_tool_bar;                               # ツールバーの解析
-	$mixi->test_get_mainly_categories;                      # 主要データの取得と解析
-	$mixi->test_get_mainly_categories_pagelinks;            # 主要データの次のページと前のページ
-	$mixi->test_get_details;                                # 詳細表示（view_〜など）の取得と解析
+	$mixi->test_scenario;                                   # 主要データの取得と解析
 	$mixi->test_get_add_diary_preview;                      # 日記のプレビュー
 	$mixi->test_save_and_read_cookies;                      # Cookieの読み書き
 	# 終了
@@ -2080,183 +2404,95 @@ sub test_get {
 	}
 }
 
-sub test_get_main_menu {
+sub test_record {
 	my $mixi = shift;
-	my $error = '';
-	$mixi->log("メインメニューの解析をします。\n");
-	my @items = eval '$mixi->get_main_menu()';
-	if ($@) {
-		$error = "[error] $@\n";
-	} elsif (not @items) {
-		$error = "[error] メニュー項目が見つかりませんでした。\n";
-	}
-	if ($error) {
-		$mixi->log("メインメニューの解析に失敗しました。\n", $error);
-		$mixi->dumper_log($mixi->response);
-		exit 8;
+	$mixi->{'__test_record'} = {} unless (ref($mixi->{'__test_record'}) eq 'HASH');
+	if (@_ == 0) {
+		return sort { $a cmp $b } (keys(%{$mixi->{'__test_record'}}));
+	} elsif (@_ == 1) {
+		my $key = shift;
+		return $mixi->{'__test_record'}->{$key};
 	} else {
-		$mixi->dumper_log([@items]);
+		my %args = @_;
+		map { $mixi->{'__test_record'}->{$_} = $args{$_} } keys(%args);
+		return 1;
 	}
 }
 
-sub test_get_banner {
+sub test_scenario {
 	my $mixi = shift;
-	my $error = '';
-	$mixi->log("バナーの解析をします。\n");
-	my @items = eval '$mixi->get_banner()';
-	if ($@) {
-		$error = "[error] $@\n";
-	} elsif (not @items) {
-		$error = "[error] バナーが見つかりませんでした。\n";
-	}
-	if ($error) {
-		$mixi->log("バナーの解析に失敗しました。\n", $error);
-		$mixi->dumper_log($mixi->response);
-		exit 8;
-	} else {
-		$mixi->dumper_log([@items]);
-	}
-}
-
-sub test_get_tool_bar {
-	my $mixi = shift;
-	my $error = '';
-	$mixi->log("ツールバーの解析をします。\n");
-	my @items = eval '$mixi->get_tool_bar()';
-	if ($@) {
-		$error = "[error] $@\n";
-	} elsif (not @items) {
-		$error = "[error] ツールバー項目が見つかりませんでした。\n";
-	}
-	if ($error) {
-		$mixi->log("ツールバーの解析に失敗しました。\n", $error);
-		$mixi->dumper_log($mixi->response);
-		exit 8;
-	} else {
-		$mixi->dumper_log([@items]);
-	}
-}
-
-sub test_get_mainly_categories {
-	my $mixi = shift;
-	my %categories = (
-		'calendar'         => 'カレンダー',
-		'calendar_term'    => 'カレンダーの期間',
-		'information'      => '管理者からのお知らせ',
-		'list_bookmark'    => 'お気に入り',
-		'list_comment'     => '最近のコメント',
-		'list_community'   => 'コミュニティ一覧',
-		'list_diary'       => '日記',
-		'list_diary_capacity' => '日記容量',
-		'list_diary_monthly_menu' => '日記月別ページ',
-		'list_friend'      => '友人・知人一覧',
-		'list_message'     => '受信メッセージ',
-		'list_outbox'      => '送信メッセージ',
-		'new_album'        => 'マイミクシィ最新アルバム',
-		'new_bbs'          => 'コミュニティ最新書き込み',
-		'new_comment'      => '日記コメント記入履歴',
-		'new_diary'        => '新着日記検索',
-		'new_friend_diary' => 'マイミクシィ最新日記',
-		'new_review'       => 'マイミクシィ最新レビュー',
-		'self_id'          => '自分のID',
-		'show_log'         => 'あしあと',
-		'show_log_count'   => 'あしあと数',
+	my @tests = (
+		# 引数不要のもの
+		'main_menu'               => {'label' => 'メインメニュー'},
+		'banner'                  => {'label' => 'バナー'},
+		'tool_bar'                => {'label' => 'ツールバー'},
+		'information'             => {'label' => '管理者からのお知らせ'},
+		'list_bookmark'           => {'label' => 'お気に入り'},
+		'list_comment'            => {'label' => '最近のコメント'},
+		'list_community'          => {'label' => 'コミュニティ一覧'},
+		'list_community_next'     => {'label' => 'コミュニティ一覧(次)'},
+		'list_community_previous' => {'label' => 'コミュニティ一覧(前)', 'url' => sub { return $_[0]->test_record('list_community_next')}},
+		'list_diary'              => {'label' => '日記'},
+		'list_diary_capacity'     => {'label' => '日記容量'},
+		'list_diary_next'         => {'label' => '日記(次)'},
+		'list_diary_previous'     => {'label' => '日記(前)', 'url' => sub { return $_[0]->test_record('list_diary_next')}},
+		'list_diary_monthly_menu' => {'label' => '日記月別ページ'},
+		'list_friend'             => {'label' => '友人・知人一覧'},
+		'list_friend_next'        => {'label' => '友人・知人一覧(次)'},
+		'list_friend_previous'    => {'label' => '友人・知人一覧(前)', 'url' => sub { return $_[0]->test_record('list_friend_next')}},
+		'list_message'            => {'label' => '受信メッセージ'},
+		'list_outbox'             => {'label' => '送信メッセージ'},
+		'list_request'            => {'label' => '承認待ちの友人'},
+		'new_album'               => {'label' => 'マイミクシィ最新アルバム'},
+		'new_bbs'                 => {'label' => 'コミュニティ最新書き込み'},
+		'new_bbs_next'            => {'label' => 'コミュニティ最新書き込み(次)'},
+		'new_bbs_previous'        => {'label' => 'コミュニティ最新書き込み(前)', 'url' => sub { return $_[0]->test_record('new_bbs_next')}},
+		'new_comment'             => {'label' => '日記コメント記入履歴'},
+		'new_friend_diary'        => {'label' => 'マイミクシィ最新日記'},
+		'new_friend_diary_next'   => {'label' => 'マイミクシィ最新日記(次)'},
+		'new_friend_diary_previous' => {'label' => 'マイミクシィ最新日記(前)', 'url' => sub { return $_[0]->test_record('new_friend_diary_next')}},
+		'new_review'              => {'label' => 'マイミクシィ最新レビュー'},
+		'release_info'            => {'label' => 'リリースインフォメーション'},
+		'self_id'                 => {'label' => '自分のID'},
+		'search_diary'            => {'label' => '新着日記検索', 'arg' => ['keyword' => 'Mixi']},
+		'search_diary_next'       => {'label' => '新着日記検索(次)', 'arg' => ['keyword' => 'Mixi']},
+		'search_diary_previous'   => {'label' => '新着日記検索(前)', 'url' => sub { return $_[0]->test_record('search_diary_next')}},
+		'show_calendar'           => {'label' => 'カレンダー'},
+		'show_calendar_term'      => {'label' => 'カレンダーの期間'},
+		'show_calendar_next'      => {'label' => 'カレンダー(次)'},
+		'show_calendar_previous'  => {'label' => 'カレンダー(前)', 'url' => sub { return $_[0]->test_record('show_calendar_next')}},
+		'show_log'                => {'label' => 'あしあと'},
+		'show_log_count'          => {'label' => 'あしあと数'},
+		'view_diary'              => {'label' => '日記(詳細)', 'url' => sub { return $_[0]->test_record('list_diary')}},
+		'view_message'            => {'label' => 'メッセージ(詳細)', 'url' => sub { return $_[0]->test_record('list_message')}},
+		# コミュニティ関連
+		'community_id'            => {'label' => 'コミュニティID',   'url' => sub { return $_[0]->test_record('list_community')}},
+		'list_bbs'                => {'label' => 'トピック一覧',     'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
+		'list_bbs_next'           => {'label' => 'トピック一覧(次)', 'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
+		'list_bbs_previous'       => {'label' => 'トピック一覧(前)', 'url' => sub { return $_[0]->test_record('list_bbs_next')}},
+		'list_member'             => {'label' => 'メンバー一覧',     'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
+		'list_member_next'        => {'label' => 'メンバー一覧(次)', 'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
+		'list_member_previous'    => {'label' => 'メンバー一覧(前)', 'url' => sub { return $_[0]->test_record('list_member_next')}},
+		'view_bbs'                => {'label' => 'トピック',         'url' => sub { return $_[0]->test_record('list_bbs')}},
 	);
-	foreach my $category (sort(keys(%categories))) {
-		$mixi->log($categories{$category} . "の取得と解析をします。\n");
-		my @opt   = ($category eq 'new_diary') ? ('keyword' => 'Mixi') : ();
-		my @items = eval "\$mixi->get_${category}(\@opt)";
-		my $error = ($@) ? $@ : ($mixi->response->is_error) ? $mixi->response->status_line : undef;
-		if (defined $error) {
-			$mixi->log("${category}の取得と解析に失敗しました。\n", "[error] $error\n");
-			$mixi->dumper_log($mixi->response);
-			exit 8;
-		} else {
-			if (@items) {
-				$mixi->dumper_log([@items]);
-				$mixi->{'__test_record'}->{$category} = $items[0];
-			} else {
-				$mixi->log("[warn] レコードが見つかりませんでした。\n");
-				$mixi->dumper_log($mixi->response);
+	while (@tests >= 2) {
+		my ($test, $opt) = splice(@tests, 0, 2);
+		my $method = "get_$test";
+		my $label = $opt->{'label'};
+		my $url = defined($opt->{'url'}) ? $opt->{'url'} : '';
+		if (defined($url) and ref($url) eq 'CODE') {
+			$url = &{$url}($mixi);
+			unless ($url) {
+				$mixi->log("$labelをスキップします。\n", "[warn] 参照レコードなし\n");
+				next;
 			}
 		}
-	}
-}
-
-sub test_get_mainly_categories_pagelinks {
-	my $mixi = shift;
-	my %categories = (
-		'calendar'         => 'カレンダー',
-		'list_community'   => 'コミュニティ一覧',
-		'list_diary'       => '日記',
-		'list_friend'      => '友人・知人一覧',
-		'new_bbs'          => 'コミュニティ最新書き込み',
-		'new_diary'        => '新着日記検索',
-		'new_friend_diary' => 'マイミクシィ最新日記',
-	);
-	foreach my $category (sort(keys(%categories))) {
-		my @opt   = ($category eq 'new_diary') ? ('keyword' => 'Mixi') : ();
-		my $error = '';
-		$mixi->log($categories{$category} . "の次のページへのリンクの解析をします。\n");
-		my $next = eval "\$mixi->get_${category}_next(\@opt)";
-		if ($@) {
-			$error = "[error] $@\n";
-		} elsif ($mixi->response->is_error) {
-			$error = "[error] " . $mixi->response->status_line ."\n";
-		} elsif (not $next) {
-			$mixi->log("[warn] 次のページが見つかりませんでした。\n");
-			$mixi->dumper_log($mixi->response);
-		} else {
-			$mixi->dumper_log($next);
-		}
-		if ($error) {
-			$mixi->log($error);
-			$mixi->dumper_log($mixi->response);
-			exit 8;
-		}
-		$mixi->log($categories{$category} . "の前のページへのリンクの解析をします。\n");
-		if (not $next) {
-			$mixi->log("[info] 次のページがなかったため、スキップされました。\n");
-			next;
-		}
-		my $previous = eval "\$mixi->get_${category}_previous(\$next->{'link'})";
-		if ($@) {
-			$error = "[error] $@\n";
-		} elsif ($mixi->response->is_error) {
-			$error = "[error] " . $mixi->response->status_line ."\n";
-		} elsif (not $previous) {
-			$mixi->log("[warn] 前のページが見つかりませんでした。\n");
-			$mixi->dumper_log($mixi->response);
-		} else {
-			$mixi->dumper_log($previous);
-		}
-		if ($error) {
-			$mixi->log($error);
-			$mixi->dumper_log($mixi->response);
-			exit 8;
-		}
-	}
-}
-
-sub test_get_details {
-	my $mixi = shift;
-	my %methods = (
-		'get_view_diary'               => ['list_diary', '日記'],
-		'get_view_message'             => ['list_message', 'メッセージ'],
-		'get_view_message_form'        => ['list_message', 'メッセージ返信・削除フォーム'],
-		'get_show_show_friend_outline' => ['list_friend', 'プロフィール(概要)'],
-		'get_show_show_friend_profile' => ['list_friend', 'プロフィール(詳細)'],
-	);
-	foreach my $method (sort(keys(%methods))) {
-		my ($category, $label) = @{$methods{$method}};
-		my $item = $mixi->{'__test_record'}->{$category};
-		unless ($item) {
-			$mixi->log("[info] ${label}は対象レコードがないためスキップされました。\n");
-			next;
-		}
-		my $link  = $item->{'link'};
+		$url = $url->{'link'} if (defined($url) and ref($url) eq 'HASH');
+		my @arg = (defined($opt->{'arg'}) and ref($opt->{'arg'})) eq 'ARRAY' ? @{$opt->{'arg'}} : ();
+		@arg = map { ref($_) eq 'CODE' ? &{$_}($mixi) : $_ } @arg;
+		unshift(@arg, $url) if (defined($url) and ref($url) eq '' and length($url));
 		$mixi->log("$labelの取得と解析をします。\n");
-		my @items = eval "\$mixi->$method(\$link)";
+		my @items = eval { $mixi->$method(@arg); };
 		my $error = ($@) ? $@ : ($mixi->response->is_error) ? $mixi->response->status_line : undef;
 		if (defined $error) {
 			$mixi->log("$labelの取得と解析に失敗しました。\n", "[error] $error\n");
@@ -2265,8 +2501,9 @@ sub test_get_details {
 		} else {
 			if (@items) {
 				$mixi->dumper_log([@items]);
+				$mixi->test_record($test => $items[0]);
 			} else {
-				$mixi->log("[info] レコードが見つかりませんでした。\n");
+				$mixi->log("[warn] レコードが見つかりませんでした。\n");
 				$mixi->dumper_log($mixi->response);
 			}
 		}

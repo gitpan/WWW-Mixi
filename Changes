@@ -1,5 +1,36 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.35  Sun Sep 11 21:10:48 2005
+	- add parse_ and get_show_calendar
+	- add parse_ and get_show_calendar_next
+	- add parse_ and get_show_calendar_previous
+	- add parse_ and get_show_calendar_term
+	- mod parse_ and get_calendar
+	- mod parse_ and get_calendar_next
+	- mod parse_ and get_calendar_previous
+	- mod parse_ and get_calendar_term
+		- now they're alias of *_show_calendar_*, and won't be longer exists.
+	- add parse_ and get_search_diary
+	- add parse_ and get_search_diary_next
+	- add parse_ and get_search_diary_previous
+	- add parse_ and get_search_diary_term
+	- mod parse_ and get_new_diary
+	- mod parse_ and get_new_diary_next
+	- mod parse_ and get_new_diary_previous
+	- mod parse_ and get_new_diary_term
+		- now they're alias of *_search_diary_*, and won't be longer exists.
+	- add parse_ and get_community_id (thanks memn0ck)
+	- add parse_ and get_list_bbs (thanks memn0ck)
+	- add parse_ and get_list_bbs_next (thanks memn0ck)
+	- add parse_ and get_list_bbs_previous (thanks memn0ck)
+	- add parse_ and get_list_member (thanks memn0ck)
+	- add parse_ and get_list_member_next (thanks memn0ck)
+	- add parse_ and get_list_member_previous (thanks memn0ck)
+	- add parse_ and get_list_request (thanks memn0ck)
+	- add parse_ and get_release_info (thanks memn0ck)
+	- add parse_ and get_view_bbs (thanks memn0ck)
+	- del parse_diary (use parse_view_diary instead of this method)
+
 0.34  Tue Aug 23 22:28:02 2005
 	- add parse_ and get_new_bbs_next
 	- add parse_ and get_new_bbs_previous

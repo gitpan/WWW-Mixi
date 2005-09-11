@@ -333,6 +333,26 @@ $responseを指定しなかった時の解析対象は、最後にgetまたはpo
 
 ホーム（home.pl）に表示される「管理者からのお知らせ」を解析します。
 
+=item parse_community_id
+
+コミュニティトップ（view_community.pl）、トピック一覧（list_bbs.pl）、トピック（view_bbs.plのメイン部）などを解析します。
+
+=item parse_list_bbs
+
+トピック一覧（list_bbs.plのメイン部）を解析します。
+
+=item parse_list_bbs_next
+
+トピック一覧（list_bbs.plのメイン部）の「次のページ」へのリンクを解析します。
+
+=item parse_list_bbs_previous
+
+トピック一覧（list_bbs.plのメイン部）の「前のページ」へのリンクを解析します。
+
+=item parse_list_bookmark
+
+お気に入り（list_bookmark.pl）を解析します。
+
 =item parse_calendar
 
 カレンダー（calendar.pl）上のイベント（参加イベント、不参加イベント、マイミクシィの誕生日）を解析します。
@@ -348,10 +368,6 @@ $responseを指定しなかった時の解析対象は、最後にgetまたはpo
 =item parse_calendar_previous
 
 カレンダー（calendar.pl）の「前の月」へのリンクを解析します。
-
-=item parse_list_bookmark
-
-お気に入り（list_bookmark.pl）を解析します。
 
 =item parse_list_comment
 
@@ -393,13 +409,37 @@ $responseを指定しなかった時の解析対象は、最後にgetまたはpo
 
 友人・知人一覧（list_friend.pl）の「前のページ」へのリンクを解析します。
 
+=item parse_list_member
+
+メンバー一覧（list_member.plのメイン部）を解析します。
+
+=item parse_list_member_next
+
+メンバー一覧（list_member.plのメイン部））の「次を表示」へのリンクを解析します。
+
+=item parse_list_member_previous
+
+メンバー一覧（list_member.plのメイン部））の「前を表示」へのリンクを解析します。
+
 =item parse_list_message
 
-メッセージ（message.pl）に表示される「受信箱」を解析します。
+メッセージ（list_message.pl）に表示される「受信箱」を解析します。
+
+=item parse_list_request
+
+承認待ち一覧（list_request.plのメイン部）を解析します。
 
 =item parse_new_bbs
 
 コミュニティ最新書き込み（new_bbs.pl）を解析します。
+
+=item parse_new_bbs_next
+
+コミュニティ最新書き込み（new_bbs.pl）の「次を表示」へのリンクを解析します。
+
+=item parse_new_bbs_previous
+
+コミュニティ最新書き込み（new_bbs.pl）の「前を表示」へのリンクを解析します。
 
 =item parse_new_comment
 
@@ -421,6 +461,10 @@ $responseを指定しなかった時の解析対象は、最後にgetまたはpo
 
 マイミクシイ最新レビュー（new_review.pl）を解析します。
 
+=item parse_release_info
+
+リリース情報・障害情報（release_info.pl）を解析します。
+
 =item parse_show_log
 
 あしあと（show_log.pl）を解析します。
@@ -429,6 +473,10 @@ $responseを指定しなかった時の解析対象は、最後にgetまたはpo
 
 あしあと（show_log.pl）の「ページ全体のアクセス数」を解析します。
 このメソッドの返り値はアクセス数で、ハッシュリファレンスの配列ではありません。
+
+=item parse_view_bbs
+
+トピック（view_bbs.plのメイン部）を解析します。
 
 =item parse_add_diary_preview
 
