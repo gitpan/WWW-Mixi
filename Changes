@@ -1,5 +1,11 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.36  Thu Sep 15 13:26:44 2005
+	- mod parse_information
+		- now its results include 'style' key.
+	- mod unescape
+		- maybe more suit unescaping for mixi style (oh, god!) escaped html.
+
 0.35  Sun Sep 11 21:10:48 2005
 	- add parse_ and get_show_calendar
 	- add parse_ and get_show_calendar_next

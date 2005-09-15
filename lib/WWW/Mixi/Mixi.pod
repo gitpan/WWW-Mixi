@@ -194,6 +194,10 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'subject' => 'あなたの友人を mixi に招待しよう！',
  	'link' => 'http://mixi.jp/invite.pl',
  	'description\' => '友人を招待'
+ 	'style' => {
+ 		'color' => 'red',
+ 		'font-weight' => 'bold'
+ 	},
  }
 
 =head3 @items = $mixi->parse_calendar( [$response] );

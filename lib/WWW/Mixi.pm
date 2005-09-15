@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.35$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.36$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -76,7 +76,7 @@ sub is_login_required {
 	if    (not $res)             { return "ページを取得できていません。"; }
 	elsif (not $res->is_success) { return sprintf('ページ取得に失敗しました。（%s）', $res->message); }
 	else {
-		my $re_attr = '(?:"[^"]+"|\'[^\']+\|[^\s<>]+)\s+';
+		my $re_attr = '(?:"[^"]+"|\'[^\']+\'|[^\s<>]+)\s+';
 		my $content = $res->content;
 		return 0 if ($content !~ /<form (?:$re_attr)*action=("[^""]+"|'[^'']+'|[^\s<>]+)/);
 		return 0 if ($self->absolute_url($1) ne $self->absolute_url('login.pl'));
@@ -234,17 +234,35 @@ sub parse_information {
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
 	my @items   = ();
-	if ($content =~ /<!-- start: お知らせ -->(.*?)<\/table>/is) {
+	if ($content =~ /<!-- start: お知らせ -->.*?<table BORDER=0 CELLSPACING=0 CELLPADDING=0>(.*?)<\/table>/is) {
 		$content = $1;
 		$content =~ s/[\r\n]+//gs;
 		$content =~ s/<!--.*?-->//g;
 		while ($content =~ s/<tr><td>(.*?)<\/td><td>(.*?)<\/td><td>(.*?)<\/td><\/tr>//i) {
 			my ($subject, $linker) = ($1, $3);
+			my $re_attr_val = '(?:"[^"]+"|\'[^\']+\'|[^\s<>]+)\s*';
+			my $style = {};
+			print "\n\n$subject\n$linker\n";
+			$subject =~ s/^.*?・<\/font>(?:&nbsp;| )//;
+			while ($subject =~ s/^\s*<([^<>]*)>\s*//) {
+				my $tag = lc($1);
+				my ($tag_part, $attr_part) = split(/\s+/, $tag, 2);
+				print "[tag] $tag_part [attr] $attr_part\n";
+				$style->{'font-weight'} = 'bold' if ($tag_part eq 'b');
+				while ($attr_part =~ s/([^\s<>=]+)(?:=($re_attr_val))?//) {
+					my ($attr, $val) = ($1, $2);
+					$val =~ s/^"(.*)"$/$1/ or $val =~ s/^'(.*)'$/$1/;
+					$val = $self->unescape($val);
+					print "[attr] $attr [val] $val\n";
+					if    ($attr eq 'style') { $style->{$1} = $2 while ($val =~ s/([^\s:]+)\s*:\s*([^\s:]+)//); }
+					elsif ($attr eq 'color') { $style->{'color'} = $val; }
+				}
+			}
 			$subject =~ s/\s*<.*?>\s*//g;
-			$subject =~ s/^・//;
 			my ($link, $description) = ($1, $2) if ($linker =~ /<a href=(.*?) .*?>(.*?)<\/a>/i);
 			my $item = {
 				'subject'     => $self->rewrite($subject),
+				'style'       => $style,
 				'link'        => $self->absolute_url($link, $base),
 				'description' => $self->rewrite($description)
 			};
@@ -2007,12 +2025,13 @@ sub unescape {
 	my $str  = shift;
 	my %unescaped = ('amp' => '&', 'quot' => '"', 'gt' => '>', 'lt' => '<', 'nbsp' => ' ', 'apos' => "'", 'copy' => '(c)');
 	my $re_target = join('|', keys(%unescaped));
-	$str =~ s[&(.*?);]{
-		local $_ = lc($1);
-		/^($re_target)$/  ? $unescaped{$1} :
-		/^#x([0-9a-f]+)$/ ? chr(hex($1)) :
-		$_
-	}gex;
+	$str =~ s/&($re_target|#x([0-9a-z]+));/defined($unescaped{$1}) ? $unescaped{$1} : defined($2) ? chr(hex($2)) : "&$1;"/ige;
+#	$str =~ s[&(.*?);]{
+#		local $_ = lc($1);
+#		/^($re_target)$/  ? $unescaped{$1} :
+#		/^#x([0-9a-f]+)$/ ? chr(hex($1)) :
+#		$_
+#	}gex;
 	return $str;
 }
 
