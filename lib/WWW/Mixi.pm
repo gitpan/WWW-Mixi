@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.36$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.37$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -242,18 +242,18 @@ sub parse_information {
 			my ($subject, $linker) = ($1, $3);
 			my $re_attr_val = '(?:"[^"]+"|\'[^\']+\'|[^\s<>]+)\s*';
 			my $style = {};
-			print "\n\n$subject\n$linker\n";
+#			print "\n\n$subject\n$linker\n";
 			$subject =~ s/^.*?¡¦<\/font>(?:&nbsp;| )//;
 			while ($subject =~ s/^\s*<([^<>]*)>\s*//) {
 				my $tag = lc($1);
 				my ($tag_part, $attr_part) = split(/\s+/, $tag, 2);
-				print "[tag] $tag_part [attr] $attr_part\n";
+#				print "[tag] $tag_part [attr] $attr_part\n";
 				$style->{'font-weight'} = 'bold' if ($tag_part eq 'b');
 				while ($attr_part =~ s/([^\s<>=]+)(?:=($re_attr_val))?//) {
 					my ($attr, $val) = ($1, $2);
 					$val =~ s/^"(.*)"$/$1/ or $val =~ s/^'(.*)'$/$1/;
 					$val = $self->unescape($val);
-					print "[attr] $attr [val] $val\n";
+#					print "[attr] $attr [val] $val\n";
 					if    ($attr eq 'style') { $style->{$1} = $2 while ($val =~ s/([^\s:]+)\s*:\s*([^\s:]+)//); }
 					elsif ($attr eq 'color') { $style->{'color'} = $val; }
 				}

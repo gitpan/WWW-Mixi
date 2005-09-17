@@ -1,5 +1,9 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.37  Sat Sep 17 12:01:32 2005
+	- mod parse_information
+		- fix : suppress debug information printing.
+
 0.36  Thu Sep 15 13:26:44 2005
 	- mod parse_information
 		- now its results include 'style' key.
