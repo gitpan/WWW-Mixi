@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.37$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.38$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -234,7 +234,7 @@ sub parse_information {
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
 	my @items   = ();
-	if ($content =~ /<!-- start: お知らせ -->.*?<table BORDER=0 CELLSPACING=0 CELLPADDING=0>(.*?)<\/table>/is) {
+	if ($content =~ /<img src=[^ <>]+ ALT=お知らせ VSPACE=1 WIDTH=100 HEIGHT=37>.*?<table BORDER=0 CELLSPACING=0 CELLPADDING=0>(.*?)<\/table>/is) {
 		$content = $1;
 		$content =~ s/[\r\n]+//gs;
 		$content =~ s/<!--.*?-->//g;
@@ -242,18 +242,15 @@ sub parse_information {
 			my ($subject, $linker) = ($1, $3);
 			my $re_attr_val = '(?:"[^"]+"|\'[^\']+\'|[^\s<>]+)\s*';
 			my $style = {};
-#			print "\n\n$subject\n$linker\n";
 			$subject =~ s/^.*?・<\/font>(?:&nbsp;| )//;
 			while ($subject =~ s/^\s*<([^<>]*)>\s*//) {
 				my $tag = lc($1);
 				my ($tag_part, $attr_part) = split(/\s+/, $tag, 2);
-#				print "[tag] $tag_part [attr] $attr_part\n";
 				$style->{'font-weight'} = 'bold' if ($tag_part eq 'b');
 				while ($attr_part =~ s/([^\s<>=]+)(?:=($re_attr_val))?//) {
 					my ($attr, $val) = ($1, $2);
 					$val =~ s/^"(.*)"$/$1/ or $val =~ s/^'(.*)'$/$1/;
 					$val = $self->unescape($val);
-#					print "[attr] $attr [val] $val\n";
 					if    ($attr eq 'style') { $style->{$1} = $2 while ($val =~ s/([^\s:]+)\s*:\s*([^\s:]+)//); }
 					elsif ($attr eq 'color') { $style->{'color'} = $val; }
 				}
@@ -267,6 +264,113 @@ sub parse_information {
 				'description' => $self->rewrite($description)
 			};
 			push(@items, $item);
+		}
+	}
+	return @items;
+}
+
+sub parse_main_new_album        { my $self = shift; return $self->parse_home_new_album(@_); }
+sub parse_main_new_bbs          { my $self = shift; return $self->parse_home_new_bbs(@_); }
+sub parse_main_new_comment      { my $self = shift; return $self->parse_home_new_comment(@_); }
+sub parse_main_new_friend_diary { my $self = shift; return $self->parse_home_new_friend_diary(@_); }
+sub parse_main_new_review       { my $self = shift; return $self->parse_home_new_review(@_); }
+
+sub parse_home_new_album {
+	my $self     = shift;
+	my $res      = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base     = $res->base->as_string;
+	my $content  = $res->content;
+	my @items    = ();
+	if ($content =~ /マイミクシィ最新アルバム(.*?)<table BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=300>/s) {
+		$content = $1;
+		while ($content =~ s/<img src=.*?>(\d{2})月(\d{2})日.*?<a href=(.+?)>(.*?)<\/a>.*?\((.+?)\)<br CLEAR=all>//is) {
+			my ($date, $link, $subj, $name) = ((sprintf('%02d/%02d', $1, $2)), $3, $4, $5);
+			$subj = $self->rewrite($subj);
+			$name = $self->rewrite($name);
+			$link = $self->absolute_url($link, $base);
+			push(@items, {'time' => $date, 'link' => $link, 'subject' => $subj, 'name' => $name});
+		}
+	}
+	return @items;
+}
+
+sub parse_home_new_bbs {
+	my $self     = shift;
+	my $res      = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base     = $res->base->as_string;
+	my $content  = $res->content;
+	my @items    = ();
+	if ($content =~ /コミュニティ最新書き込み(.*?)<table BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=300>/s) {
+		$content = $1;
+		while ($content =~ s/<img src=.*?>(\d{2})月(\d{2})日.*?<a href=(.+?)>(.*?)<\/a>.*?\((.+?)\)<br CLEAR=all>//is) {
+			my ($date, $link, $subj, $name) = ((sprintf('%02d/%02d', $1, $2)), $3, $4, $5);
+			$subj = $self->rewrite($subj);
+			$name = $self->rewrite($name);
+			$link = $self->absolute_url($link, $base);
+			push(@items, {'time' => $date, 'link' => $link, 'subject' => $subj, 'name' => $name});
+		}
+	}
+	return @items;
+}
+
+sub parse_home_new_comment {
+	my $self     = shift;
+	my $res      = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base     = $res->base->as_string;
+	my $content  = $res->content;
+	my @items    = ();
+	if ($content =~ /日記コメント記入履歴(.*?)<table BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=300>/s) {
+		$content = $1;
+		while ($content =~ s/<img src=.*?>(\d{2})月(\d{2})日.*?<a href=(.+?)>(.*?)<\/a>.*?\((.+?)\)<br CLEAR=all>//is) {
+			my ($date, $link, $subj, $name) = ((sprintf('%02d/%02d', $1, $2)), $3, $4, $5);
+			$subj = $self->rewrite($subj);
+			$name = $self->rewrite($name);
+			$link = $self->absolute_url($link, $base);
+			push(@items, {'time' => $date, 'link' => $link, 'subject' => $subj, 'name' => $name});
+		}
+	}
+	return @items;
+}
+
+sub parse_home_new_friend_diary {
+	my $self     = shift;
+	my $res      = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base     = $res->base->as_string;
+	my $content  = $res->content;
+	my @items    = ();
+#	if ($content =~ /<!-- 最新情報 -->(.*?)<table BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=300>/s) {
+	if ($content =~ /<td BGCOLOR=#F2DDB7 WIDTH=80 NOWRAP><font COLOR=#996600>マイミクシィ最新日記<\/font>.*?<\/td>(.*?)<table BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=300>/s) {
+		$content = $1;
+		while ($content =~ s/<img src=.*?>(\d{2})月(\d{2})日.*?<a href=(.+?)>(.*?)<\/a>.*?\((.+?)\)<br CLEAR=all>//is) {
+			my ($date, $link, $subj, $name) = ((sprintf('%02d/%02d', $1, $2)), $3, $4, $5);
+			$subj = $self->rewrite($subj);
+			$name = $self->rewrite($name);
+			$link = $self->absolute_url($link, $base);
+			push(@items, {'time' => $date, 'link' => $link, 'subject' => $subj, 'name' => $name});
+		}
+	}
+	return @items;
+}
+
+sub parse_home_new_review {
+	my $self     = shift;
+	my $res      = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base     = $res->base->as_string;
+	my $content  = $res->content;
+	my @items    = ();
+	if ($content =~ /マイミクシィ最新レビュー(.*?)<table BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=300>/s) {
+		$content = $1;
+		while ($content =~ s/<img src=.*?>(\d{2})月(\d{2})日.*?<a href=(.+?)>(.*?)<\/a>.*?\((.+?)\)<br CLEAR=all>//is) {
+			my ($date, $link, $subj, $name) = ((sprintf('%02d/%02d', $1, $2)), $3, $4, $5);
+			$subj = $self->rewrite($subj);
+			$name = $self->rewrite($name);
+			$link = $self->absolute_url($link, $base);
+			push(@items, {'time' => $date, 'link' => $link, 'subject' => $subj, 'name' => $name});
 		}
 	}
 	return @items;
@@ -299,7 +403,7 @@ sub parse_list_bbs {
 	my @items   = ();
 	my $re_date = '<td ALIGN=center ROWSPAN=3 NOWRAP bgcolor=#FFD8B0>(\d{2})月(\d{2})日<br>(\d{1,2}):(\d{2})</td>';
 	my $re_subj = '<td bgcolor=#FFF4E0>&nbsp;(.+?)</td>';
-	my $re_desc = '<td CLASS=h120>\n\n\n(.*?)\n</td>';
+	my $re_desc = '<td CLASS=h120>(.*?)\n</td>';
 	my $re_name = '\((.*?)\)';
 	my $re_link = '<a href="?(.+?)"?>書き込み\((\d+)\)<\/a>';
 	if ($content =~ /<table BORDER=0 cellspacing=1 cellpadding=3 width=630>(.+)<\/table>/s) {
@@ -356,7 +460,7 @@ sub parse_list_bookmark {
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
 	my @items   = ();
-	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>(.+?)<!--フッタ-->/s) {
+	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>(.+?)<img src=["']?http:\/\/\S*?\/q_brown3.gif['"]? [^<>]*?>/s) {
 		$content = $1;
 		while ($content =~ s/<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=550>(.*?)<\/table>//is) {
 			my $record = $1;
@@ -523,9 +627,11 @@ sub parse_list_diary_monthly_menu {
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
 	my @items   = ();
-	if ($content =~ /<!-- start: monthly menu -->(.+)<!-- end: monthly menu -->/s) {
+	if ($content =~ /<img src=.*? ALT=各月の日記 .*?>(.+?)<\/table>/is) {
 		$content = $1;
-		while ($content =~ s/<a HREF=['"]?(list_diary.pl\?year=(\d+)\&month=(\d+))['"]?.*?>.*?<\/a>//is) {
+		$content =~ s/\s+/ /gs;
+		while ($content =~ s/<a HREF=['"]?(list_diary.pl\?year=(\d+)\&month=(\d+))["']?.*?>.*?<\/a>//is) {
+			$self->dumper_log([$1, $2, $3]);
 			push(@items, {'link' => $self->absolute_url($1, $base), 'year' => $2, 'month' => $3});
 		}
 	}
@@ -728,7 +834,8 @@ sub parse_list_request {
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
 	my @items   = ();
-	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>(.+?)<!--フッタ-->/s) {
+#	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>(.+?)<!--フッタ-->/s) {
+	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>(.+?)<table BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=720 BGCOLOR=#FF9933>/s) {
 		$content = $1;
 		while ($content =~ s/<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=550>(.*?)<\/table>//is) {
 			my $record = $1;
@@ -740,9 +847,16 @@ sub parse_list_request {
 			$item->{'description'} = $1 if ($lines[1] =~ /<td COLSPAN=2 BGCOLOR=#FFFFFF>(.*?)<\/td>/is);
 			$item->{'message'} = $1 if ($lines[2] =~ /<td COLSPAN=2 BGCOLOR=#FFFFFF>(.*?)<\/td>/is);
 			$item->{'time'} = $1 if ($lines[3] =~ /<td BGCOLOR=#FFFFFF WIDTH=140>(.*?)<\/td>/is);
+			while ($lines[3] =~ s/<a href="(.*?)"><img src=["']?(.*?)['"]? ALT=["']?(.*?)['"]? [^<>]*?><\/a>//) {
+				my $button = { 'link' => $1, 'image' => $2, 'title' => $3 };
+				map { $button->{$_} = $self->absolute_url($button->{$_}, $base) } qw(link image);
+				map { $button->{$_} = $self->rewrite($button->{$_}, $base) }      qw(title);
+				$item->{'button'} = [] unless ($item->{'button'});
+				push(@{$item->{'button'}}, $button);
+			}
 			# format
-			foreach (qw(image link)) { $item->{$_} = $self->absolute_url($item->{$_}, $base) if ($item->{$_}); }
-			foreach (qw(subject description gender)) { $item->{$_} = $self->rewrite($item->{$_}); }
+			map { $item->{$_} = $self->absolute_url($item->{$_}, $base) } qw(link image);
+			map { $item->{$_} = $self->rewrite($item->{$_}, $base) }      qw(subject description message gender);
 			$item->{'time'} = $self->convert_login_time($item->{'time'}) if ($item->{'time'});
 			push(@items, $item) if ($item->{'subject'} and $item->{'link'});
 		}
@@ -1046,6 +1160,33 @@ sub parse_show_friend_profile {
 	return;
 }
 
+sub parse_show_intro {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	if ($content =~ /からの紹介文(.+?)<!--フッタ-->/s) {
+		$content = $1;
+		while ($content =~ s/<tr bgcolor=#FFFFFF>.*?<a href="(.+?)"><img src="(.+?)".*?\n(.+?)<\/td>.*?<td WIDTH=480>\n(.*?)\n(.*?)<\/td>//is) {
+			my ($link, $img, $name, $rel, $desc) = ($1, $2, $3, $4, $5);
+			$rel =~ s/関係：(.+?)<br>/$1/;
+			my $intro = ($desc =~ /edit_intro.pl\?id=.+?\&type=edit/) ? "1" : "0";
+			my $delete = ($desc =~ s/<a href="delete_intro.pl\?id=(\d+)">削除<\/a>//s) ? "1" : "0";
+			$name = $self->rewrite($name);
+			$rel  = $self->rewrite($rel);
+			$desc = $self->rewrite($desc);
+			$desc =~ s/この友人を紹介する//;
+			$desc =~ s/[\r\n]+//ig;
+			$link = $self->absolute_url($link, $base);
+			my $item = {'link' => $link, 'name' => $name, 'image' => $img, 'relation' => $rel, 'description' => $desc, 'introduction' => $intro, 'detele' => $delete};
+			push(@items, $item);
+		}
+	}
+	return @items;
+}
+
 sub parse_show_log {
 	my $self    = shift;
 	my $res     = (@_) ? shift : $self->response();
@@ -1077,6 +1218,67 @@ sub parse_show_log_count {
 	return $count;
 }
 
+sub parse_view_album {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	if ($content =~ /概要ここから(.+?)<!--フッタ-->/s) {
+		my $img = $1 if ($content =~ /width=250><img ALT="" SRC="(.*?)" VSPACE=4><\/td>/);
+		my $name = $1 if ($content =~ /<b>(.*?)さんのフォトアルバム/);
+		my $subj = $1 if ($content =~ /タイトル.*?<b>(.*?)<\/b>/s);
+		my $desc = $1 if ($content =~ /説明.*?CLASS=h120>(.*?)<\/td>/s);
+		my $level = $1 if ($content =~ /公開レベル.*?<td bgcolor=#FFFFFF>(.*?)<br>/s);
+		my $time = sprintf('%04d/%02d/%02d %02d:%02d', $1, $2, $3, $5, $5) if ($content =~ /作成日時.*?<td bgcolor=#FFFFFF>(\d{4})年(\d{2})月(\d{2})日&nbsp;(\d{2}):(\d{2})<\/td>/s);
+		my $comm = $1 if ($content =~ />コメント\((\d+)\)/);
+		my $number = $1 if ($content =~ /写真一覧.*?\&nbsp;(\d+)枚/);
+		$name = $self->rewrite($name);
+		$subj = $self->rewrite($subj);
+		$desc = $self->rewrite($desc);
+		my $item = { 'image' => $self->absolute_url($img, $base), 'name' => $name, 'subject' => $subj, 'description' => $desc, 'level' => $level, 'time' => $time, 'comment_number' => $comm, 'photo_number' => $number};
+		push(@items, $item);
+	}
+	return @items;
+}
+
+sub parse_view_album_comment {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	if ($content =~ /写真一覧ここまで(.*?)<!--フッタ-->/s) {
+		$content = $1;
+		while ($content =~ s/<td rowspan="2" width="110" bgcolor="#f2ddb7" align="center" valign="top" nowrap>\n(\d{4})年(\d{2})月(\d{2})日<br>(\d{2}):(\d{2})\n<\/td>.*?<a href="(.+?)">(.+?)<\/a>.*?<td class="h120">(.*?)<\/td>//s) {
+			my ($time, $link, $name, $desc) = ((sprintf('%04d/%02d/%02d %02d:%02d', $1, $2, $3, $4, $5)), $6, $7, $8);
+			my $item = { 'time' => $time, 'link' => $self->absolute_url($link, $base), 'name' => $self->rewrite($name), 'description' => $self->rewrite($desc)};
+			push(@items, $item);
+		}
+	}
+	return @items;
+}
+
+sub parse_view_album_photo {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	if ($content =~ /写真一覧ここから(.*?)写真一覧ここまで/s) {
+		$content = $1;
+		while ($content =~ s/<td.*?<img alt="(.+?)" src="(.+?)".*?<a href="(.+?)">(.+?)<\/a><\/td>//) {
+			my ($alt, $thumb, $link, $subj) = ($1, $2, $3, $4);
+			my $item = { 'description' => $alt, 'thumb_link' => $self->absolute_url($thumb, $base), 'link' => $self->absolute_url($link, $base), 'subject' => $self->rewrite($subj)};
+			push(@items, $item);
+		}
+	}
+	return @items;
+}
+
 sub parse_view_bbs {
 	my $self    = shift;
 	my $res     = (@_) ? shift : $self->response();
@@ -1088,8 +1290,8 @@ sub parse_view_bbs {
 	my $re_subj = '<td bgcolor="#fff4e0">&nbsp;(.+?)</td>';
 	my $re_desc = '</table>(.+?)</td>';
 	my $re_c_date = '<td rowspan="2" width="110" bgcolor="#f2ddb7" align="center" nowrap>\n(\d{4})年(\d{2})月(\d{2})日<br>\n(\d{1,2}):(\d{2})';
-	my $re_c_desc = '<td class="h120">(.+?)</td>';
-	my $re_link   = '<a href="?(.+?)"?>(.+?)<\/a>';
+	my $re_c_desc = '<td class="h120">(.+?)\n</td>';
+	my $re_link   = '<a href="?(.+?)"?>(.*?)<\/a>';
 	if ($content =~ s/<!-- TOPIC: start -->.*?${re_date}.*?${re_subj}.*?${re_link}(.*?)${re_desc}(.*?)$//is) {
 		my ($time, $subj, $link, $name, $imgs, $desc, $comm) = (sprintf('%04d/%02d/%02d %02d:%02d', $1,$2,$3,$4,$5), $6, $7, $8, $9, $10, $11);
 		($desc, $subj) = map { s/[\r\n]+//g; s/<br>/\n/g; $_ = $self->rewrite($_); } ($desc, $subj);
@@ -1123,14 +1325,54 @@ sub parse_view_diary {
 	my $re_link   = '<a href="?(.+?)"?>(.+?)<\/a>';
 	if ($content =~ s/<tr VALIGN=top>.*?${re_date}.*?${re_subj}(.*?)${re_desc}(.+)//is) {
 		my ($time, $subj, $imgs, $desc, $comm) = (sprintf('%04d/%02d/%02d %02d:%02d', $1,$2,$3,$4,$5), $6, $7, $8, $9);
+		my $level = { 'description' => $self->rewrite($2), 'link' => $self->absolute_url($1, $base) } if ($content =~ /<img src="([^"]+)" alt="([^"]+)" height="\d+" hspace="\d+" width="\d+">/);
 		($desc, $subj) = map { s/[\r\n]+//g; s/<br>/\n/g; $_ = $self->rewrite($_); } ($desc, $subj);
-		my $item = { 'time' => $time, 'description' => $desc, 'subject' => $subj, 'link' => $res->request->uri->as_string, 'images' => [], 'comments' => [] };
+		my $item = { 'time' => $time, 'description' => $desc, 'subject' => $subj, 'link' => $res->request->uri->as_string, 'images' => [], 'comments' => [], 'level' => $level };
 		foreach my $image ($imgs =~ /<td width=130[^<>]*>(.*?)<\/td>/g) {
 			next unless ($image =~ /<a [^<>]*'show_picture.pl\?img_src=(.*?)'[^<>]*><img src=([^ ]*) border=0>/);
 			push(@{$item->{'images'}}, {'link' => $self->absolute_url($1, $base), 'thumb_link' => $self->absolute_url($2, $base)});
 		}
 		while ($comm =~ s/.*?${re_c_date}.*?${re_link}.*?${re_desc}.*?<\/table>//is){
 			my ($time, $link, $name, $desc) = (sprintf('%04d/%02d/%02d %02d:%02d', $1,$2,$3,$4,$5), $6, $7, $8);
+			($name, $desc) = map { s/[\r\n]+//g; s/<br>/\n/g; $_ = $self->rewrite($_); } ($name, $desc);
+			push(@{$item->{'comments'}}, {'time' => $time, 'link' => $self->absolute_url($link, $base), 'name' => $name, 'description' => $desc});
+		}
+		push(@items, $item);
+	}
+	return @items;
+}
+
+sub parse_view_event {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	my $re_date = '<td ROWSPAN=11 BGCOLOR=#FFD8B0 ALIGN=center VALIGN=top WIDTH=110>(\d{4})年(\d{2})月(\d{2})日<br>(\d{1,2}):(\d{2})</td>';
+	my $re_subj = '<td BGCOLOR=#FFF4E0>&nbsp;(.+?)</td>';
+	my $re_link = '<a href="?(.+?)"?>(.*?)<\/a>';
+	my $re_hold = '<td BGCOLOR=#FFFFFF>\n&nbsp;(.*?)\n</td>';
+	my $re_dead = '<td BGCOLOR=#FFFFFF>&nbsp;(.*?)</td>';
+	my $re_desc = '<table BORDER=0 CELLSPACING=0 CELLPADDING=5>(.*?)</tr>';
+	my $re_c_date = '<td ROWSPAN=.*?\n(\d{4})年(\d{2})月(\d{2})日<br>\n(\d{1,2}):(\d{2})<br>\n';
+	my $re_c_desc = '<td CLASS="?h120"?>(.*?)\n</tr>';
+	if ($content =~ s/<table BORDER=0 CELLSPACING=0 CELLPADDING=1 BGCOLOR=#DFA473>.*?${re_date}(.*?)${re_subj}.*?${re_link}.*?${re_hold}.*?${re_hold}.*?${re_desc}.*?${re_dead}(.*?)<!-- TOPIC: end -->(.*?)<!--フッタ-->//is) {
+		my ($time, $imgs, $subj, $link, $name, $date, $location, $desc, $deadline, $join, $comm) = (sprintf('%04d/%02d/%02d %02d:%02d', $1,$2,$3,$4,$5), $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);
+		if ($join =~ /VALUE="　イベントに参加する　"/i) { $join = 1;
+		} elsif ($join =~ /VALUE="　参加をキャンセルする　"/i) { $join = 2;
+		} else { $join = 0;
+		}
+		($desc, $subj) = map { s/[\r\n]+//g; s/<br>/\n/g; $_ = $self->rewrite($_); } ($desc, $subj);
+		my $item = { 'time' => $time, 'description' => $desc, 'subject' => $subj, 'link' => $res->request->uri->as_string, 'images' => [], 'comments' => [] , 'name' => $name, 'name_link' => $self->absolute_url($link, $base), 'date' => $date, 'location' => $location, 'deadline' => $deadline, 'join' => $join};
+		foreach my $image ($imgs =~ /<td width=130[^<>]*>(.*?)<\/td>/g) {
+			next unless ($image =~ /<a [^<>]*'show_picture.pl\?img_src=(.*?)'[^<>]*><img src=([^ ]*) border=0>/);
+			push(@{$item->{'images'}}, {'link' => $self->absolute_url($1, $base), 'thumb_link' => $self->absolute_url($2, $base)});
+		}
+		while ($comm =~ s/${re_c_date}.*?${re_link}.*?${re_c_desc}//is) {
+			my ($time, $link, $name, $desc) = (sprintf('%04d/%02d/%02d %02d:%02d', $1,$2,$3,$4,$5), $6, $7, $8);
+			my $imgs;
+			($imgs, $desc) = ($1, $2) if ($desc =~ /<table>(.+?)<\/table>.*?(.+?)<\/td>/);
 			($name, $desc) = map { s/[\r\n]+//g; s/<br>/\n/g; $_ = $self->rewrite($_); } ($name, $desc);
 			push(@{$item->{'comments'}}, {'time' => $time, 'link' => $self->absolute_url($link, $base), 'name' => $name, 'description' => $desc});
 		}
@@ -1327,10 +1569,12 @@ sub get_tool_bar {
 	return $self->parse_tool_bar();
 }
 
-sub get_information {
-	my $self = shift;
-	return $self->get_standard_data('parse_information', 'home.pl', @_);
-}
+sub get_information           { my $self = shift; return $self->get_standard_data('parse_information',           'home.pl', @_); }
+sub get_home_new_album        { my $self = shift; return $self->get_standard_data('parse_home_new_album',        'home.pl', @_); }
+sub get_home_new_bbs          { my $self = shift; return $self->get_standard_data('parse_home_new_bbs',          'home.pl', @_); }
+sub get_home_new_comment      { my $self = shift; return $self->get_standard_data('parse_home_new_comment',      'home.pl', @_); }
+sub get_home_new_friend_diary { my $self = shift; return $self->get_standard_data('parse_home_new_friend_diary', 'home.pl', @_); }
+sub get_home_new_review       { my $self = shift; return $self->get_standard_data('parse_home_new_review',       'home.pl', @_); }
 
 sub get_calendar { my $self = shift; return $self->get_show_calendar(@_); }
 sub get_calendar_term { my $self = shift; return $self->get_show_calendar_term(@_); }
@@ -1715,6 +1959,14 @@ sub get_show_calendar_previous {
 	return $self->parse_show_calendar_previous();
 }
 
+sub get_show_intro {
+	my $self = shift;
+	my $url  = 'show_intro.pl';
+	$url     = shift if (@_ and $_[0] ne 'refresh');
+	$self->set_response($url, @_) or return;
+	return $self->parse_show_intro();
+}
+
 sub get_show_log {
 	my $self = shift;
 	my $url  = 'show_log.pl';
@@ -1745,6 +1997,51 @@ sub get_show_friend_profile {
 	return $self->parse_show_friend_profile();
 }
 
+sub get_view_album {
+	my $self    = shift;
+#	my $url  = shift or return;
+#	$self->set_response($url, @_) or return undef;
+#	return $self->parse_view_album();
+	my $url     = 'view_album.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'id'}) and length($param{'id'}) and $url !~ /[\?\&]id=/) {
+		$url .= ($url =~ /\?/) ? "&id=$param{'id'}" : "?id=$param{'id'}";
+	}
+	return $self->get_standard_data('parse_view_album', qr/view_album\.pl/, $url, $refresh);
+}
+
+sub get_view_album_comment {
+	my $self = shift;
+#	my $url  = shift or return;
+#	$self->set_response($url, @_) or return undef;
+#	return $self->parse_view_album_comment();
+	my $url     = 'view_album.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'id'}) and length($param{'id'}) and $url !~ /[\?\&]id=/) {
+		$url .= ($url =~ /\?/) ? "&id=$param{'id'}" : "?id=$param{'id'}&mode=comment";
+	}
+	return $self->get_standard_data('parse_view_album_comment', qr/view_album\.pl/, $url, $refresh);
+}
+
+sub get_view_album_photo {
+	my $self = shift;
+#	my $url  = shift or return;
+#	$self->set_response($url, @_) or return undef;
+#	return $self->parse_view_album_comment();
+	my $url     = 'view_album.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'id'}) and length($param{'id'}) and $url !~ /[\?\&]id=/) {
+		$url .= ($url =~ /\?/) ? "&id=$param{'id'}" : "?id=$param{'id'}";
+	}
+	return $self->get_standard_data('parse_view_album_photo', qr/view_album\.pl/, $url, $refresh);
+}
+
 sub get_view_bbs {
 	my $self = shift;
 	my $url  = shift or return;
@@ -1752,11 +2049,34 @@ sub get_view_bbs {
 	return $self->parse_view_bbs();
 }
 
+sub get_view_community {
+	my $self = shift;
+#	my $url  = shift or return;
+#	$self->set_response($url, @_) or return undef;
+#	return $self->parse_view_community();
+	my $url     = 'view_community.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'id'}) and length($param{'id'}) and $url !~ /[\?\&]id=/) {
+		$url .= ($url =~ /\?/) ? "&id=$param{'id'}" : "?id=$param{'id'}";
+	}
+	print "[test:get_view_community] $url\n";
+	return $self->get_standard_data('parse_view_community', qr/view_community\.pl/, $url, $refresh);
+}
+
 sub get_view_diary {
 	my $self = shift;
 	my $url  = shift or return;
 	$self->set_response($url, @_) or return undef;
 	return $self->parse_view_diary();
+}
+
+sub get_view_event {
+	my $self = shift;
+	my $url  = shift or return;
+	$self->set_response($url, @_) or return undef;
+	return $self->parse_view_event();
 }
 
 sub get_view_message {
@@ -1995,7 +2315,7 @@ sub callback_log {
 }
 
 sub callback_abort {
-	die;
+	die @_;
 }
 
 sub rewrite {
@@ -2008,6 +2328,7 @@ sub callback_rewrite {
 	my $str  = shift;
 	$str = $self->remove_tag($str);
 	$str = $self->unescape($str);
+	$str =~ s/\s+$//s;
 	return $str;
 }
 
@@ -2174,7 +2495,6 @@ sub parse_standard_form {
 	return @items;
 }
 
-
 sub set_response {
 	my $self    = shift;
 	my $url     = shift;
@@ -2225,10 +2545,10 @@ sub post_edit_diary {
 	$self->dumper_log(\%values);
 	$values{'id'} = $values{'diary_id'} if (not $values{'id'} and defined($values{'diary_id'}));
 	my $url       = exists($values{'__action__'}) ? $values{'__action__'} : 'edit_diary.pl?id=' . $values{'id'};
-	my @fields    = qw(submit diary_title diary_body photo1 photo2 photo3 submit);
+	my @fields    = qw(submit diary_title diary_body photo1 photo2 photo3 submit post_key);
 	my @required  = qw(submit diary_title diary_body);
 	my @files     = qw(photo1 photo2 photo3);
-	my %label     = ('id' => '日記ID', 'diary_title' => '日記のタイトル', 'diary_body' => '日記の本文', 'photo1' => '写真1', 'photo2' => '写真2', 'photo3' => '写真3');
+	my %label     = ('id' => '日記ID', 'diary_title' => '日記のタイトル', 'diary_body' => '日記の本文', 'photo1' => '写真1', 'photo2' => '写真2', 'photo3' => '写真3', 'post_key' => '送信キー');
 	my @errors;
 	# データの生成とチェック
 	my %form     = map { $_ => $values{$_} } @fields;
@@ -2446,6 +2766,11 @@ sub test_scenario {
 		'banner'                  => {'label' => 'バナー'},
 		'tool_bar'                => {'label' => 'ツールバー'},
 		'information'             => {'label' => '管理者からのお知らせ'},
+		'home_new_album'          => {'label' => 'ホームのマイミクシィ最新アルバム'},
+		'home_new_bbs'            => {'label' => 'ホームのコミュニティ最新書き込み'},
+		'home_new_comment'        => {'label' => 'ホームの日記コメント記入履歴'},
+		'home_new_friend_diary'   => {'label' => 'ホームのマイミクシィ最新日記'},
+		'home_new_review'         => {'label' => 'ホームのマイミクシィ最新レビュー'},
 		'list_bookmark'           => {'label' => 'お気に入り'},
 		'list_comment'            => {'label' => '最近のコメント'},
 		'list_community'          => {'label' => 'コミュニティ一覧'},
@@ -2455,7 +2780,7 @@ sub test_scenario {
 		'list_diary_capacity'     => {'label' => '日記容量'},
 		'list_diary_next'         => {'label' => '日記(次)'},
 		'list_diary_previous'     => {'label' => '日記(前)', 'url' => sub { return $_[0]->test_record('list_diary_next')}},
-		'list_diary_monthly_menu' => {'label' => '日記月別ページ'},
+#		'list_diary_monthly_menu' => {'label' => '日記月別ページ'},
 		'list_friend'             => {'label' => '友人・知人一覧'},
 		'list_friend_next'        => {'label' => '友人・知人一覧(次)'},
 		'list_friend_previous'    => {'label' => '友人・知人一覧(前)', 'url' => sub { return $_[0]->test_record('list_friend_next')}},
@@ -2480,10 +2805,15 @@ sub test_scenario {
 		'show_calendar_term'      => {'label' => 'カレンダーの期間'},
 		'show_calendar_next'      => {'label' => 'カレンダー(次)'},
 		'show_calendar_previous'  => {'label' => 'カレンダー(前)', 'url' => sub { return $_[0]->test_record('show_calendar_next')}},
+		'show_intro'              => {'label' => 'マイミクシィからの紹介文'},
 		'show_log'                => {'label' => 'あしあと'},
 		'show_log_count'          => {'label' => 'あしあと数'},
-		'view_diary'              => {'label' => '日記(詳細)', 'url' => sub { return $_[0]->test_record('list_diary')}},
-		'view_message'            => {'label' => 'メッセージ(詳細)', 'url' => sub { return $_[0]->test_record('list_message')}},
+		# コンテンツ
+		'view_album'              => {'label' => 'フォトアルバム',           'url' => sub { return $_[0]->test_record('new_album')}},
+		'view_album_photo'        => {'label' => 'フォトアルバムの写真',     'url' => sub { $_ = $_[0]->test_record('new_album'); return ref($_) eq 'HASH' ? $_->{'link'} : undef }},
+		'view_album_comment'      => {'label' => 'フォトアルバムのコメント', 'url' => sub { $_ = $_[0]->test_record('new_album'); return ref($_) eq 'HASH' ? $_->{'link'} . '&mode=comment' : undef }},
+		'view_diary'              => {'label' => '日記(詳細)',               'url' => sub { return $_[0]->test_record('list_diary')}},
+		'view_message'            => {'label' => 'メッセージ(詳細)',         'url' => sub { return $_[0]->test_record('list_message')}},
 		# コミュニティ関連
 		'community_id'            => {'label' => 'コミュニティID',   'url' => sub { return $_[0]->test_record('list_community')}},
 		'list_bbs'                => {'label' => 'トピック一覧',     'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
@@ -2493,6 +2823,7 @@ sub test_scenario {
 		'list_member_next'        => {'label' => 'メンバー一覧(次)', 'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
 		'list_member_previous'    => {'label' => 'メンバー一覧(前)', 'url' => sub { return $_[0]->test_record('list_member_next')}},
 		'view_bbs'                => {'label' => 'トピック',         'url' => sub { return $_[0]->test_record('list_bbs')}},
+#		'view_community'          => {'label' => 'コミュニティ',     'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
 	);
 	while (@tests >= 2) {
 		my ($test, $opt) = splice(@tests, 0, 2);
@@ -2521,6 +2852,7 @@ sub test_scenario {
 			if (@items) {
 				$mixi->dumper_log([@items]);
 				$mixi->test_record($test => $items[0]);
+				$mixi->test_record($test => {'link' => 'http://mixi.jp/view_album.pl?id=150828'}) if ($test eq 'new_album');
 			} else {
 				$mixi->log("[warn] レコードが見つかりませんでした。\n");
 				$mixi->dumper_log($mixi->response);

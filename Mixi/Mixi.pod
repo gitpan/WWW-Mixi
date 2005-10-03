@@ -200,6 +200,66 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	},
  }
 
+=head3 @items = $mixi->parse_home_new_album( [$response] );
+
+ホーム(home.pl)のマイミクシィ最新アルバムを取得します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'link' => 'http://mixi.jp/view_album.pl?id=xxxxx',
+ 	'subject' => '10月1日のアルバム',
+ 	'time' => '10/01',
+ 	'name' => 'walrus'
+ },
+
+=head3 @items = $mixi->parse_home_new_bbs( [$response] );
+
+ホーム(home.pl)のコミュニティ最新書き込みを取得します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'link' => 'http://mixi.jp/view_bbs.pl?id=xxxxxx',
+ 	'subject' => 'はじめまして (59)',
+ 	'time' => '09/11',
+ 	'name' => 'WWW::Mixi'
+ }
+
+=head3 @items = $mixi->parse_home_new_comment( [$response] );
+
+ホーム(home.pl)の日記コメント記入履歴を取得します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'subject' => 'こんにちわ。',
+ 	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx&owner_id=xxxx',
+ 	'name' => '塚本牧生',
+ 	'time' => '08/18'
+ }
+
+=head3 @items = $mixi->parse_home_new_friend_diary( [$response] );
+
+ホーム(home.pl)のマイミクシィ最新日記を取得します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'subject' => 'こんにちわ。',
+ 	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx&owner_id=xxxx',
+ 	'name' => '塚本牧生',
+ 	'time' => '08/18'
+ }
+
+=head3 @items = $mixi->parse_home_new_review( [$response] );
+
+ホーム(home.pl)のマイミクシィ最新レビューを取得します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'subject' => 'mixiの本。',
+ 	'link' => 'http://mixi.jp/list_item_review.pl?reviewer_id=xxxx&item_id=xxxxx',
+ 	'name' => '塚本牧生',
+ 	'time' => '08/18'
+ }
+
 =head3 @items = $mixi->parse_calendar( [$response] );
 
 parse_show_calendarメソッドの別名です。
@@ -494,9 +554,29 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
 承認待ち一覧（list_request.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
- {
- 	（未稿）
- }
+{
+	'subject' => 'walrus',
+	'gender' => '男性',
+	'link' => 'http://mixi.jp/show_friend.pl?id=xxxxx',
+	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxxx_xxxxxxxxxs.jpg'
+	'time' => '2005/09/24 14:45',
+	'description' => 'WWW::Mixi作者です。ここにはプロフィールの説明文が入ります。',
+	'message' => '先日はメールで面白い話をありがとうごさいました。
+	改めてマイミクシィに加えさせていただきたいと思ってます。
+	よろしくです。',
+	'button' => [
+		{
+			'link' => 'http://mixi.jp/accept_request.pl?id=xxxxx&post_key=xxxxxxxxxxxxxxx',
+			'title' => '承認',
+			'image' => 'http://img.mixi.jp/img/ybtn.gif'
+		},
+		{
+			'link' => 'http://mixi.jp/reject_request.pl?id=xxxxx&post_key=xxxxxxxxxxxxxxx',
+			'title' => '拒否',
+			'image' => 'http://img.mixi.jp/img/nbtn.gif'
+		}
+	],
+}
 
 =head3 @items = $mixi->parse_new_album( [$response] );
 
@@ -522,7 +602,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'name' => 'WWW::Mixi'
  }
 
-=head3 $item = $mixi->parse_new_bbs_next( [$response] ); New!
+=head3 $item = $mixi->parse_new_bbs_next( [$response] );
 
 コミュニティ最新書き込み（new_bbs.plのメイン部）の「次を表示」へのリンクを解析します。
 返り値は、「次を表示」がある場合は以下のようなハッシュリファレンスです。
@@ -532,7 +612,7 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	'subject' => '次を表示'
  }
 
-=head3 $item = $mixi->parse_new_bbs_previous( [$response] ); New!
+=head3 $item = $mixi->parse_new_bbs_previous( [$response] );
 
 コミュニティ最新書き込み（new_bbs.plのメイン部）の「前を表示」へのリンクを解析します。
 返り値は、「前を表示」がある場合は以下のようなハッシュリファレンスです。
@@ -682,7 +762,7 @@ IDを取得できなかった時の返り値は0です。
 
  {
  	'subject' => '誕生日',
- 	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx',
+ 	'link' => 'http://mixi.jp/view_event.pl?id=xxxxxx',
  	'name' => '塚本牧生',
  	'time' => '2004/08/18'
  	'icon' => 'http://mixi.jp/img/i_bd.gif'
@@ -761,6 +841,21 @@ stepが2の時は上のように、間に挟まるマイミクシィの情報が
 
 ハッシュの項目は、その人の公開しているプロフィールの内容によって増減します。
 
+=head3 @items = $mixi->parse_show_intro( [$response] );
+
+マイミクシィからの紹介文（show_intro.plのメイン部）を解析し、紹介文を返します。
+返り値は、以下のようなハッシュリファレンスです。
+
+ {
+ 	'description' => 'いつもいつもWWW::Mixiな人です。',
+ 	'name' => 'walrus',
+ 	'link' => 'http://mixi.jp/show_friend.pl?id=xxxx',
+ 	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxx_xxxxxxxxs.jpg'
+ 	'introduction' => '0',
+ 	'detele' => '1',
+ 	'relation' => '',
+ }
+
 =head3 @items = $mixi->parse_show_log( [$response] );
 
 あしあと（show_log.plのメイン部）を解析し、あしあとを返します。
@@ -777,6 +872,47 @@ stepが2の時は上のように、間に挟まるマイミクシィの情報が
 あしあと（show_log.plのメイン部）を解析し、あしあと数を返します。
 
 このメソッドは他の多くの解析系メソッドと違い、ハッシュリファレンスの配列ではなくただの数値（スカラ値）を返すことに注意してください。
+
+=head3 @items = $mixi->parse_view_album( [$response] );
+
+フォトアルバム（view_album.plのメイン部）を解析し、アルバムの情報を返します。
+
+ {
+ 	'subject' => '10月1日のアルバム',
+ 	'time' => '2005/10/01 15:15',
+ 	'name' => 'walrus',
+ 	'description' => '10月1日のパーティーの時の写真です。
+ 他にもとって人がいたら教えてくださいませ！',
+ 	'image' => 'http://img1.mixi.jp/photo/album/xx/xx/xxxx_xxxxxxxxs.jpg',
+ 	'level' => '友人まで公開',
+ 	'photo_number' => '7',
+ 	'comment_number' => '0'
+ }
+
+=head3 @items = $mixi->parse_view_album_comment( [$response] );
+
+フォトアルバム（view_album.pl?mode=commentのメイン部）を解析し、コメントを返します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'link' => 'http://mixi.jp/show_friend.pl?id=xxxx',
+ 	'time' => '2005/10/02 01:19',
+ 	'name' => 'walrus',
+ 	'description' => 'いいなぁ、楽しそうだなぁ。
+ 僕も行きたかったです。'
+ }
+
+=head3 @items = $mixi->parse_view_album_photo( [$response] );
+
+フォトアルバム（view_album.pl）の写真一覧を解析し、写真の情報を返します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'subject' => 'パーティー開始。',
+ 	'link' => 'http://mixi.jp/view_album_photo.pl?album_id=xxxx&number=xxxxxxxx&page=1',
+ 	'thumb_link' => 'http://img1.mixi.jp/photo/album/x/xx/xxxx_xxxxxxxxs.jpg',
+ 	'description' => 'xxxx_xxxxxxxxs.jpg'
+ }
 
 =head3 $item = $mixi->parse_view_bbs( [$response] );
 
@@ -816,6 +952,10 @@ stepが2の時は上のように、間に挟まるマイミクシィの情報が
  	'link'        => 'http://mixi.jp/view_diary.pl?id=xxxxxx',
  	'description' => '本文',
  	'time'        => '2005/05/24 22:36'
+ 	'level' => {
+ 		'description' => '全体に公開'
+ 		'link' => 'http://img.mixi.jp/img/diary_icon3.gif',
+ 	},
  	'images'      => [
  		{
  			'link'        => 'http://img.mixi.jp/photo/diary/xx/xx/xxxxxxxxx_xxx.jpg',
@@ -830,6 +970,35 @@ stepが2の時は上のように、間に挟まるマイミクシィの情報が
  			'description' => 'こんにちは～。'
  		},
  	]
+ }
+
+images、commentsは0件の時も、複数件の時もあることに注意してください。
+
+=head3 @items = $mixi->parse_view_event( [$response] );
+
+イベント（view_event.plのメイン部）を解析します。
+返り値は、以下のようなハッシュリファレンスです。
+
+ {
+ 	'subject' => '10月記念パーティ。',
+ 	'link' => 'http://mixi.jp/view_event.pl?id=xxxxxxxx',
+ 	'time' => '2005/09/15 02:45',
+ 	'date' => '2005年10月01日(午後)',
+ 	'deadline' => '指定なし',
+ 	'location' => 'レストランお茶の間',
+ 	'description' => '10月を記念してパーティーしましょう！',
+ 	'images' => [],
+ 	'name' => 'waltus',
+ 	'name_link' => 'http://mixi.jp/show_friend.pl?id=xxxx'
+ 	'join' => 5,
+ 	'comments' => [
+ 		{
+ 			'link' => 'http://mixi.jp/show_friend.pl?id=xxxx',
+ 			'time' => '2005/09/21 15:15',
+ 			'name' => 'seiuchi',
+ 			'description' => '参加します。よろしく！'
+ 		}
+ 	],
  }
 
 images、commentsは0件の時も、複数件の時もあることに注意してください。
@@ -1048,6 +1217,51 @@ __action__というキーがあることに注意してください。
 指定されたURLから、「管理者からのお知らせ」を取得します。
 URLを指定しなかった時は「ホーム」を対象にします。
 返り値はparse_informationと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 @items = $mixi->get_home_new_album( [$url | $url => 'refresh' | 'refresh'] );
+
+指定されたURLから、「マイミクシィ最新アルバム」を取得します。
+URLを指定しなかった時は「ホーム」を対象にします。
+返り値はparse_home_new_albumと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 @items = $mixi->get_home_new_bbs( [$url | $url => 'refresh' | 'refresh'] );
+
+指定されたURLから、「コミュニティ最新書き込み」を取得します。
+URLを指定しなかった時は「ホーム」を対象にします。
+返り値はparse_home_new_bbsと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 @items = $mixi->get_home_new_comment( [$url | $url => 'refresh' | 'refresh'] );
+
+指定されたURLから、「日記コメント記入履歴」を取得します。
+URLを指定しなかった時は「ホーム」を対象にします。
+返り値はparse_home_new_commentと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 @items = $mixi->get_home_new_friend_diary( [$url | $url => 'refresh' | 'refresh'] );
+
+指定されたURLから、「マイミクシィ最新日記」を取得します。
+URLを指定しなかった時は「ホーム」を対象にします。
+返り値はparse_home_new_friend_diaryと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 @items = $mixi->get_home_new_review( [$url | $url => 'refresh' | 'refresh'] );
+
+指定されたURLから、「マイミクシィ最新レビュー」を取得します。
+URLを指定しなかった時は「ホーム」を対象にします。
+返り値はparse_home_new_reviewと同じです。
 
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
@@ -1494,6 +1708,15 @@ IDを取得できなかった時の返り値は0です。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
+=head3 @items = $mixi->get_show_intro( [$url | $url => 'refresh' | 'refresh'] );
+
+紹介文を取得します。
+デフォルトでは「マイミクシィからの紹介文」を対象にしますが、URLを指定した時はそのページを対象にします。
+返り値はparse_show_introと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
 =head3 @items = $mixi->get_show_log( [$url | $url => 'refresh' | 'refresh'] );
 
 あしあとを取得します。
@@ -1530,7 +1753,34 @@ IDを取得できなかった時の返り値は0です。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=head3 $item = $mixi->get_view_bbs( $url [ => 'refresh'] ); New!
+=head3 @items = $mixi->get_view_album( $url [, 'refresh'] | 'id' => $id  [, 'refresh'] );
+
+アルバムの概要を取得します。
+このメソッドでは、URLか、IDの指定が必須です。
+返り値はparse_view_albumと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 @items = $mixi->get_view_album_comment( $url [, 'refresh'] | 'id' => $id  [, 'refresh'] );
+
+アルバムのコメントを取得します。
+このメソッドでは、URLか、IDの指定が必須です。
+返り値はparse_view_album_commentと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 @items = $mixi->get_view_album_photo( $url [, 'refresh'] | 'id' => $id  [, 'refresh'] );
+
+アルバムの写真を取得します。
+このメソッドでは、URLか、IDの指定が必須です。
+返り値はparse_view_album_photoと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 $item = $mixi->get_view_bbs( $url [ => 'refresh'] );
 
 トピックを取得します。
 このメソッドでは、URLの指定が必須です。
@@ -1544,6 +1794,15 @@ IDを取得できなかった時の返り値は0です。
 日記を取得します。
 このメソッドでは、URLの指定が必須です。
 返り値はparse_view_diaryと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 @items = $mixi->get_view_event( $url [, 'refresh'] | 'id' => $id  [, 'refresh'] );
+
+イベントを取得します。
+このメソッドでは、URLか、IDの指定が必須です。
+返り値はparse_view_eventと同じです。
 
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
