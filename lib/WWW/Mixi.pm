@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.38$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.39$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -631,7 +631,7 @@ sub parse_list_diary_monthly_menu {
 		$content = $1;
 		$content =~ s/\s+/ /gs;
 		while ($content =~ s/<a HREF=['"]?(list_diary.pl\?year=(\d+)\&month=(\d+))["']?.*?>.*?<\/a>//is) {
-			$self->dumper_log([$1, $2, $3]);
+#			$self->dumper_log([$1, $2, $3]);
 			push(@items, {'link' => $self->absolute_url($1, $base), 'year' => $2, 'month' => $3});
 		}
 	}
@@ -2412,7 +2412,8 @@ sub parse_standard_history {
 	my @items   = ();
 	my $re_date = '(?:(\d{4})年)?(\d{2})月(\d{2})日 (\d{1,2}):(\d{2})';
 	my $re_name = '\(([^\r\n]*)\)';
-	my $re_link = '<a href="?(.+?)"?>(.+?)\s*<\/a>';
+#	my $re_link = '<a href="?(.+?)"?>(.+?)\s*<\/a>';
+	my $re_link = '<a href="?(.+?)"?>(.*?)\s*<\/a>';
 	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>(.+?)<\/table>/s) {
 		$content = $1;
 		my @today = reverse((localtime)[3..5]);
@@ -2422,7 +2423,8 @@ sub parse_standard_history {
 			my @date = ($1, $2, $3, $4, $5);
 			$date[0] = ($date[1] > $today[1]) ? $today[0] - 1 : $today[0] if (not defined($date[0]));
 			my $time = sprintf('%04d/%02d/%02d %02d:%02d', @date);
-			my $subj = $self->rewrite($7);
+#			my $subj = $self->rewrite($7);
+			my $subj = (defined($7) and length($7)) ? $self->rewrite($7) : '(削除)';
 			my $name = $self->rewrite($8);
 			my $link = $self->absolute_url($6, $base);
 			push(@items, {'time' => $time, 'subject' => $subj, 'name' => $name, 'link' => $link});
@@ -2780,7 +2782,7 @@ sub test_scenario {
 		'list_diary_capacity'     => {'label' => '日記容量'},
 		'list_diary_next'         => {'label' => '日記(次)'},
 		'list_diary_previous'     => {'label' => '日記(前)', 'url' => sub { return $_[0]->test_record('list_diary_next')}},
-#		'list_diary_monthly_menu' => {'label' => '日記月別ページ'},
+		'list_diary_monthly_menu' => {'label' => '日記月別ページ'},
 		'list_friend'             => {'label' => '友人・知人一覧'},
 		'list_friend_next'        => {'label' => '友人・知人一覧(次)'},
 		'list_friend_previous'    => {'label' => '友人・知人一覧(前)', 'url' => sub { return $_[0]->test_record('list_friend_next')}},
