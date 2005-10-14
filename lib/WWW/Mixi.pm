@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.39$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.40$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -342,7 +342,6 @@ sub parse_home_new_friend_diary {
 	my $base     = $res->base->as_string;
 	my $content  = $res->content;
 	my @items    = ();
-#	if ($content =~ /<!-- 最新情報 -->(.*?)<table BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=300>/s) {
 	if ($content =~ /<td BGCOLOR=#F2DDB7 WIDTH=80 NOWRAP><font COLOR=#996600>マイミクシィ最新日記<\/font>.*?<\/td>(.*?)<table BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=300>/s) {
 		$content = $1;
 		while ($content =~ s/<img src=.*?>(\d{2})月(\d{2})日.*?<a href=(.+?)>(.*?)<\/a>.*?\((.+?)\)<br CLEAR=all>//is) {
@@ -376,10 +375,10 @@ sub parse_home_new_review {
 	return @items;
 }
 
-sub parse_calendar { my $self = shift; return $self->parse_show_calendar(@_); }
-sub parse_calendar_term { my $self = shift; return $self->parse_show_calendar_term(@_); }
-sub parse_calendar_next { my $self = shift; return $self->parse_show_calendar_next(@_); }
-sub parse_calendar_previous { my $self = shift; return $self->parse_show_calendar_previous(@_); }
+#	sub parse_calendar { my $self = shift; return $self->parse_show_calendar(@_); }
+#	sub parse_calendar_term { my $self = shift; return $self->parse_show_calendar_term(@_); }
+#	sub parse_calendar_next { my $self = shift; return $self->parse_show_calendar_next(@_); }
+#	sub parse_calendar_previous { my $self = shift; return $self->parse_show_calendar_previous(@_); }
 
 sub parse_community_id {
 	my $self    = shift;
@@ -631,7 +630,6 @@ sub parse_list_diary_monthly_menu {
 		$content = $1;
 		$content =~ s/\s+/ /gs;
 		while ($content =~ s/<a HREF=['"]?(list_diary.pl\?year=(\d+)\&month=(\d+))["']?.*?>.*?<\/a>//is) {
-#			$self->dumper_log([$1, $2, $3]);
 			push(@items, {'link' => $self->absolute_url($1, $base), 'year' => $2, 'month' => $3});
 		}
 	}
@@ -834,7 +832,6 @@ sub parse_list_request {
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
 	my @items   = ();
-#	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>(.+?)<!--フッタ-->/s) {
 	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>(.+?)<table BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=720 BGCOLOR=#FF9933>/s) {
 		$content = $1;
 		while ($content =~ s/<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=550>(.*?)<\/table>//is) {
@@ -890,9 +887,9 @@ sub parse_new_comment {
 	return $self->parse_standard_history(@_);
 }
 
-sub parse_new_diary { my $self = shift; return $self->parse_search_diary(@_); }
-sub parse_new_diary_next { my $self = shift; return $self->parse_search_diary_next(@_); }
-sub parse_new_diary_previous { my $self = shift; return $self->parse_search_diary_previous(@_); }
+#	sub parse_new_diary { my $self = shift; return $self->parse_search_diary(@_); }
+#	sub parse_new_diary_next { my $self = shift; return $self->parse_search_diary_next(@_); }
+#	sub parse_new_diary_previous { my $self = shift; return $self->parse_search_diary_previous(@_); }
 
 sub parse_new_friend_diary {
 	my $self    = shift;
@@ -1320,7 +1317,6 @@ sub parse_view_diary {
 	my $re_date = '<td ALIGN=center ROWSPAN=2 NOWRAP WIDTH=95 bgcolor=#FFD8B0>(\d{4})年(\d{2})月(\d{2})日<br>(\d{1,2}):(\d{2})</td>';
 	my $re_subj = '<td BGCOLOR=#FFF4E0 WIDTH=430>&nbsp;(.+?)</td>';
 	my $re_desc = '<td CLASS=h12>(.+?)</td>';
-#	my $re_c_date = '<td rowspan="2" align="center" width="95" bgcolor="#f2ddb7" nowrap>\n(\d{4})年(\d{2})月(\d{2})日<br>(\d{1,2}):(\d{2})<br>';
 	my $re_c_date = '<td rowspan="2" align="center" width="95" bgcolor="#f2ddb7" nowrap>\n(\d{4})年(\d{2})月(\d{2})日<br>(\d{1,2}):(\d{2})';
 	my $re_link   = '<a href="?(.+?)"?>(.+?)<\/a>';
 	if ($content =~ s/<tr VALIGN=top>.*?${re_date}.*?${re_subj}(.*?)${re_desc}(.+)//is) {
@@ -1576,10 +1572,10 @@ sub get_home_new_comment      { my $self = shift; return $self->get_standard_dat
 sub get_home_new_friend_diary { my $self = shift; return $self->get_standard_data('parse_home_new_friend_diary', 'home.pl', @_); }
 sub get_home_new_review       { my $self = shift; return $self->get_standard_data('parse_home_new_review',       'home.pl', @_); }
 
-sub get_calendar { my $self = shift; return $self->get_show_calendar(@_); }
-sub get_calendar_term { my $self = shift; return $self->get_show_calendar_term(@_); }
-sub get_calendar_next { my $self = shift; return $self->get_show_calendar_next(@_); }
-sub get_calendar_previous { my $self = shift; return $self->get_show_calendar_previous(@_); }
+#	sub get_calendar { my $self = shift; return $self->get_show_calendar(@_); }
+#	sub get_calendar_term { my $self = shift; return $self->get_show_calendar_term(@_); }
+#	sub get_calendar_next { my $self = shift; return $self->get_show_calendar_next(@_); }
+#	sub get_calendar_previous { my $self = shift; return $self->get_show_calendar_previous(@_); }
 
 sub get_community_id {
 	my $self = shift;
@@ -1830,9 +1826,9 @@ sub get_new_comment {
 	return $self->parse_new_comment();
 }
 
-sub get_new_diary { my $self = shift; return $self->get_search_diary(@_); }
-sub get_new_diary_next { my $self = shift; return $self->get_search_diary_next(@_); }
-sub get_new_diary_previous { my $self = shift; return $self->get_search_diary_previous(@_); }
+#	sub get_new_diary { my $self = shift; return $self->get_search_diary(@_); }
+#	sub get_new_diary_next { my $self = shift; return $self->get_search_diary_next(@_); }
+#	sub get_new_diary_previous { my $self = shift; return $self->get_search_diary_previous(@_); }
 
 sub get_new_friend_diary {
 	my $self = shift;
@@ -1932,7 +1928,7 @@ sub get_show_calendar {
 	my $url  = 'show_calendar.pl';
 	$url     = shift if (@_ and $_[0] ne 'refresh');
 	$self->set_response($url, @_) or return;
-	return $self->parse_calendar();
+	return $self->parse_show_calendar();
 }
 
 sub get_show_calendar_term {
@@ -1999,9 +1995,6 @@ sub get_show_friend_profile {
 
 sub get_view_album {
 	my $self    = shift;
-#	my $url  = shift or return;
-#	$self->set_response($url, @_) or return undef;
-#	return $self->parse_view_album();
 	my $url     = 'view_album.pl';
 	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
 	my $refresh = shift if (@_ and $_[0] eq 'refresh');
@@ -2014,9 +2007,6 @@ sub get_view_album {
 
 sub get_view_album_comment {
 	my $self = shift;
-#	my $url  = shift or return;
-#	$self->set_response($url, @_) or return undef;
-#	return $self->parse_view_album_comment();
 	my $url     = 'view_album.pl';
 	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
 	my $refresh = shift if (@_ and $_[0] eq 'refresh');
@@ -2029,9 +2019,6 @@ sub get_view_album_comment {
 
 sub get_view_album_photo {
 	my $self = shift;
-#	my $url  = shift or return;
-#	$self->set_response($url, @_) or return undef;
-#	return $self->parse_view_album_comment();
 	my $url     = 'view_album.pl';
 	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
 	my $refresh = shift if (@_ and $_[0] eq 'refresh');
@@ -2051,9 +2038,6 @@ sub get_view_bbs {
 
 sub get_view_community {
 	my $self = shift;
-#	my $url  = shift or return;
-#	$self->set_response($url, @_) or return undef;
-#	return $self->parse_view_community();
 	my $url     = 'view_community.pl';
 	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
 	my $refresh = shift if (@_ and $_[0] eq 'refresh');
@@ -2411,23 +2395,30 @@ sub parse_standard_history {
 	my $content = $res->content;
 	my @items   = ();
 	my $re_date = '(?:(\d{4})年)?(\d{2})月(\d{2})日 (\d{1,2}):(\d{2})';
-	my $re_name = '\(([^\r\n]*)\)';
-#	my $re_link = '<a href="?(.+?)"?>(.+?)\s*<\/a>';
-	my $re_link = '<a href="?(.+?)"?>(.*?)\s*<\/a>';
+	my $re_link = '<a [^<>]*href="?([^<> ]*?)"?(?: [^<>]*)?>(.*?)<\/a>';
+	my $re_name = '\((.*?)\)';
 	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>(.+?)<\/table>/s) {
 		$content = $1;
 		my @today = reverse((localtime)[3..5]);
 		$today[0] += 1900;
 		$today[1] += 1;
-		while ($content =~ s/<tr bgcolor=#FFFFFF>.*?${re_date}.*?${re_link}\s*${re_name}.*?<\/tr>//is) {
-			my @date = ($1, $2, $3, $4, $5);
-			$date[0] = ($date[1] > $today[1]) ? $today[0] - 1 : $today[0] if (not defined($date[0]));
-			my $time = sprintf('%04d/%02d/%02d %02d:%02d', @date);
-#			my $subj = $self->rewrite($7);
-			my $subj = (defined($7) and length($7)) ? $self->rewrite($7) : '(削除)';
-			my $name = $self->rewrite($8);
-			my $link = $self->absolute_url($6, $base);
-			push(@items, {'time' => $time, 'subject' => $subj, 'name' => $name, 'link' => $link});
+		foreach my $row ($content =~ /<tr bgcolor=#FFFFFF>(.*?)<\/tr>/isg) {
+			$row =~ s/\s*[\r\n]\s*//gs;
+			my @cols = ($row =~ /<td[^<>]*>(.*?)<\/td>/gs);
+#			print join("\n", "[row]", $row, @cols) . "\n";
+			my $item = {};
+			next unless ($cols[0] =~ /$re_date/);
+			my @date           = ($1, $2, $3, $4, $5);
+#			print "date : " . join(', ', @date) . "\n";
+			next unless ($cols[1] =~ /${re_link}\s*$re_name/);
+			print "link : $1\nsubj : $2\nname : $3\n";
+			$item->{'link'}    = $self->absolute_url($1, $base);
+			$item->{'subject'} = (defined($2) and length($2)) ? $self->rewrite($2) : '(削除)';
+			$item->{'name'}    = $self->rewrite($3);
+			$date[0]           = ($date[1] > $today[1]) ? $today[0] - 1 : $today[0] if (not defined($date[0]));
+			$item->{'time'}    = sprintf('%04d/%02d/%02d %02d:%02d', @date);
+			map { $item->{$_} =~ s/^\s+|\s+$//gs } (keys(%{$item}));
+			push(@items, $item);
 		}
 	}
 	return @items;
@@ -2545,7 +2536,7 @@ sub post_edit_diary {
 	my $self      = shift;
 	my %values    = @_;
 	$self->dumper_log(\%values);
-	$values{'id'} = $values{'diary_id'} if (not $values{'id'} and defined($values{'diary_id'}));
+#	$values{'id'} = $values{'diary_id'} if (not $values{'id'} and defined($values{'diary_id'}));
 	my $url       = exists($values{'__action__'}) ? $values{'__action__'} : 'edit_diary.pl?id=' . $values{'id'};
 	my @fields    = qw(submit diary_title diary_body photo1 photo2 photo3 submit post_key);
 	my @required  = qw(submit diary_title diary_body);
@@ -2581,7 +2572,7 @@ sub post_delete_diary {
 	my %label    = ('id' => '日記ID', 'post_key' => '送信キー');
 	# データの生成とチェック
 	my %form     = map {$_ => $values{$_}} @fields;
-	$form{'id'}  = $values{'diary_id'} if (not $form{'id'} and defined($values{'diary_id'}));
+#	$form{'id'}  = $values{'diary_id'} if (not $form{'id'} and defined($values{'diary_id'}));
 	$form{'id'}  = $1 if ($values{'__action__'} and $values{'__action__'} =~ /delete_diary.pl?id=(\d+)/);
 	my @errors   = map { "$label{$_}を指定してください。" } grep { not $form{$_} } @required;
 	if (@errors) {

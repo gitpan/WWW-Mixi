@@ -1,5 +1,20 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.40  Sat Oct 15 01:20:40 2005
+	- mod parse_standard_history
+		- fixed for HTML changes.
+	- del parse_ and get_calendar
+	- del parse_ and get_calendar_next
+	- del parse_ and get_calendar_previous
+	- del parse_ and get_calendar_term
+		- use *_show_calendar_* instead of them.
+	- del parse_ and get_new_diary
+	- del parse_ and get_new_diary_next
+	- del parse_ and get_new_diary_previous
+	- del parse_ and get_new_diary_term
+		- use *_search_diary_* instead of them.
+
+
 0.39  Thu Oct 13 08:52:40 2005
 	- mod parse_list_diary_monthly_menu
 		- fix : suppress debug information printing.
