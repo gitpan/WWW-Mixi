@@ -1,5 +1,12 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.41  Mon Oct 17 15:29:10 2005
+	- add parse_ and get_ajax_new_diary
+	- add parse_standar_tag
+	- mod parse_standard_history
+		- now result with parse_new_friend_diary includes 'image' for ajax_new_diary.
+		- fix : suppress debug information printing. (thanks yoshy and memn0ck)
+
 0.40  Sat Oct 15 01:20:40 2005
 	- mod parse_standard_history
 		- fixed for HTML changes.
@@ -22,16 +29,16 @@ Revision history for Perl extension WWW::Mixi.
 		- subject of deleted diary be '(deleted)' with parse_search_diary
 
 0.38  Sat Oct 03 17:00:18 2005
-	- add parse_ and get_home_new_album
-	- add parse_ and get_home_new_bbs
-	- add parse_ and get_home_new_comment
-	- add parse_ and get_home_new_friend_diary
-	- add parse_ and get_home_new_review
-	- add parse_ and get_show_intro
-	- add parse_ and get_view_album
-	- add parse_ and get_view_album_comment
-	- add parse_ and get_view_album_photo
-	- add parse_ and get_view_event
+	- add parse_ and get_home_new_album (thanks memn0ck)
+	- add parse_ and get_home_new_bbs (thanks memn0ck)
+	- add parse_ and get_home_new_comment (thanks memn0ck)
+	- add parse_ and get_home_new_friend_diary (thanks memn0ck)
+	- add parse_ and get_home_new_review (thanks memn0ck)
+	- add parse_ and get_show_intro (thanks memn0ck)
+	- add parse_ and get_view_album (thanks memn0ck)
+	- add parse_ and get_view_album_comment (thanks memn0ck)
+	- add parse_ and get_view_album_photo (thanks memn0ck)
+	- add parse_ and get_view_event (thanks memn0ck)
 	- mod parse_information
 	- mod parse_list_bbs
 	- mod parse_list_bookmark

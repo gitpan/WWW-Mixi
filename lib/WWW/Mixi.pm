@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.40$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.41$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -269,12 +269,6 @@ sub parse_information {
 	return @items;
 }
 
-sub parse_main_new_album        { my $self = shift; return $self->parse_home_new_album(@_); }
-sub parse_main_new_bbs          { my $self = shift; return $self->parse_home_new_bbs(@_); }
-sub parse_main_new_comment      { my $self = shift; return $self->parse_home_new_comment(@_); }
-sub parse_main_new_friend_diary { my $self = shift; return $self->parse_home_new_friend_diary(@_); }
-sub parse_main_new_review       { my $self = shift; return $self->parse_home_new_review(@_); }
-
 sub parse_home_new_album {
 	my $self     = shift;
 	my $res      = (@_) ? shift : $self->response();
@@ -375,10 +369,32 @@ sub parse_home_new_review {
 	return @items;
 }
 
-#	sub parse_calendar { my $self = shift; return $self->parse_show_calendar(@_); }
-#	sub parse_calendar_term { my $self = shift; return $self->parse_show_calendar_term(@_); }
-#	sub parse_calendar_next { my $self = shift; return $self->parse_show_calendar_next(@_); }
-#	sub parse_calendar_previous { my $self = shift; return $self->parse_show_calendar_previous(@_); }
+sub parse_ajax_new_diary {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	my $re_date = '(\d{1,2})月(\d{1,2})日';
+	my $re_link = '<a [^<>]*href="?([^<> ]*?)"?(?: [^<>]*)?>(.*?)<\/a>';
+	my $re_name = '\((.*?)\)';
+	my @today = reverse((localtime)[3..5]);
+	$today[0] += 1900;
+	$today[1] += 1;
+	foreach my $row ($content =~ /<div align=left>(.*?)<\/div>/isg) {
+		next unless ($row =~ /$re_date … $re_link/);
+		my $item           = {};
+		my @date           = (undef, $1, $2);
+		$item->{'link'}    = $self->absolute_url($3, $base);
+		$item->{'subject'} = (defined($4) and length($4)) ? $self->rewrite($4) : '(削除)';
+		$date[0]           = ($date[1] > $today[1]) ? $today[0] - 1 : $today[0] if (not defined($date[0]));
+		$item->{'time'}    = sprintf('%04d/%02d/%02d', @date);
+		map { $item->{$_} =~ s/^\s+|\s+$//gs } (keys(%{$item}));
+		push(@items, $item);
+	}
+	return @items;
+}
 
 sub parse_community_id {
 	my $self    = shift;
@@ -886,10 +902,6 @@ sub parse_new_comment {
 	my $self    = shift;
 	return $self->parse_standard_history(@_);
 }
-
-#	sub parse_new_diary { my $self = shift; return $self->parse_search_diary(@_); }
-#	sub parse_new_diary_next { my $self = shift; return $self->parse_search_diary_next(@_); }
-#	sub parse_new_diary_previous { my $self = shift; return $self->parse_search_diary_previous(@_); }
 
 sub parse_new_friend_diary {
 	my $self    = shift;
@@ -1572,10 +1584,17 @@ sub get_home_new_comment      { my $self = shift; return $self->get_standard_dat
 sub get_home_new_friend_diary { my $self = shift; return $self->get_standard_data('parse_home_new_friend_diary', 'home.pl', @_); }
 sub get_home_new_review       { my $self = shift; return $self->get_standard_data('parse_home_new_review',       'home.pl', @_); }
 
-#	sub get_calendar { my $self = shift; return $self->get_show_calendar(@_); }
-#	sub get_calendar_term { my $self = shift; return $self->get_show_calendar_term(@_); }
-#	sub get_calendar_next { my $self = shift; return $self->get_show_calendar_next(@_); }
-#	sub get_calendar_previous { my $self = shift; return $self->get_show_calendar_previous(@_); }
+sub get_ajax_new_diary {
+	my $self = shift;
+	my $url     = 'ajax_new_diary.pll';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'friend_id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if (defined($param{'friend_id'}) and length($param{'friend_id'}) and $url !~ /[\?\&]friend_id=/) {
+		$url .= ($url =~ /\?/) ? "&friend_id=$param{'friend_id'}" : "?friend_id=$param{'friend_id'}";
+	}
+	return $self->get_standard_data('parse_ajax_new_diary', qr/ajax_new_diary\.pl/, $url, $refresh);
+}
 
 sub get_community_id {
 	my $self = shift;
@@ -1826,10 +1845,6 @@ sub get_new_comment {
 	return $self->parse_new_comment();
 }
 
-#	sub get_new_diary { my $self = shift; return $self->get_search_diary(@_); }
-#	sub get_new_diary_next { my $self = shift; return $self->get_search_diary_next(@_); }
-#	sub get_new_diary_previous { my $self = shift; return $self->get_search_diary_previous(@_); }
-
 sub get_new_friend_diary {
 	my $self = shift;
 	my $url  = 'new_friend_diary.pl';
@@ -2045,7 +2060,6 @@ sub get_view_community {
 	if (defined($param{'id'}) and length($param{'id'}) and $url !~ /[\?\&]id=/) {
 		$url .= ($url =~ /\?/) ? "&id=$param{'id'}" : "?id=$param{'id'}";
 	}
-	print "[test:get_view_community] $url\n";
 	return $self->get_standard_data('parse_view_community', qr/view_community\.pl/, $url, $refresh);
 }
 
@@ -2331,12 +2345,6 @@ sub unescape {
 	my %unescaped = ('amp' => '&', 'quot' => '"', 'gt' => '>', 'lt' => '<', 'nbsp' => ' ', 'apos' => "'", 'copy' => '(c)');
 	my $re_target = join('|', keys(%unescaped));
 	$str =~ s/&($re_target|#x([0-9a-z]+));/defined($unescaped{$1}) ? $unescaped{$1} : defined($2) ? chr(hex($2)) : "&$1;"/ige;
-#	$str =~ s[&(.*?);]{
-#		local $_ = lc($1);
-#		/^($re_target)$/  ? $unescaped{$1} :
-#		/^#x([0-9a-f]+)$/ ? chr(hex($1)) :
-#		$_
-#	}gex;
 	return $str;
 }
 
@@ -2405,19 +2413,26 @@ sub parse_standard_history {
 		foreach my $row ($content =~ /<tr bgcolor=#FFFFFF>(.*?)<\/tr>/isg) {
 			$row =~ s/\s*[\r\n]\s*//gs;
 			my @cols = ($row =~ /<td[^<>]*>(.*?)<\/td>/gs);
-#			print join("\n", "[row]", $row, @cols) . "\n";
 			my $item = {};
-			next unless ($cols[0] =~ /$re_date/);
+			next unless ($cols[0] =~ s/$re_date//);
 			my @date           = ($1, $2, $3, $4, $5);
-#			print "date : " . join(', ', @date) . "\n";
 			next unless ($cols[1] =~ /${re_link}\s*$re_name/);
-			print "link : $1\nsubj : $2\nname : $3\n";
 			$item->{'link'}    = $self->absolute_url($1, $base);
 			$item->{'subject'} = (defined($2) and length($2)) ? $self->rewrite($2) : '(削除)';
 			$item->{'name'}    = $self->rewrite($3);
 			$date[0]           = ($date[1] > $today[1]) ? $today[0] - 1 : $today[0] if (not defined($date[0]));
 			$item->{'time'}    = sprintf('%04d/%02d/%02d %02d:%02d', @date);
 			map { $item->{$_} =~ s/^\s+|\s+$//gs } (keys(%{$item}));
+			if ($cols[1] =~ /(<a [^>]*>)\s*(<img [^>]*>)\s*<\/a>/is) {
+				my $image = {};
+				my @tags = ($1, $2);
+				if ($_ = $self->parse_standard_tag($tags[0]) and $_->{'attr'}->{'href'} or $_->{'attr'}->{'onclick'}) {
+					$_ = ($_->{'attr'}->{'onclick'}) ? $_->{'attr'}->{'onclick'} : $_->{'attr'}->{'href'};
+					$_ = $1 if ($_ =~ /MM_openBrWindow\('(.*?)'/);
+					$item->{'image'}->{'link'} = $self->absolute_url($_, $base);
+				}
+				$item->{'image'}->{'src'}  = $self->absolute_url($_, $base) if ($_ = $self->parse_standard_tag($tags[1]) and $_ = $_->{'attr'}->{'src'});
+			}
 			push(@items, $item);
 		}
 	}
@@ -2488,6 +2503,22 @@ sub parse_standard_form {
 	return @items;
 }
 
+sub parse_standard_tag {
+	my $self = shift;
+	my $str = shift;
+	return undef unless ($str =~ s/^\s*<(.*)>\s*$/$1/s);
+	return undef if ($str =~ /^\!--/);
+	my $re_word  = q{[^"'<>\s=]+};                             #"]}
+	my $re_quote = q{(?:"[^"]*"|'[^']*')};                     #")}
+	my $re_pair  = qq{$re_word\\s*=\\s*(?:$re_quote|$re_word\\((?:[^)]*|$re_quote)*\\)|[^"'<>\\s]+)?};
+	my $re_parse = qq{$re_pair|$re_word|$re_quote};
+	my @parsed = ($str =~ /$re_parse/gs);
+	my $tag = lc(shift(@parsed));
+	@parsed = map { /^($re_word)\s*=\s*(.*)$/ ? (lc($1) => $2) : (lc($_) => '') } @parsed;
+	@parsed = map { /^\s*=\s*$/ ? '=' :/^"(.*)"$/ ? $1 : /^'(.*)'$/ ? $1 : $_ } @parsed;
+	return { 'tag' => $tag, , 'attr' => {@parsed} };
+}
+
 sub set_response {
 	my $self    = shift;
 	my $url     = shift;
@@ -2536,7 +2567,6 @@ sub post_edit_diary {
 	my $self      = shift;
 	my %values    = @_;
 	$self->dumper_log(\%values);
-#	$values{'id'} = $values{'diary_id'} if (not $values{'id'} and defined($values{'diary_id'}));
 	my $url       = exists($values{'__action__'}) ? $values{'__action__'} : 'edit_diary.pl?id=' . $values{'id'};
 	my @fields    = qw(submit diary_title diary_body photo1 photo2 photo3 submit post_key);
 	my @required  = qw(submit diary_title diary_body);
@@ -2572,7 +2602,6 @@ sub post_delete_diary {
 	my %label    = ('id' => '日記ID', 'post_key' => '送信キー');
 	# データの生成とチェック
 	my %form     = map {$_ => $values{$_}} @fields;
-#	$form{'id'}  = $values{'diary_id'} if (not $form{'id'} and defined($values{'diary_id'}));
 	$form{'id'}  = $1 if ($values{'__action__'} and $values{'__action__'} =~ /delete_diary.pl?id=(\d+)/);
 	my @errors   = map { "$label{$_}を指定してください。" } grep { not $form{$_} } @required;
 	if (@errors) {
@@ -2641,6 +2670,7 @@ sub test {
 	$mixi->test_save_and_read_cookies;                      # Cookieの読み書き
 	# 終了
 	$mixi->log("終了しました。\n");
+	$mixi->dumper_log({'テストレコード' => $mixi->{'__test_record'}, 'テストリンク' => $mixi->{'__test_link'}});
 	exit 0;
 }
 
@@ -2751,6 +2781,30 @@ sub test_record {
 	}
 }
 
+sub test_link {
+	my $mixi = shift;
+	$mixi->{'__test_link'} = {} unless (ref($mixi->{'__test_link'}) eq 'HASH');
+	if (@_ == 0) {
+		return sort { $a cmp $b } (keys(%{$mixi->{'__test_link'}}));
+	} elsif (@_ == 1) {
+		my $key = shift;
+		return $mixi->{'__test_link'}->{$key};
+	} else {
+		my $key = shift;
+		foreach my $item (grep { ref($_) eq 'HASH' } @_) {
+			foreach (values(%{$item})) {
+				foreach my $value (ref($_) eq 'HASH' ? values(%{$_}) : $_) {
+					next if (ref($value) ne '' or $value =~ /\s/);
+					next if ($value !~ /^https?:\/\/(?:[^\/]*].)?mixi.jp\/(?:[^\?]*\/)?([^\/\?]+).*$/);
+					next if ($mixi->{'__test_link'}->{$1});
+					$mixi->{'__test_link'}->{$1} = $value;
+				}
+			}
+		}
+		return 1;
+	}
+}
+
 sub test_scenario {
 	my $mixi = shift;
 	my @tests = (
@@ -2788,6 +2842,7 @@ sub test_scenario {
 		'new_friend_diary'        => {'label' => 'マイミクシィ最新日記'},
 		'new_friend_diary_next'   => {'label' => 'マイミクシィ最新日記(次)'},
 		'new_friend_diary_previous' => {'label' => 'マイミクシィ最新日記(前)', 'url' => sub { return $_[0]->test_record('new_friend_diary_next')}},
+		'ajax_new_diary'          => {'label' => 'マイミクシィの最新日記（Ajax版）', 'url' => sub { return $_[0]->test_link('ajax_new_diary.pl') }},
 		'new_review'              => {'label' => 'マイミクシィ最新レビュー'},
 		'release_info'            => {'label' => 'リリースインフォメーション'},
 		'self_id'                 => {'label' => '自分のID'},
@@ -2806,6 +2861,7 @@ sub test_scenario {
 		'view_album_photo'        => {'label' => 'フォトアルバムの写真',     'url' => sub { $_ = $_[0]->test_record('new_album'); return ref($_) eq 'HASH' ? $_->{'link'} : undef }},
 		'view_album_comment'      => {'label' => 'フォトアルバムのコメント', 'url' => sub { $_ = $_[0]->test_record('new_album'); return ref($_) eq 'HASH' ? $_->{'link'} . '&mode=comment' : undef }},
 		'view_diary'              => {'label' => '日記(詳細)',               'url' => sub { return $_[0]->test_record('list_diary')}},
+		'view_event'              => {'label' => 'イベント',                 'url' => sub { return $_[0]->test_link('view_event.pl')}},
 		'view_message'            => {'label' => 'メッセージ(詳細)',         'url' => sub { return $_[0]->test_record('list_message')}},
 		# コミュニティ関連
 		'community_id'            => {'label' => 'コミュニティID',   'url' => sub { return $_[0]->test_record('list_community')}},
@@ -2835,6 +2891,7 @@ sub test_scenario {
 		@arg = map { ref($_) eq 'CODE' ? &{$_}($mixi) : $_ } @arg;
 		unshift(@arg, $url) if (defined($url) and ref($url) eq '' and length($url));
 		$mixi->log("$labelの取得と解析をします。\n");
+		$mixi->log(qq([info] ターゲットURLは"$url"です。\n));
 		my @items = eval { $mixi->$method(@arg); };
 		my $error = ($@) ? $@ : ($mixi->response->is_error) ? $mixi->response->status_line : undef;
 		if (defined $error) {
@@ -2844,6 +2901,7 @@ sub test_scenario {
 		} else {
 			if (@items) {
 				$mixi->dumper_log([@items]);
+				$mixi->test_link($test => @items);
 				$mixi->test_record($test => $items[0]);
 				$mixi->test_record($test => {'link' => 'http://mixi.jp/view_album.pl?id=150828'}) if ($test eq 'new_album');
 			} else {
