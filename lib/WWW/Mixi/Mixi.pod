@@ -2028,6 +2028,15 @@ HTMLタグではない場合、コメントタグの場合はundefになりま�
  	}
  }
 
+=head3 $url = $mixi->parse_standard_anchor( $tag );
+
+アンカータグ（Aタグ）から、URLを解析します。
+返り値は、$tagがURLを抽出できればその文字列、HTMLタグではない場合、URLを抽出できない場合はundefになります。
+メソッドの性格上、URLの絶対パス化や、文字列のサニタイズなどは行われていない状態で返されることに注意してください。
+
+なお、mixiの典型的なアンカーとして、onClickでのJavaScript処理でMM_openBrWindowメソッドにURLを渡しているケース、同じくwindow.opener.location.hrefでURLを指定しているケース、一般的なhrefアトリビュートにURLが入れられているケースがあります。
+このメソッドは、ここで上げた順番でURLを取得しようとします。
+
 =head3 $url = $mixi->set_response( $url [ => 'refresh'] )
 
 responseメソッドの返り値を、$url取得時のデータになるようにセットします。

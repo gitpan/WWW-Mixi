@@ -1,5 +1,12 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.42  Wed Oct 19 11:04:16
+	- add parse_standar_anchor
+	- mod parse_ ajax_new_diary
+		- fixed for url with '&type=1' (thanks mizuki)
+	- mod get_ajax_new_diary
+		- fixed default url (thanks mizuki)
+
 0.41  Mon Oct 17 15:29:10 2005
 	- add parse_ and get_ajax_new_diary
 	- add parse_standar_tag

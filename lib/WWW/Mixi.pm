@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.41$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.42$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -376,9 +376,9 @@ sub parse_ajax_new_diary {
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
 	my @items   = ();
-	my $re_date = '(\d{1,2})月(\d{1,2})日';
-	my $re_link = '<a [^<>]*href="?([^<> ]*?)"?(?: [^<>]*)?>(.*?)<\/a>';
-	my $re_name = '\((.*?)\)';
+	my $re_date = q{(\d{1,2})月(\d{1,2})日};
+	my $re_link = q{(<a (?:"[^"]*"|'[\']*'|[^>]+)*>)(.*?)<\/a>};
+	my $re_name = q{\((.*?)\)};
 	my @today = reverse((localtime)[3..5]);
 	$today[0] += 1900;
 	$today[1] += 1;
@@ -386,7 +386,7 @@ sub parse_ajax_new_diary {
 		next unless ($row =~ /$re_date … $re_link/);
 		my $item           = {};
 		my @date           = (undef, $1, $2);
-		$item->{'link'}    = $self->absolute_url($3, $base);
+		$item->{'link'}    = $self->absolute_url($self->parse_standard_anchor($3), $base);
 		$item->{'subject'} = (defined($4) and length($4)) ? $self->rewrite($4) : '(削除)';
 		$date[0]           = ($date[1] > $today[1]) ? $today[0] - 1 : $today[0] if (not defined($date[0]));
 		$item->{'time'}    = sprintf('%04d/%02d/%02d', @date);
@@ -1586,7 +1586,7 @@ sub get_home_new_review       { my $self = shift; return $self->get_standard_dat
 
 sub get_ajax_new_diary {
 	my $self = shift;
-	my $url     = 'ajax_new_diary.pll';
+	my $url     = 'ajax_new_diary.pl';
 	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'friend_id');
 	my $refresh = shift if (@_ and $_[0] eq 'refresh');
 	my %param   = @_;
@@ -2517,6 +2517,21 @@ sub parse_standard_tag {
 	@parsed = map { /^($re_word)\s*=\s*(.*)$/ ? (lc($1) => $2) : (lc($_) => '') } @parsed;
 	@parsed = map { /^\s*=\s*$/ ? '=' :/^"(.*)"$/ ? $1 : /^'(.*)'$/ ? $1 : $_ } @parsed;
 	return { 'tag' => $tag, , 'attr' => {@parsed} };
+}
+
+sub parse_standard_anchor {
+	my $self   = shift;
+	my $str    = shift;
+	my $parsed = $self->parse_standard_tag($str);
+	my $link   = undef;
+	return undef unless ($parsed);
+	if ($parsed->{'attr'}->{'onclick'}) {
+		if    ($parsed->{'attr'}->{'onclick'} =~ /MM_openBrWindow\(("[^""]*"|'[^'']*'|[^\s\)]*)/)             { $link = $1; }
+		elsif ($parsed->{'attr'}->{'onclick'} =~ /window.opener.location.href=("[^""]*"|'[^'']*'|[^\s\)]*)/i) { $link = $1; }
+		1 if (defined($link) and ($link =~ s/^"(.*?)"/$1/ or $link =~ s/^'(.*?)'/$1/));
+	}
+	$link = $parsed->{'attr'}->{'href'} if (not defined($link));
+	return $link;
 }
 
 sub set_response {
