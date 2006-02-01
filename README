@@ -1,4 +1,4 @@
-WWW-Mixi version 0.42
+WWW-Mixi version 0.43
 =====================
 
 The README is used to introduce the module and provide instructions on
@@ -30,7 +30,7 @@ This module requires these other modules and libraries:
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2004-2005 by Makio Tsukamoto
+Copyright (C) 2004-2006 by Makio Tsukamoto
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.6 or,

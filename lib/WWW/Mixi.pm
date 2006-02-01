@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.42$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.43$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -2404,7 +2404,7 @@ sub parse_standard_history {
 	my @items   = ();
 	my $re_date = '(?:(\d{4})Ç¯)?(\d{2})·î(\d{2})Æü (\d{1,2}):(\d{2})';
 	my $re_link = '<a [^<>]*href="?([^<> ]*?)"?(?: [^<>]*)?>(.*?)<\/a>';
-	my $re_name = '\((.*?)\)';
+	my $re_name = '\(([^<>]*)\)';
 	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>(.+?)<\/table>/s) {
 		$content = $1;
 		my @today = reverse((localtime)[3..5]);
