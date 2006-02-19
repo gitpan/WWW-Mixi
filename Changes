@@ -1,5 +1,22 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.44  Sun Feb 19 13:03:14
+	- mod parse_tool_bar
+	- mod parse_information
+	- mod parse_community_id
+		- fixed for HTML changes.
+	- mod parse_self_id
+	- mod get_self_id
+		- use id in session (thanks chaki and memn0ck)
+	- mod post_add_diary
+		- add 'id' and 'news_id' key (thanks chaki and memn0ck)
+		- use id in session as default id
+	- mod post_edit_diary
+		- add 'form_date' key
+	- del parse_home_new_review
+	- del get_home_new_review
+		- new review at home page is removed.
+
 0.43  Wed Feb  1 18:18:29
 	- mod parse_standard_history
 		- fixed name pase error for '...(...)' (thanks mizuki)

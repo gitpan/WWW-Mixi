@@ -96,14 +96,14 @@ $responseにはHTTP::Responseオブジェクト（get、post、request、simple_
 
 $sessionを指定したときには、セッションIDを指定した値で置き換えます。
 
-=head3 $session = $mixi->stamp( [$stamp] );
+=head3 $stamp = $mixi->stamp( [$stamp] );
 
 現在のセッションスタンプを返します。
 ログイン前など、セッションスタンプを取得できていない時にはundefが返ります。
 
 $stampを指定したときには、セッションスタンプを指定した値で置き換えます。
 
-=head3 $session = $mixi->refresh
+=head3 $url = $mixi->refresh
 
 ログイン時に取得したリフレッシュURLを返します。
 
@@ -244,18 +244,6 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  {
  	'subject' => 'こんにちわ。',
  	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx&owner_id=xxxx',
- 	'name' => '塚本牧生',
- 	'time' => '08/18'
- }
-
-=head3 @items = $mixi->parse_home_new_review( [$response] );
-
-ホーム(home.pl)のマイミクシィ最新レビューを取得します。
-返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
-
- {
- 	'subject' => 'mixiの本。',
- 	'link' => 'http://mixi.jp/list_item_review.pl?reviewer_id=xxxx&item_id=xxxxx',
  	'name' => '塚本牧生',
  	'time' => '08/18'
  }
@@ -679,9 +667,9 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
  	13:30頃、メンテナンスが完了したことをお知らせ致します。'
  }
 
-=head3 $id = $mixi->parse_self_id( [$response] );
+=head3 $id = $mixi->parse_self_id();
 
-プロフィール（show_profile.pl）を解析し、自分のIDを返します。
+セッションIDを解析し、自分のIDを返します。
 IDを取得できなかった時の返り値は0です。
 
 このメソッドは他の多くの解析系メソッドと違い、ハッシュリファレンスの配列ではなくただの文字列（スカラ値）を返すことに注意してください。
@@ -1223,15 +1211,6 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=head3 @items = $mixi->get_home_new_review( [$url | $url => 'refresh' | 'refresh'] );
-
-指定されたURLから、「マイミクシィ最新レビュー」を取得します。
-URLを指定しなかった時は「ホーム」を対象にします。
-返り値はparse_home_new_reviewと同じです。
-
-最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
-最新のデータを取得したい時は、'refresh'を指定してください。
-
 =head3 @items = $mixi->get_ajax_new_diary( $url [, 'refresh'] | 'friend_id' => $id  [, 'refresh'] );
 
 イベントを取得します。
@@ -1550,16 +1529,12 @@ URLを指定しなかった時は「ホーム」を対象にします。
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
 
-=head3 $id = $mixi->get_self_id( ['refresh'] );
+=head3 $id = $mixi->get_self_id();
 
-おすすめレビュー（list_review.pl）の「レビューを書く」ボックスを解析し、
-自分のIDを返します。
-IDを取得できなかった時の返り値は0です。
-あしあと数を取得します。
+ログイン時に与えられたセッションIDから、セッションIDを取得します。
 返り値はparse_self_idと同じです。
 
-最後にgetまたはpostメソッドで取得したページが「おすすめレビュー」の時は、その時のデータを返します。
-最新のデータを取得したい時は、'refresh'を指定してください。
+未ログイン時はログインを行います。
 
 =head3 @items = $mixi->get_search_diary( [$url | $url => 'refresh' | 'refresh']  [,'keyword' => $keyword]);
 
@@ -2046,17 +2021,23 @@ responseメソッドの返り値を、$url取得時のデータになるよう�
 これにより、不要な再取得の負荷と時間をかけないようにしています。
 この場合でもデータを再取得し、最新のデータにしたい時には'refresh'を指定してください。
 
-=head3 $response = $mixi->post_add_diary('submit' => $action, 'diary_title' => $title, 'diary_body' => $body, [, 'photo1' => $path_to_photo1, 'photo2' => $path_to_photo2, 'photo3' => $path_to_photo3] [, 'orig_size' => 1]] [, 'packed' => $hash_value]);
+=head3 $response = $mixi->post_add_diary('submit' => $action, 'diary_title' => $title, 'diary_body' => $body [, 'post_key' => $key] [, 'photo1' => $path_to_photo1, 'photo2' => $path_to_photo2, 'photo3' => $path_to_photo3] [, 'orig_size' => 1]] [, 'packed' => $packed_value] [, 'id' => $self_id] [, 'news_id' => $news_id]);
 
 日記作成ページに引数のデータを送信します。
 返り値は送信時のHTTP::Responseオブジェクトです。
 
-アクションには、確認画面を取得する時は"main"、実際に投稿する時には"confirm"を指定します。
-写真1～3には、確認画面を取得する時はファイルパスを指定し、「そのままのサイズで送信」する時には、orig_size => 1も指定します。
+$self_idには自身のmixiユーザーIDを指定します。
+ニュースに関連した日記を投稿する時は、$news_idを指定します。
 
-実際に投稿する時には、写真1～3などの代わりに、確認画面に表示されたハッシュ値（packedフィールドの値）を指定します。
+確認画面を取得する時は、$actionに"main"を指定します。
+画像を添付する時はphoto1～3に画像のファイルパスを指定し、「そのままのサイズで送信」する時には、orig_size => 1も指定します。
 
-=head3 $response = $mixi->post_edit_diary('submit' => $action, 'diary_id' => $id, 'diary_title' => $title, 'diary_body' => $body, 'photo1' => $path_to_photo1, 'photo2' => $path_to_photo2, 'photo3' => $path_to_photo3);
+実際に投稿する時には、$actionに"confirm"を指定します。
+また、$post_keyに確認画面から取得したpost_keyフィールドの値を指定します。
+画像を添付する時は$packed_valueに確認画面から取得したpackedフィールドの値を指定します。
+この時、packedが画像指定の代わりになっているので、photo1～3は不要です。
+
+=head3 $response = $mixi->post_edit_diary('submit' => $action, 'diary_id' => $id, 'diary_title' => $title, 'diary_body' => $body, 'photo1' => $path_to_photo1, 'photo2' => $path_to_photo2, 'photo3' => $path_to_photo3, 'form_date' => $form_date);
 
 日記編集ページに引数のデータを送信します。
 返り値は送信時のHTTP::Responseオブジェクトです。
@@ -2064,7 +2045,7 @@ responseメソッドの返り値を、$url取得時のデータになるよう�
 アクションには、編集する時には"main"を指定します。
 写真1～3には、ファイルパスを指定します。
 
-=head3 $response = $mixi->post_delete_diary('submit' => $action, 'diary_id' => $id);
+=head3 $response = $mixi->post_delete_diary('submit' => $action, 'diary_id' => $id, 'post_key' => $key);
 
 日記削除ページに引数のデータを送信します。
 返り値は送信時のHTTP::Responseオブジェクトです。
