@@ -4,13 +4,14 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.44$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.45$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
 require HTTP::Request;
 require HTTP::Response;
 
+use Jcode;
 use LWP::Debug ();
 use HTTP::Cookies;
 use HTTP::Request::Common;
@@ -435,6 +436,60 @@ sub parse_community_id {
 		$item = $1;
 	}
 	return $item;
+}
+
+sub parse_edit_member {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	# get member list part
+	my $content_from = qq(\Q<table BORDER=0 CELLSPACING=1 CELLPADDING=4 WIDTH=630>\E);
+	my $content_till = qq(\Q</table>\E);
+	return $self->log("[warn] member list part is missing.\n") unless ($content =~ /$content_from(.*?)$content_till/s);
+	$content = $1;
+	# get member list
+	$content =~ s/[\t\r\n]//g;
+	my @rows = ($content =~ /<tr>(.*?)<\/tr>/ig);
+	return $self->log("[warn] member list has no rows.\n") unless (@rows);
+	# parse rows
+	foreach my $row (@rows) {
+		my @cols = ($row =~ /<td[^<>]*?>(.*?)<\/td>/g);
+		if ($#cols >= 1 and $cols[1] =~ /<a href="([^'""<>]*?)">(.*)<\/a>/) {
+			my $item = {'link' => $self->absolute_url($1, $base), 'subject' => $self->rewrite($2)};
+			$item->{'date'} = "${1}/${2}/${3}" if ($cols[0] =~ /(\d{4})年(\d{4})月(\d{4})日/);
+			$item->{'delete_member'}  = {'link' => $self->absolute_url($1, $base), 'subject' => $self->rewrite($2)} if ($#cols >= 2 and $cols[2] =~ /<a href="([^'""<>]*?)">(.*)<\/a>/);
+			$item->{'transfer_admin'} = {'link' => $self->absolute_url($1, $base), 'subject' => $self->rewrite($2)} if ($#cols >= 3 and $cols[3] =~ /<a href="([^'""<>]*?)">(.*)<\/a>/);
+			push(@items, $item);
+		}
+	}
+	return @items;
+}
+
+sub parse_edit_member_pages {
+	my $self    = shift;
+	my $res     = (@_) ? shift : $self->response();
+	return unless ($res and $res->is_success);
+	my $base    = $res->base->as_string;
+	my $current = $res->request->uri->as_string;
+	my $content = $res->content;
+	my @items   = ();
+	# get page list part
+	my $content_from = qq(\Q<!-- start: page number -->\E[^\\[\\]]*\\[);
+	my $content_till = qq(\\][^\\[\\]]*\Q<!-- end: page number -->\E);
+	return $self->log("[warn] page list part is missing.\n") unless ($content =~ /$content_from(.*?)$content_till/s);
+	$content = $1;
+	# parse rows
+	$content =~ s/[\t\r\n]//g;
+	while ($content =~ s/ (?:<a href=["']?([^"'<>]*)["']?>)?(\d+)(?:<\/a>)? / /) {
+		my $item = {'subject' => $self->rewrite($2)};
+		$item->{'link'}    = ($1) ? $self->absolute_url($1, $base) : $current;
+		$item->{'current'} = ($1) ? 0 : 1;
+		push(@items, $item);
+	}
+	return @items;
 }
 
 sub parse_list_bbs {
@@ -980,12 +1035,6 @@ sub parse_self_id {
 	my $self    = shift;
 	my $session = $self->session;
 	return ($session and $session =~ /^(\d+)_/) ? $1 : 0;
-#	my $res     = (@_) ? shift : $self->response();
-#	return unless ($res and $res->is_success);
-#	my $base    = $res->base->as_string;
-#	my $content = $res->content;
-#	my $self_id = ($content =~ /\(URL は http:\/\/mixi.jp\/show_friend.pl\?id=(\d+) です。\)/) ? $1 : 0;
-#	return $self_id;
 }
 
 sub parse_search_diary {
@@ -1631,6 +1680,32 @@ sub get_community_id {
 	return $self->get_standard_data('parse_community_id', qr/view_community\.pl/, @_);
 }
 
+sub get_edit_member {
+	my $self    = shift;
+	my $url     = 'edit_member.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if ($url !~ /[\?\&]id=/) {
+		$url .= ($url =~ /\?/) ? "&id=$param{'id'}"     : "?id=$param{'id'}"   if (defined($param{'id'})   and length($param{'id'}));
+		$url .= ($url =~ /\?/) ? "&page=$param{'page'}" : "?id=$param{'page'}" if (defined($param{'page'}) and length($param{'page'}));
+	}
+	return $self->get_standard_data('parse_edit_member', qr/edit_member\.pl/, $url, $refresh);
+}
+
+sub get_edit_member_pages {
+	my $self    = shift;
+	my $url     = 'edit_member.pl';
+	$url        = shift if (@_ and $_[0] ne 'refresh' and $_[0] ne 'id');
+	my $refresh = shift if (@_ and $_[0] eq 'refresh');
+	my %param   = @_;
+	if ($url !~ /[\?\&]id=/) {
+		$url .= ($url =~ /\?/) ? "&id=$param{'id'}"     : "?id=$param{'id'}"   if (defined($param{'id'})   and length($param{'id'}));
+		$url .= ($url =~ /\?/) ? "&page=$param{'page'}" : "?id=$param{'page'}" if (defined($param{'page'}) and length($param{'page'}));
+	}
+	return $self->get_standard_data('parse_edit_member_pages', qr/edit_member\.pl/, $url, $refresh);
+}
+
 sub get_list_bbs {
 	my $self    = shift;
 	my $url     = 'list_bbs.pl';
@@ -1918,8 +1993,6 @@ sub get_release_info {
 sub get_self_id {
 	my $self = shift;
 	$self->login unless ($self->is_logined);
-#	my $url  = 'show_profile.pl';
-#	$self->set_response($url, @_) or return;
 	return $self->parse_self_id();
 }
 
@@ -2344,7 +2417,6 @@ sub callback_log {
 	}
 	$self->abort if ($error);
 	return;
-#	return $self;
 }
 
 sub callback_abort {
@@ -2709,7 +2781,6 @@ sub test {
 	my $error = undef;
 	my @items = ();
 	unless ($mail and  $pass) {
-
 		&{$logger}("mixiにログインできるメールアドレスとパスワードを指定してください。\n");
 		&{$logger}("[usage] perl -MWWW::Mixi -e \"WWW::Mixi::test('mail\@address', 'password');\"\n");
 		exit 1;
@@ -2918,15 +2989,17 @@ sub test_scenario {
 		'view_event'              => {'label' => 'イベント',                 'url' => sub { return $_[0]->test_link('view_event.pl')}},
 		'view_message'            => {'label' => 'メッセージ(詳細)',         'url' => sub { return $_[0]->test_record('list_message')}},
 		# コミュニティ関連
-		'community_id'            => {'label' => 'コミュニティID',   'url' => sub { return $_[0]->test_record('list_community')}},
-		'list_bbs'                => {'label' => 'トピック一覧',     'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
-		'list_bbs_next'           => {'label' => 'トピック一覧(次)', 'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
-		'list_bbs_previous'       => {'label' => 'トピック一覧(前)', 'url' => sub { return $_[0]->test_record('list_bbs_next')}},
-		'list_member'             => {'label' => 'メンバー一覧',     'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
-		'list_member_next'        => {'label' => 'メンバー一覧(次)', 'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
-		'list_member_previous'    => {'label' => 'メンバー一覧(前)', 'url' => sub { return $_[0]->test_record('list_member_next')}},
-		'view_bbs'                => {'label' => 'トピック',         'url' => sub { return $_[0]->test_record('list_bbs')}},
-#		'view_community'          => {'label' => 'コミュニティ',     'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
+		'community_id'            => {'label' => 'コミュニティID',           'url' => sub { return $_[0]->test_record('list_community')}},
+		'list_bbs'                => {'label' => 'トピック一覧',             'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
+		'list_bbs_next'           => {'label' => 'トピック一覧(次)',         'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
+		'list_bbs_previous'       => {'label' => 'トピック一覧(前)',         'url' => sub { return $_[0]->test_record('list_bbs_next')}},
+		'list_member'             => {'label' => 'メンバー一覧',             'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
+		'list_member_next'        => {'label' => 'メンバー一覧(次)',         'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
+		'list_member_previous'    => {'label' => 'メンバー一覧(前)',         'url' => sub { return $_[0]->test_record('list_member_next')}},
+		'edit_member'             => {'label' => 'メンバー管理',             'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
+		'edit_member_pages'       => {'label' => 'メンバー管理(ページ一覧)', 'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
+		'view_bbs'                => {'label' => 'トピック',                 'url' => sub { return $_[0]->test_record('list_bbs')}},
+#		'view_community'          => {'label' => 'コミュニティ',             'arg' => ['id' => sub { return $_[0]->test_record('community_id')}]},
 		# 日記の編集
 		'edit_diary_preview'      => {'label' => '日記(編集)',       'url' => sub { return $_[0]->test_record('list_diary')}},
 	);

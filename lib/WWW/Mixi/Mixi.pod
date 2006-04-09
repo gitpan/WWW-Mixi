@@ -266,24 +266,57 @@ IDを取得できなかった時の返り値は0です。
 
 このメソッドは他の多くの解析系メソッドと違い、ハッシュリファレンスの配列ではなくただの文字列（スカラ値）を返すことに注意してください。
 
-=head3 @items = $mixi->parse_list_bbs( [$response] );
+=head3 @items = $mixi->parse_edit_member( [$response] );
 
-トピック一覧（list_bbs.plのメイン部）を解析します。
+メンバー管理（edit_member.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
+ 	'subject' => 'walrus',
+ 	'link' => 'http://mixi.jp/show_friend.pl?id=xxxxx',
+ 	'delete_member' => {
+ 		'link' => 'http://mixi.jp/delete_member.pl?comm_id=xxxxx&member_id=xxxxxxx',
+ 		'subject' => 'メンバーから外す'
+ 	},
+ 	'transfer_admin' => {
+ 		'link' => 'http://mixi.jp/transfer_admin.pl?comm_id=xxxxx&member_id=xxxxxxx',
+ 		'subject' => '管理権を渡す'
+ 	}
+ }
+
+=head3 @items = $mixi->parse_edit_member_pages( [$response] );
+
+メンバー管理（edit_member.plのメイン部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'subject' => '1',
+ 	'link' => 'http://mixi.jp/edit_member.pl?id=236233',
+ 	'current' => '1'
+ }
+
+'current'は現在のページに対しては1、それ以外のページに対しては0です。
+
+=head3 @items = $mixi->parse_list_bbs( [$response] );
+
+メンバー管理のページ一覧（edit_member.plのページ一覧部）を解析します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'subject' => '0.33版公開。',
  	'link' => 'http://mixi.jp/view_bbs.pl?id=1492858',
+ 	'time' => '08/16 13:38',
+ 	'description' => '0.33版を公開しました。CPANにもアップロード済みで、今日、明日中にはCPANモジュールでのインストールが可能になると思います。'
+ 	'count' => '3',
  	'images' => [
  		{
  			'thumb_link' => 'http://img1.mixi.jp/photo/bbs/xx/xx/xxxxxxx_xxs.jpg',
  			'link' => 'show_picture.pl?img_src=http://img1.mixi.jp/photo/bbs/xx/xx/xxxxxxx_xx.jpg'}
  		},
  	],
- 	'count' => '3',
- 	'subject' => '0.33版公開。',
- 	'time' => '08/16 13:38',
- 	'description' => '0.33版を公開しました。CPANにもアップロード済みで、今日、明日中にはCPANモジュールでのインストールが可能になると思います。'
  }
+
+countはコメント数です。
 
 =head3 $item = $mixi->parse_list_bbs_next( [$response] );
 

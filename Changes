@@ -1,5 +1,9 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.45  Mon Apr 10 00:59:28
+	- add parse_ and get_edit_member (thanks icchan)
+	- add parse_ and get_edit_member_pages
+
 0.44  Sun Feb 19 13:03:14
 	- mod parse_tool_bar
 	- mod parse_information
