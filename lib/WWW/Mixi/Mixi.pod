@@ -7,7 +7,7 @@ WWW::Mixi - Mixiアクセス用のLWP::UserAgentモジュール
 =head1 SYNOPSIS
 
   use WWW::Mixi;
-  $mixi = WWW::Mixi->new('me@foo.com', 'password');
+  $mixi = WWW::Mixi->new('me@foo.com', 'password', '-log' => 1, '-logcode' => 'sjis');
   $mixi->login;
   my $res = $mixi->get('home.pl');
   print $res->content;
@@ -41,15 +41,44 @@ WWW::MixiはLWP::RobotUAのサブクラスとして実装されていますの�
 
 WWW::Mixiのコンストラクタです。
 
-=head3 $mixi = WWW::Mixi->new($email [, $password] [, '-log' => \&logging_method] [, '-abort' => \&aborting_method] [, '-rewrite' => \&rewriting_method] )
+=head3 $mixi = WWW::Mixi->new($email [, $password] [, '-log' => $log] [, '-logcode' => $kanji_code] [, '-abort' => \&aborting_method] [, '-rewrite' => \&rewriting_method] )
 
 WWW::Mixiオブジェクトを作成するコンストラクタです。
 
 最初に引数は、mixiにログインするためのメールアドレスで、必須です。
 二番目の引数は、mixiにログインするためのパスワードです。
-'-log'はオプションで、ログを出力するためのメソッドを指定します。
-'-abort'はオプションで、エラー時の終了処理を行うためのメソッドを指定します。
-'-rewrite'はオプションで、解析時のテキスト値のリフォーマットをするためのメソッドを指定します。
+その他のオプションは、省略可能です。
+
+=over 4
+
+=item '-log'
+
+ログの出力レベルを指定します。
+0を指定した時はまったくログは出力されず、1を指定したときはタグなしおよび"[error]"タグのログだけを出力し、5以上であれば"[usage]"、"[warn]"、"[info]"、そしてデータダンプなども出力されます。
+この出力自体は、内部メソッドのcallback_logメソッドで行われています。
+
+出力レベルを指定する代わりに、独自のログ出力メソッドを指定することもできます。
+$logにログ出力メソッドへのリファレンスを指定してください。
+ログが発生した際、ログ出力メソッドには、WWW::Mixiオブジェクトおよびログ文字列が引数として渡されます。
+
+=item '-logcode'
+
+ログを出力する際の漢字コードを指定します。
+'euc'（デフォルト）以外の文字コードを指定するときは、Jcodeモジュールが必要になります。
+
+なお、-logオプションで独自のログ出力メソッドを指定しているときには、この漢字コード指定の有効性はそのメソッド次第です。
+
+=item '-abort'
+
+エラー時の終了処理を行うためのメソッドを指定します。
+未指定時は、WWW::Mixiの持つcallback_abortメソッドが使われます。
+
+=item '-rewrite'
+
+HTMLをテキストに書き直すためのメソッドを指定します。
+未指定時は、WWW::Mixiの持つcallback_rewriteメソッドが使われます。
+
+=back
 
 このメソッドはLWP::RobotUA（を介してLWP::UserAgent）から継承したnewメソッドを上書きしています。
 
@@ -246,6 +275,18 @@ WWW::Mixiモジュールを使用する際は、上記を良く考慮した上�
  	'link' => 'http://mixi.jp/view_diary.pl?id=xxxxxx&owner_id=xxxx',
  	'name' => '塚本牧生',
  	'time' => '08/18'
+ }
+
+=head3 @items = $mixi->parse_home_new_review( [$response] );
+
+ホーム(home.pl)のマイミクシィ最新レビューを取得します。
+返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
+
+ {
+ 	'link' => 'http://mixi.jp/list_review.pl?id=xxxxx&item_id=xxxxxxx',
+ 	'subject' => 'ミクシィHacks (5)',
+ 	'time' => '05/02',
+ 	'name' => 'walrus'
  }
 
 =head3 @items = $mixi->parse_ajax_new_diary( [$response] );
@@ -498,12 +539,12 @@ imagesの中身はサムネイルと本体画像のURLをハッシュリファ�
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
  {
- 	'link' => 'http://mixi.jp/show_friend.pl?id=xxxxxx',
- 	'count' => 'xx',
  	'subject' => 'walrusさん',
- 	'background' => 'http://img.mixi.jp/img/bg_line.gif',
+ 	'link' => 'http://mixi.jp/show_friend.pl?id=xxxxxx',
  	'id' => 'xxxxx',
+ 	'count' => 'xx',
  	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxxxx_xxxxxxxxxxs.jpg'
+ 	'background' => 'http://img.mixi.jp/img/bg_line.gif',
  }
 
 =head3 $item = $mixi->parse_list_member_next( [$response] );
@@ -978,24 +1019,40 @@ images、commentsは0件の時も、複数件の時もあることに注意し�
  	'name' => 'waltus',
  	'name_link' => 'http://mixi.jp/show_friend.pl?id=xxxx'
  	'join' => 5,
+ 	'community' => {
+ 		'link' => 'http://mixi.jp/view_community.pl?id=xxxxx',
+ 		'name' => '毎月コングラチュレーションズ'
+ 	},
+ 	'list' => {
+ 		'count' => '8人',
+ 		'link' => 'http://mixi.jp/list_event_member.pl?id=xxxxxxx&comm_id=xxxxx',
+ 		'subject' => '参加者一覧を見る'
+ 	},
  	'comments' => [
  		{
+ 			'subject' => 1,
+ 			'name' => 'seiuchi',
  			'link' => 'http://mixi.jp/show_friend.pl?id=xxxx',
  			'time' => '2005/09/21 15:15',
- 			'name' => 'seiuchi',
  			'description' => '参加します。よろしく！'
+ 			'images' => [],
  		}
  	],
+ 	'pages' => [
+ 		{
+ 			'current' => 1,
+ 			'link' => 'http://mixi.jp/view_event.pl?comm_id=29659&id=6366972',
+ 			'subject' => '最新の10件を表示'
+ 		}
+ 	]
  }
 
-images、commentsは0件の時も、複数件の時もあることに注意してください。
+images、comments、pagesは0件の時も、複数件の時もあることに注意してください。
 
 =head3 $item = $mixi->parse_view_message( [$response] );
 
-受信メッセージ（view_message.plのメイン部）のメッセージを解析します。
+受信メッセージまたは送信済みメッセージ（view_message.plのメイン部）のメッセージを解析します。
 返り値は、メッセージを取得できたときは以下のようなハッシュリファレンスです。
-
-送信メッセージにも対応しました。
 
  {
  	'subject'     => 'こんにちわ。',
@@ -1240,6 +1297,15 @@ URLを指定しなかった時は「ホーム」を対象にします。
 指定されたURLから、「マイミクシィ最新日記」を取得します。
 URLを指定しなかった時は「ホーム」を対象にします。
 返り値はparse_home_new_friend_diaryと同じです。
+
+最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
+最新のデータを取得したい時は、'refresh'を指定してください。
+
+=head3 @items = $mixi->get_home_new_review( [$url | $url => 'refresh' | 'refresh'] );
+
+指定されたURLから、「マイミクシィ最新レビュー」を取得します。
+URLを指定しなかった時は「ホーム」を対象にします。
+返り値はparse_home_new_reviewと同じです。
 
 最後にgetまたはpostメソッドで取得したページが対象URLと同じ時は、その時のデータを返します。
 最新のデータを取得したい時は、'refresh'を指定してください。
@@ -1901,7 +1967,8 @@ dieを実行します。
 
 =head3 $str = $mixi->callback_rewrite($str);
 
-HTMLタグの削除とHTMLエスケープの解除（アンエスケープ）を行います。
+HTMLタグの削除、HTMLエスケープの解除（アンエスケープ）を行います。
+ほとんどのHTMLタグは単に削除されますが、<blockquote>タグだけは、内部を'> 'でインデントします。
 これはrewriteメソッドのデフォルトの実装で、内部で利用されます。
 
 =head3 $str = $mixi->escape($str);

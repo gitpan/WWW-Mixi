@@ -1,5 +1,20 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.46  Mon Mar  4 13:05:01
+	- mod callback_log
+		- now W:M->new(mail, pass, '-log' => 0) means quietly, W:M->new(mail, pass, '-log' => 9) means buzzly.
+	- mod remove_tag
+		- convert "<blockqupote>...</blockquote>" to ">..."
+	- add parse_ and get_ home_new_review (which removed on 0.44)
+	- mod parse_list_community_next
+	- mod parse_list_community_previous
+	- mod parse_list_member
+	- mod parse_list_request
+	- mod parse_view_album_comment
+	- mod parse_view_event
+	- mod parse_view_message
+		- fixed for HTML changes.
+
 0.45  Mon Apr 10 00:59:28
 	- add parse_ and get_edit_member (thanks icchan)
 	- add parse_ and get_edit_member_pages
@@ -17,8 +32,7 @@ Revision history for Perl extension WWW::Mixi.
 		- use id in session as default id
 	- mod post_edit_diary
 		- add 'form_date' key
-	- del parse_home_new_review
-	- del get_home_new_review
+	- del parse_ and get_ home_new_review
 		- new review at home page is removed.
 
 0.43  Wed Feb  1 18:18:29
