@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.46$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.47$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -227,8 +227,8 @@ sub parse_tool_bar {
 	my $content = $res->content;
 	my @items   = ();
 	# get tool bar part
-	my $content_from = qq(\Q<td><img src="http://img.mixi.jp/img/b_left.gif" height="23" width="22"></td>\E);
-	my $content_till = qq(\Q<td><img src="http://img.mixi.jp/img/b_right.gif" height="23" width="23"></td>\E);
+	my $content_from = qq(\Q<td><img src=http://img.mixi.jp/img/b_left.gif width=22 height=23></td>\E);
+	my $content_till = qq(\Q<td><img src="http://img.mixi.jp/img/smenu_bg.gif" width="150" height="23"></td>\E);
 	return $self->log("[warn] tool bar part is missing.\n") unless ($content =~ /$content_from(.*?)$content_till/s);
 	$content = $1;
 	# parse tool bar part
@@ -247,8 +247,8 @@ sub parse_information {
 	my $content = $res->content;
 	my @items   = ();
 	# get information part
-	my $content_from = qq(\Q<!-- start: お知らせ -->\E.*?\Q<table BORDER=0 CELLSPACING=0 CELLPADDING=0 STYLE="margin-left: 10px;">\E);
-	my $content_till = qq(\Q</table>\E.*?\Q<!-- end: お知らせ -->\E);
+	my $content_from = qq(\Q<!-- お知らせメッセージ ここから -->\E);
+	my $content_till = qq(\Q<!-- お知らせメッセージ ここまで -->\E);
 	return $self->log("[warn] information is missing.\n") unless ($content =~ /$content_from(.*?)$content_till/s);
 	$content = $1;
 	# parse information part
@@ -1129,7 +1129,7 @@ sub parse_show_calendar_term {
 	return unless ($res and $res->is_success);
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
-	return unless ($content =~ /<a href="show_calendar.pl\?year=(\d+)&month=(\d+)&pref_id=13">[^&]*?<\/a>/);
+	return unless ($content =~ /<a href="show_calendar.pl\?year=(\d+)&month=(\d+)&pref_id=\d+">[^&]*?<\/a>/);
 	return {'year' => $1, 'month' => $2};
 }
 

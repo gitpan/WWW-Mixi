@@ -1,5 +1,11 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.47  Mon Mar 30 01:52:10
+	- mod parse_information (thanks memn0ck)
+	- mod parse_calendar_term (thanks pirori)
+	- mod parse_tool_bar
+		- fixed for HTML changes.
+
 0.46  Mon Mar  4 13:05:01
 	- mod callback_log
 		- now W:M->new(mail, pass, '-log' => 0) means quietly, W:M->new(mail, pass, '-log' => 9) means buzzly.
