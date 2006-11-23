@@ -1,5 +1,16 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.48  Thu Nov 23 21:48:10
+	- mod parse_tool_bar
+	- mod parse_main_menu
+	- mod parse_banner (Iframe url only, not follow.)
+	- mod parse_list_community
+	- mod parse_list_friend
+	- mod parse_list_member
+	- mod parse_show_calendar
+	- mod parse_show_calendar_term (thanks pirori)
+		- fixed for HTML changes.
+
 0.47  Mon Mar 30 01:52:10
 	- mod parse_information (thanks memn0ck)
 	- mod parse_calendar_term (thanks pirori)

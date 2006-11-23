@@ -4,7 +4,7 @@ use strict;
 use Carp ();
 use vars qw($VERSION @ISA);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.47$ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.48$ =~ /(\d+)\.(\d+)/);
 
 require LWP::RobotUA;
 @ISA = qw(LWP::RobotUA);
@@ -188,9 +188,13 @@ sub parse_main_menu {
 	my $content_till = qq(\Q</map>\E);
 	return $self->log("[warn] main menu part is missing.\n") unless ($content =~ /$content_from(.*?)$content_till/s);
 	$content = $1;
-	# parse main menu part
-	while ($content =~ s/<area .*?alt=([^\s<>]*?) .*?href=([^\s<>]*?)>//) {
-		my $item = { 'link' => $self->absolute_url($2, $base), 'subject' => $self->rewrite($1) };
+	# parse main menu items
+	my @tags = ($content =~ /(<area [^<>]*>)/gs);
+	return $self->log("[warn] area tag is missing in main menu part.\n") unless (@tags);
+	# parse each items
+	foreach my $str (@tags) {
+		my $tag = $self->parse_standard_tag($str);
+		my $item = { 'link' => $self->absolute_url($tag->{'attr'}->{'href'}, $base), 'subject' => $self->rewrite($tag->{'attr'}->{'alt'}) };
 		push(@items, $item);
 	}
 	return @items;
@@ -203,18 +207,14 @@ sub parse_banner {
 	my $base    = $res->base->as_string;
 	my $content = $res->content;
 	my @items   = ();
-	while ($content =~ s/<a href=["']?([^"' ]*banner.pl\?[^ '"]*)['"]?.*?>(.*?)<\/a>//i) {
-		my ($link, $subject) = ($1, $2);
-		my $image = ($subject =~ s/^.*<img src=(["']?[^"' ]*["']?).*?alt=(["']?([^"' ]*)["']?).*$/$2/) ? $1 : undef;
-		$link =~ s/^["'](.*?)['"]$/$1/;
-		$link = $self->absolute_url($link, $base);
-		$image =~ s/^["'](.*?)['"]$/$1/;
-		$image = $self->absolute_url($image, $base) if ($image);
-		$subject =~ s/^["'](.*?)['"]$/$1/;
-		$subject = "($1)" if (not $subject and $image =~ /([^\\\/]+)$/);
-		$subject = $self->rewrite($subject);
-		my $item = { 'link' => $link, 'image' => $image, 'subject' => $subject };
+	my @tags    = ($content =~ /(<iframe [^<>]*>)/gs);
+	return $self->log("[warn] content has no iframe tags.\n") unless (@tags);
+	foreach my $str (@tags) {
+		my $tag = $self->parse_standard_tag($str);
+		next unless ($tag->{'attr'}->{'src'} and $tag->{'attr'}->{'src'} =~ /^http:\/\/ads.mixi.jp/);
+		my $item = { 'link' => $tag->{'attr'}->{'src'} };
 		push(@items, $item);
+		last;
 	}
 	return @items;
 }
@@ -228,7 +228,7 @@ sub parse_tool_bar {
 	my @items   = ();
 	# get tool bar part
 	my $content_from = qq(\Q<td><img src=http://img.mixi.jp/img/b_left.gif width=22 height=23></td>\E);
-	my $content_till = qq(\Q<td><img src="http://img.mixi.jp/img/smenu_bg.gif" width="150" height="23"></td>\E);
+	my $content_till = qq(\Q<td><img src=http://img.mixi.jp/img/b_right.gif width=23 height=23></td>\E);
 	return $self->log("[warn] tool bar part is missing.\n") unless ($content =~ /$content_from(.*?)$content_till/s);
 	$content = $1;
 	# parse tool bar part
@@ -595,27 +595,49 @@ sub parse_list_community {
 	my $content = $res->content;
 	my @items   = ();
 	my $status_backgrounds = {
-		'http://img.mixi.jp/img/bg_orange1-.gif' => '管理者',
+		'bg_orange1-.gif' => '管理者',
 	};
-	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=2 WIDTH=560>(.+?)<\/table>/s) {
-		$content = $1;
-		while ($content =~ s/<tr ALIGN=center BGCOLOR=#FFFFFF>(.*?)<tr ALIGN=center BGCOLOR=#FFF4E0>(.*?)<\/tr>//is) {
-			my ($image_part, $text_part) = ($1, $2);
-			my @images = ($image_part =~ /<td WIDTH=20% HEIGHT=100 background=http:\/\/img.mixi.jp\/img\/bg_[a-z0-9-]+.gif>.*?<\/td>/gi);
-			my @texts  = ($text_part =~ /<td>(.*?)<\/td>/gi);
-			for (my $i = 0; $i < @images or $i < @texts; $i++) {
-				my $item = {};
-				my ($image, $text) = ($images[$i], $texts[$i]);
-				($item->{'subject'}, $item->{'count'}) = ($1, $2) if ($text =~ /^\s*(.*?)\((\d+)\)\s*$/);
-				($item->{'background'}, $item->{'link'}, $item->{'image'}) = ($1, $2, $3) if ($image =~ /<td .*? background=([^<> ]*).*?><a href=(.*?)><img SRC=(.*?) border=0><\/a>/);
-				if ($item->{'link'}) {
-					$item->{'subject'}    = $self->rewrite($item->{'subject'});
-					$item->{'link'}       = $self->absolute_url($item->{'link'}, $base);
-					$item->{'image'}      = $self->absolute_url($item->{'image'}, $base);
-					$item->{'background'} = $self->absolute_url($item->{'background'}, $base);
-					$item->{'status'}     = $status_backgrounds->{$item->{'background'}};
-					push(@items, $item);
-				}
+	# get community list part
+	my $content_from = qq(\Q<table BORDER=0 CELLSPACING=1 CELLPADDING=2 WIDTH=560>\E);
+	my $content_till = qq(\Q</table>\E);
+	return $self->log("[warn] community list part is missing.\n") unless ($content =~ /$content_from(.*?)$content_till/s);
+	$content = $1;
+	# get community list rows
+	my @rows = ();
+	push(@rows, [$1, $2]) while ($content =~ s/<tr ALIGN=center BGCOLOR=#FFFFFF>(.*?)<\/tr>\s*<tr ALIGN=center BGCOLOR=#FFF4E0>(.*?)<\/tr>//is);
+	return $self->log("[warn] community list has no rows.\n") unless (@rows);
+	# parse each items
+	foreach my $row (@rows) {
+		my ($image_part, $text_part) = @{$row};
+		my @images = ($image_part =~ /<td\b[^<>]*>.*?<\/td>/gi);
+		my @texts  = ($text_part =~ /<td\b[^<>]*>(.*?)<\/td>/gi);
+		return $self->log("[warn] image is missing in image part.\n\t$image_part\n") unless (@images);
+		return $self->log("[warn] text is missing in text part.\n\t$text_part\n") unless (@texts);
+		for (my $i = 0; $i < @images or $i < @texts; $i++) {
+			my $item = {};
+			my ($image, $text) = ($images[$i], $texts[$i]);
+			unless ($text =~ /^\s*([^<>]*)\((\d+)\)\s*$/) {
+				$self->log("[warn] name or count is missing in text.\n\t$text\n") if ($i == 0);
+				last;
+			}
+			($item->{'subject'}, $item->{'count'}) = ($1, $2);
+			unless ($image =~ /(<td\b[^<>]*>)(<a\b[^<>]*>)(<img\b[^<>]*>)/) {
+				$self->log("[warn] td, a or img tag is missing in image.\n\t$image\n") if ($i == 0);
+				next;
+			}
+			my @tags = ($1, $2, $3);
+			my ($td, $a, $img) = map { $self->parse_standard_tag($_) } @tags;
+			$item->{'background'} = $td->{'attr'}->{'background'} or return $self->log("[warn] background is missing in tag.\n\t$tags[0]\n");
+			$item->{'link'} = $a->{'attr'}->{'href'} or return $self->log("[warn] link is missing in tag.\n\t$tags[1]\n");
+			$item->{'image'} = $img->{'attr'}->{'src'} or return $self->log("[warn] image is missing in tag.\n\t$tags[2]\n");
+			$item->{'status'} = ($item->{'background'} and $item->{'background'} =~ /([^\/]+)$/) ? $1 : undef;
+			if ($item->{'link'}) {
+				$item->{'subject'}    = $self->rewrite($item->{'subject'});
+				$item->{'link'}       = $self->absolute_url($item->{'link'}, $base);
+				$item->{'image'}      = $self->absolute_url($item->{'image'}, $base);
+				$item->{'background'} = $self->absolute_url($item->{'background'}, $base);
+				$item->{'status'}     = $status_backgrounds->{$item->{'status'}};
+				push(@items, $item);
 			}
 		}
 	}
@@ -744,31 +766,47 @@ sub parse_list_friend {
 	my $content = $res->content;
 	my @items   = ();
 	my $status_backgrounds = {
-		'http://img.mixi.jp/img/bg_orange1-.gif' => '1時間以内',
-		'http://img.mixi.jp/img/bg_orange2-.gif' => '1日以内',
+		'bg_orange1-.gif' => '1時間以内',
+		'bg_orange2-.gif' => '1日以内',
 	};
 	my @time1   = reverse((localtime(time - 3600))[0..5]);
 	my @time2   = reverse((localtime(time - 3600 * 24))[0..5]);
-	if ($content =~ /<table BORDER=0 CELLSPACING=1 CELLPADDING=2 WIDTH=560>(.+?)<\/table>/s) {
-		$content = $1 ;
-		while ($content =~ s/<tr ALIGN=center BGCOLOR=#FFFFFF>(.*?)<tr ALIGN=center BGCOLOR=#FFF4E0>(.*?)<\/tr>//is) {
-			my ($image_part, $text_part) = ($1, $2);
-			my @images = ($image_part =~ /<td WIDTH=20% HEIGHT=100 background=http:\/\/img.mixi.jp\/img\/bg_[a-z0-9-]+.gif>.*?<\/td>/gi);
-			my @texts  = ($text_part =~ /<td>(.*?)<\/td>/gi);
-			for (my $i = 0; $i < @images or $i < @texts; $i++) {
-				my $item = {};
-				my ($image, $text) = ($images[$i], $texts[$i]);
-				($item->{'subject'}, $item->{'count'}) = ($1, $2) if ($text =~ /^\s*(.+?)\((\d+)\)/);
-				($item->{'background'}, $item->{'link'}, $item->{'image'}) = ($1, $2, $3) if ($image =~ /<td .*? background=([^<> ]*).*?><a href=(.*?)><img alt=(?:.*?) SRC=(.*?) border=0><\/a>/);
-				if ($item->{'link'}) {
-					$item->{'subject'}    = $self->rewrite($item->{'subject'});
-					$item->{'link'}       = $self->absolute_url($item->{'link'}, $base);
-					$item->{'id'}         = $2 if ($item->{'link'} =~ /(.*?)?id=(\d*)/); 
-					$item->{'image'}      = $self->absolute_url($item->{'image'}, $base);
-					$item->{'background'} = $self->absolute_url($item->{'background'}, $base);
-					$item->{'status'}     = $status_backgrounds->{$item->{'background'}};
-					push(@items, $item);
-				}
+	# get friend list part
+	my $content_from = qq(\Q<table BORDER=0 CELLSPACING=1 CELLPADDING=2 WIDTH=560>\E);
+	my $content_till = qq(\Q</table>\E);
+	return $self->log("[warn] friend list part is missing.\n") unless ($content =~ /$content_from(.*?)$content_till/s);
+	$content = $1;
+	# get friend list rows
+	my @rows = ();
+	push(@rows, [$1, $2]) while ($content =~ s/<tr ALIGN=center BGCOLOR=#FFFFFF>(.*?)<\/tr>\s*<tr ALIGN=center BGCOLOR=#FFF4E0>(.*?)<\/tr>//is);
+	return $self->log("[warn] friend list has no rows.\n") unless (@rows);
+	# parse each items
+	foreach my $row (@rows) {
+		my ($image_part, $text_part) = @{$row};
+		my @images = ($image_part =~ /<td\b[^<>]*>.*?<\/td>/gi);
+		my @texts  = ($text_part =~ /<td\b[^<>]*>(.*?)<\/td>/gi);
+		return $self->log("[warn] image is missing in image part.\n\t$image_part\n") unless (@images);
+		return $self->log("[warn] text is missing in text part.\n\t$text_part\n") unless (@texts);
+		for (my $i = 0; $i < @images or $i < @texts; $i++) {
+			my $item = {};
+			my ($image, $text) = ($images[$i], $texts[$i]);
+			$text =~ /^\s*([^<>]*)\((\d+)\)<br\b[^<>]*>/ or return $self->log("[warn] name or count is missing in text.\n\t$text\n");
+			($item->{'subject'}, $item->{'count'}) = ($1, $2);
+			$image =~ /(<td\b[^<>]*>)(<a\b[^<>]*>)(<img\b[^<>]*>)/ or return $self->log("[warn] td, a or img tag is missing in image.\n\t$image\n");
+			my @tags = ($1, $2, $3);
+			my ($td, $a, $img) = map { $self->parse_standard_tag($_) } @tags;
+			$item->{'background'} = $td->{'attr'}->{'background'} or return $self->log("[warn] background is missing in tag.\n\t$tags[0]\n");
+			$item->{'link'} = $a->{'attr'}->{'href'} or return $self->log("[warn] link is missing in tag.\n\t$tags[1]\n");
+			$item->{'image'} = $img->{'attr'}->{'src'} or return $self->log("[warn] image is missing in tag.\n\t$tags[2]\n");
+			$item->{'status'} = ($item->{'background'} and $item->{'background'} =~ /([^\/]+)$/) ? $1 : undef;
+			if ($item->{'link'}) {
+				$item->{'subject'}    = $self->rewrite($item->{'subject'});
+				$item->{'link'}       = $self->absolute_url($item->{'link'}, $base);
+				$item->{'id'}         = $2 if ($item->{'link'} =~ /(.*?)?id=(\d*)/); 
+				$item->{'image'}      = $self->absolute_url($item->{'image'}, $base);
+				$item->{'background'} = $self->absolute_url($item->{'background'}, $base);
+				$item->{'status'}     = $status_backgrounds->{$item->{'status'}};
+				push(@items, $item);
 			}
 		}
 	}
@@ -809,27 +847,45 @@ sub parse_list_member {
 	my $content = $res->content;
 	my @items   = ();
 	# get member list part
-	my $content_from = "\Q<!-- end: Page link -->\E";
-	my $content_till = "\Q<!-- start: Page number -->\E";
-	return $self->log("[warn] Member list part is missing.\n") unless ($content =~ /$content_from(.+?)$content_till/s);
+	my $content_from = "\Q<table BORDER=0 CELLSPACING=1 CELLPADDING=2 WIDTH=560>\E";
+	my $content_till = "\Q</table>\E";
+	return $self->log("[warn] member list part is missing.\n") unless ($content =~ /$content_from(.+?)$content_till/s);
 	$content = $1;
-	# parse members
-	my $attr = qr/\s+(?:"[^""]*"|'[^'']*'|[^<>]+)?/;
-	while ($content =~ s/<tr ALIGN=center BGCOLOR=#FFFFFF>(.*?)<tr ALIGN=center BGCOLOR=#FFF4E0>(.*?)<\/tr>//is) {
-		my ($image_part, $text_part) = ($1, $2);
-		my @images = ($image_part =~ /<td(?:$attr)*background=http:\/\/img.mixi.jp\/img\/bg_line.gif(?:$attr)*>.*?<\/td>/gi);
-		my @texts  = ($text_part =~ /<td>(.*?)<\/td>/gi);
+	# get member list rows
+	my @rows = ();
+	push(@rows, [$1, $2]) while ($content =~ s/<tr ALIGN=center BGCOLOR=#FFFFFF>(.*?)<\/tr>\s*<tr ALIGN=center BGCOLOR=#FFF4E0>(.*?)<\/tr>//is);
+	return $self->log("[warn] no rows found in member list part.\n") unless (@rows);
+	# parse each items
+	foreach my $row (@rows) {
+		my ($image_part, $text_part) = @{$row};
+		my @images = ($image_part =~ /<td\b[^<>]*>.*?<\/td>/gi);
+		my @texts  = ($text_part =~ /<td\b[^<>]*>(.*?)<\/td>/gi);
+		return $self->log("[warn] image is missing in image part.\n\t$image_part\n") unless (@images);
+		return $self->log("[warn] text is missing in text part.\n\t$text_part\n") unless (@texts);
 		for (my $i = 0; $i < @images or $i < @texts; $i++) {
 			my $item = {};
 			my ($image, $text) = ($images[$i], $texts[$i]);
-			($item->{'subject'}, $item->{'count'}) = ($1, $2) if ($text =~ /^\s*(.+?)\((\d+)\)/);
-			($item->{'background'}, $item->{'link'}, $item->{'image'}) = ($1, $2, $3) if ($image =~ /<td(?:$attr)*background=([^<> ]*)(?:$attr)*><a href=(.*?)><img(?:$attr)*SRC=(.*?)(?:$attr)*><\/a>/i);
+			unless ($text =~ /^\s*([^<>]*)\((\d+)\)\s*$/) {
+				$self->log("[warn] name or count is missing in text.\n\t$text\n") if ($i == 0);
+				last;
+			}
+			($item->{'subject'}, $item->{'count'}) = ($1, $2);
+			unless ($image =~ /(<td\b[^<>]*>)(<a\b[^<>]*>)(<img\b[^<>]*>)/) {
+				$self->log("[warn] td, a or img tag is missing in image.\n\t$image\n") if ($i == 0);
+				next;
+			}
+			my @tags = ($1, $2, $3);
+			my ($td, $a, $img) = map { $self->parse_standard_tag($_) } @tags;
+			$item->{'background'} = $td->{'attr'}->{'background'} or return $self->log("[warn] background is missing in tag.\n\t$tags[0]\n");
+			$item->{'link'} = $a->{'attr'}->{'href'} or return $self->log("[warn] link is missing in tag.\n\t$tags[1]\n");
+			$item->{'image'} = $img->{'attr'}->{'src'} or return $self->log("[warn] image is missing in tag.\n\t$tags[2]\n");
+			$item->{'status'} = ($item->{'background'} and $item->{'background'} =~ /([^\/]+)$/) ? $1 : undef;
 			if ($item->{'link'}) {
 				$item->{'subject'}    = $self->rewrite($item->{'subject'});
 				$item->{'link'}       = $self->absolute_url($item->{'link'}, $base);
-				$item->{'id'}         = $2 if ($item->{'link'} =~ /(.*?)?id=(\d*)/); 
 				$item->{'image'}      = $self->absolute_url($item->{'image'}, $base);
 				$item->{'background'} = $self->absolute_url($item->{'background'}, $base);
+				$item->{'id'}         = $1 if ($item->{'link'} =~ /\bid=(\d+)/); 
 				push(@items, $item);
 			}
 		}
@@ -1085,39 +1141,44 @@ sub parse_show_calendar {
 	my %whethers = ('1' => '晴', '2' => '曇', '3' => '雨', '4' => '雪', '8' => 'のち', '9' => 'ときどき');
 	my @items    = ();
 	my $term     = $self->parse_show_calendar_term($res) or return undef; 
-	if ($content =~ /<table width="670" border="0" cellspacing="1" cellpadding="3">(.+?)<\/table>/s) {
-		$content = $1;
-		$content =~ s/<tr ALIGN=center BGCOLOR=#FFF1C4>.*?<\/tr>//is;
-		while ($content =~ s/<td HEIGHT=65 [^<>]*><font COLOR=#996600>(\S*?)<\/font>(.*?)<\/td>//is) {
-			my $date = $1;
-			my $text = $2;
-			next unless ($date =~ /(\d+)/);
-			$date = sprintf('%04d/%02d/%02d', $term->{'year'}, $term->{'month'}, $1);
-			if ($text =~ s/<img SRC=(.*?) WIDTH=23 HEIGHT=16 ALIGN=absmiddle>(.*?)<\/font><\/font>//) {
-				my $item = { 'subject' => "天気", 'link' => undef, 'name' => $2, 'time' => $date, 'icon' => $1};
-				$item->{'icon'} = $self->absolute_url($item->{'icon'}, $base);
-				my $weather = ($item->{'icon'} =~ /i_w(\d+).gif$/) ? $1 : '不明';
-				$weather    =~ s/(\d)/$whethers{$1}/g;
-				$item->{'name'} = sprintf("%s(%s%%)", $weather, $self->rewrite($item->{'name'}));
-				push(@items, $item);
+	# get calendar part
+	my $content_from = qq(\Q<table width="670" border="0" cellspacing="1" cellpadding="3">\E);
+	my $content_till = qq(\Q</table>\E);
+	return $self->log("[warn] calendar part is missing.\n") unless ($content =~ /$content_from(.*?)$content_till/s);
+	$content = $1;
+	# parse main menu items
+	my @days = ();
+	$content =~ s/<tr align=center bgcolor=#fff1c4>.*?<\/tr>//is;
+	push(@days, [$1, $2]) while ($content =~ s/<td height=65 [^<>]*><font color=#996600>\s*(\d+)\s*<\/font>(.*?)<\/td>//is);
+	return $self->log("[warn] no day found in calendar.\n") unless (@days);
+	# parse each days
+	foreach my $day (@days) {
+		my ($date, $text) = @{$day};
+		$date = sprintf('%04d/%02d/%02d', $term->{'year'}, $term->{'month'}, $date);
+		if ($text =~ s/<img src=(.*?) width=23 height=16 align=absmiddle \/>(.*?)<\/font><\/font>//i) {
+			my $item = { 'subject' => "天気", 'link' => undef, 'name' => $2, 'time' => $date, 'icon' => $1};
+			$item->{'icon'} = $self->absolute_url($item->{'icon'}, $base);
+			my $weather = ($item->{'icon'} =~ /i_w(\d+).gif$/) ? $1 : '不明';
+			$weather    =~ s/(\d)/$whethers{$1}/g;
+			$item->{'name'} = sprintf("%s(%s%%)", $weather, $self->rewrite($item->{'name'}));
+			push(@items, $item);
+		}
+		my @events = split(/<br>/, $text);
+		foreach my $event (@events) {
+			my $item = {};
+			if ($event =~ /<img src=(.*?) width=16 height=16 align=middle \/><a href=(.*?)>(.*?)<\/a>/i) {
+				$item = { 'subject' => $1, 'link' => $2, 'name' => $3, 'time' => $date, 'icon' => $1};
+			} elsif ($event =~ /<a href=".*?" onClick="MM_openBrWindow\('(view_schedule.pl\?id=\d+)'.*?\)"><img src=(.*?) .*?>(.*?)<\/a>/i) {
+				$item = { 'subject' => $2, 'link' => $1, 'name' => $3, 'time' => $date, 'icon' => $2};
+			} else {
+				next;
 			}
-			my @events = split(/<br>/, $text);
-			foreach my $event (@events) {
-				my $item = {};
-				if ($event =~ /<img SRC=(.*?) WIDTH=16 HEIGHT=16 ALIGN=middle><a HREF=(.*?)>(.*?)<\/a>/) {
-					$item = { 'subject' => $1, 'link' => $2, 'name' => $3, 'time' => $date, 'icon' => $1};
-				} elsif ($event =~ /<a href=".*?" onClick="MM_openBrWindow\('(view_schedule.pl\?id=\d+)'.*?\)"><img src=(.*?) .*?>(.*?)<\/a>/) {
-					$item = { 'subject' => $2, 'link' => $1, 'name' => $3, 'time' => $date, 'icon' => $2};
-				} else {
-					next;
-				}
-				$item->{'subject'} = ($item->{'subject'} =~ /([^\/]+)$/ and $icons{$1}) ? $icons{$1} : "不明($1)";
-				$item->{'link'} = $self->absolute_url($item->{'link'}, $base);
-				$item->{'icon'} = $self->absolute_url($item->{'icon'}, $base);
-				$item->{'subject'} = $self->rewrite($item->{'subject'});
-				$item->{'name'} = $self->rewrite($item->{'name'});
-				push(@items, $item);
-			}
+			$item->{'subject'} = ($item->{'subject'} =~ /([^\/]+)$/ and $icons{$1}) ? $icons{$1} : "不明($1)";
+			$item->{'link'} = $self->absolute_url($item->{'link'}, $base);
+			$item->{'icon'} = $self->absolute_url($item->{'icon'}, $base);
+			$item->{'subject'} = $self->rewrite($item->{'subject'});
+			$item->{'name'} = $self->rewrite($item->{'name'});
+			push(@items, $item);
 		}
 	}
 	return @items;
@@ -1260,14 +1321,22 @@ sub parse_show_log {
 	my @items   = ();
 	my $re_date = '(\d{4})年(\d{2})月(\d{2})日 (\d{1,2}):(\d{2})';
 	my $re_link = '<a href="?(.+?)"?>(.+?)<\/a>';
-	if ($content =~ /<table BORDER=0 CELLSPACING=0 CELLPADDING=5>(.+?)<\/table>/s) {
-		$content = $1 ;
-		while ($content =~ s/${re_date} ${re_link}<br>//is) {
-			my $time = sprintf('%04d/%02d/%02d %02d:%02d', $1, $2, $3, $4, $5);
-			my $name = $self->rewrite($7);
-			my $link = $self->absolute_url($6, $base);
-			push(@items, {'time' => $time, 'name' => $name, 'link' => $link});
-		}
+	# get log part
+	my $content_from = qq(\Q<ul class="log" style="margin: 0; padding: 0;">\E);
+	my $content_till = qq(\Q</ul>\E);
+	return $self->log("[warn] log part is missing.\n") unless ($content =~ /$content_from(.*?)$content_till/s);
+	$content = $1;
+	# parse main menu items
+	my @lines = ($content =~ /<li\b[^<>]*>(.*?)<\/li>/gs);
+	return $self->log("[warn] no log found in log part.\n") unless (@lines);
+	# parse each items
+	foreach my $line (@lines) {
+		$line =~ /${re_date} (<a\b[^<>]*>)(.*)<\/a>/ or return $self->log("[warn] a tag, date or name in not found in '$line'.\n");
+		my $time = sprintf('%04d/%02d/%02d %02d:%02d', $1, $2, $3, $4, $5);
+		my $a    = $self->parse_standard_tag($6);
+		my $name = $self->rewrite($7);
+		my $link = $self->absolute_url($a->{'attr'}->{'href'}, $base);
+		push(@items, {'time' => $time, 'name' => $name, 'link' => $link});
 	}
 	return @items;
 }
@@ -3102,8 +3171,11 @@ sub test_scenario {
 		my $label  = $opt->{'label'};
 		my $url    = defined($opt->{'url'}) ? $opt->{'url'} : '';
 		if (ref($url) eq 'CODE') {
-			$url   = &{$url}($mixi) ;
-			$mixi->log("$labelをスキップします。\n", "[warn] 参照レコードなし\n") & next unless ($url);
+			$url   = &{$url}($mixi);
+			unless ($url) {
+				$mixi->log("$labelをスキップします。\n", "[warn] 参照レコードなし\n");
+				next;
+			}
 		}
 		$url       = $url->{'link'} if (ref($url) eq 'HASH');
 		my @arg    = (defined($opt->{'arg'}) and ref($opt->{'arg'})) eq 'ARRAY' ? @{$opt->{'arg'}} : ();
