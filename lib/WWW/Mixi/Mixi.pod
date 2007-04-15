@@ -386,7 +386,7 @@ countはコメント数です。
 
  {
  	'subject' => 'walrus',
- 	'gender' => '男性',
+ 	'gender' => undef,
  	'description' => 'PerlマニアでPDAマニアでザウルスユーザー。メインサイトの日記はこちらです。...',
  	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxx.jpg',
  	'link' => 'http://mixi.jp/show_friend.pl?id=xxxxxx',
@@ -599,29 +599,29 @@ statusはnew(新着)、opened(既読)、replied(返信済み)、unknown(不明)�
 承認待ち一覧（list_request.plのメイン部）を解析します。
 返り値は、項目ごとに以下のようなハッシュリファレンスにしたものの配列です。
 
-{
-	'subject' => 'walrus',
-	'gender' => '男性',
-	'link' => 'http://mixi.jp/show_friend.pl?id=xxxxx',
-	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxxx_xxxxxxxxxs.jpg'
-	'time' => '2005/09/24 14:45',
-	'description' => 'WWW::Mixi作者です。ここにはプロフィールの説明文が入ります。',
-	'message' => '先日はメールで面白い話をありがとうごさいました。
-	改めてマイミクシィに加えさせていただきたいと思ってます。
-	よろしくです。',
-	'button' => [
-		{
-			'link' => 'http://mixi.jp/accept_request.pl?id=xxxxx&post_key=xxxxxxxxxxxxxxx',
-			'title' => '承認',
-			'image' => 'http://img.mixi.jp/img/ybtn.gif'
-		},
-		{
-			'link' => 'http://mixi.jp/reject_request.pl?id=xxxxx&post_key=xxxxxxxxxxxxxxx',
-			'title' => '拒否',
-			'image' => 'http://img.mixi.jp/img/nbtn.gif'
-		}
-	],
-}
+ {
+ 	'subject' => 'walrus',
+ 	'gender' => undef,
+ 	'link' => 'http://mixi.jp/show_friend.pl?id=xxxxx',
+ 	'image' => 'http://img.mixi.jp/photo/member/xx/xx/xxxxx_xxxxxxxxxs.jpg'
+ 	'time' => '2005/09/24 14:45',
+ 	'description' => 'WWW::Mixi作者です。ここにはプロフィールの説明文が入ります。',
+ 	'message' => '先日はメールで面白い話をありがとうごさいました。
+ 	改めてマイミクシィに加えさせていただきたいと思ってます。
+ 	よろしくです。',
+ 	'button' => [
+ 		{
+ 			'link' => 'http://mixi.jp/accept_request.pl?id=xxxxx&post_key=xxxxxxxxxxxxxxx',
+ 			'title' => '承認',
+ 			'image' => 'http://img.mixi.jp/img/ybtn.gif'
+ 		},
+ 		{
+ 			'link' => 'http://mixi.jp/reject_request.pl?id=xxxxx&post_key=xxxxxxxxxxxxxxx',
+ 			'title' => '拒否',
+ 			'image' => 'http://img.mixi.jp/img/nbtn.gif'
+ 		}
+ 	],
+ }
 
 =head3 @items = $mixi->parse_new_album( [$response] );
 

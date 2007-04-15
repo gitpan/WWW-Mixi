@@ -1,6 +1,33 @@
 Revision history for Perl extension WWW::Mixi.
 
-0.48  Thu Nov 23 21:48:10
+0.49  Sun Apr 15 10:57:20 2007
+	- mod parse_edit_member
+	- mod parse_list_bookmark
+	- mod parse_list_community
+	- mod parse_list_community_next
+	- mod parse_list_community_previous
+	- mod parse_list_diary
+	- mod parse_list_friend
+	- mod parse_list_member
+	- mod parse_list_message
+	- mod parse_list_request
+	- mod parse_search_diary
+	- mod parse_show_calendar
+	- mod parse_show_log
+	- mod parse_view_message
+		- fixed for HTML changes.
+	- mod parse_view_diary
+		- fixed for HTML changes.
+		- 'raw_description' key (for both diary and comment) is added.
+	- mod parse_information
+		- fixed color parsing sometimes fails
+	- mod parse_standard_history
+		- for parse_new_friend_diary, iconed URL is now ".../list_diary.pl".
+	- mod callback_log
+		- use Jcode only it is available.
+		- now don't require Jcode module.
+
+0.48  Thu Nov 23 21:48:10 2006
 	- mod parse_tool_bar
 	- mod parse_main_menu
 	- mod parse_banner (Iframe url only, not follow.)
@@ -9,15 +36,16 @@ Revision history for Perl extension WWW::Mixi.
 	- mod parse_list_member
 	- mod parse_show_calendar
 	- mod parse_show_calendar_term (thanks pirori)
+	- mod parse_show_log
 		- fixed for HTML changes.
 
-0.47  Mon Mar 30 01:52:10
+0.47  Mon Mar 30 01:52:10 2006
 	- mod parse_information (thanks memn0ck)
 	- mod parse_calendar_term (thanks pirori)
 	- mod parse_tool_bar
 		- fixed for HTML changes.
 
-0.46  Mon Mar  4 13:05:01
+0.46  Mon Mar  4 13:05:01 2006
 	- mod callback_log
 		- now W:M->new(mail, pass, '-log' => 0) means quietly, W:M->new(mail, pass, '-log' => 9) means buzzly.
 	- mod remove_tag
@@ -32,11 +60,11 @@ Revision history for Perl extension WWW::Mixi.
 	- mod parse_view_message
 		- fixed for HTML changes.
 
-0.45  Mon Apr 10 00:59:28
+0.45  Mon Apr 10 00:59:28 2006
 	- add parse_ and get_edit_member (thanks icchan)
 	- add parse_ and get_edit_member_pages
 
-0.44  Sun Feb 19 13:03:14
+0.44  Sun Feb 19 13:03:14 2006
 	- mod parse_tool_bar
 	- mod parse_information
 	- mod parse_community_id
@@ -52,11 +80,11 @@ Revision history for Perl extension WWW::Mixi.
 	- del parse_ and get_ home_new_review
 		- new review at home page is removed.
 
-0.43  Wed Feb  1 18:18:29
+0.43  Wed Feb  1 18:18:29 2006
 	- mod parse_standard_history
 		- fixed name pase error for '...(...)' (thanks mizuki)
 
-0.42  Wed Oct 19 11:04:16
+0.42  Wed Oct 19 11:04:16 2005
 	- add parse_standar_anchor
 	- mod parse_ajax_new_diary
 		- fixed for url with '&type=1' (thanks mizuki)
