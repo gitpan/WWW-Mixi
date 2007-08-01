@@ -1,5 +1,29 @@
 Revision history for Perl extension WWW::Mixi.
 
+0.50  Wed Aug  1 14:38:46 2007
+	- mod parse_main_menu
+	- mod parse_tool_bar
+	- mod parse_home_new_album
+	- mod parse_home_new_bbs
+	- mod parse_home_new_comment
+	- mod parse_home_new_friend_diary
+	- mod parse_home_new_review
+	- mod parse_list_bbs
+	- mod parse_list_diary
+	- mod parse_list_diary_monthly_menu
+	- mod parse_show_log
+	- mod parse_view_album
+	- mod parse_view_album_comment
+	- mod parse_view_album_photo
+	- mod parse_view_bbs
+	- mod parse_view_diary
+	- mod parse_view_event
+		- fixed for HTML changes.
+	- mod parse_list_friend
+		- bug fix, faild to parse line which has less than 5 friends.
+	- mod jconv_log
+		- bug fix, loop with log level over 2.
+
 0.49  Sun Apr 15 10:57:20 2007
 	- mod parse_edit_member
 	- mod parse_list_bookmark
